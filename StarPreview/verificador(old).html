@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Verificador de JSON - Stardew Valley</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
+    .item { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; background: #fff; display: flex; align-items: center; gap: 20px; }
+    .item img { width: 64px; height: 64px; object-fit: contain; border: 1px solid #ddd; }
+    .info { flex: 1; }
+    .info h2 { margin: 0 0 5px; font-size: 18px; }
+    .info p { margin: 0; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>Itens do JSON</h1>
+  <div id="listaItens"></div>
+
+  <script>
+    // Cole seu JSON diretamente aqui
+    const produtos = [
+      {"id":1,"nome":"abacaxi","valorBase":300,"imagem":"imagens/abacaxi.png"},
+      {"id":2,"nome":"abobora","valorBase":320,"imagem":"imagens/abobora.png"},
+      {"id":3,"nome":"alcachofra","valorBase":160,"imagem":"imagens/alcachofra.png"},
+      {"id":4,"nome":"alho","valorBase":60,"imagem":"imagens/alho.png"},
+      {"id":5,"nome":"alho-poro","valorBase":60,"imagem":"imagens/alho_poro.png"},
+      {"id":6,"nome":"amaranto","valorBase":150,"imagem":"imagens/amaranto.png"},
+      {"id":7,"nome":"ameixa selvagem","valorBase":80,"imagem":"imagens/ameixa_selvagem.png"},
+      {"id":8,"nome":"amora","valorBase":20,"imagem":"imagens/amora.png"},
+      {"id":9,"nome":"banana","valorBase":150,"imagem":"imagens/banana.png"}
+      // Adicione mais itens conforme necessário
+    ];
+
+    const lista = document.getElementById('listaItens');
+
+    produtos.forEach(produto => {
+      const div = document.createElement('div');
+      div.className = 'item';
+
+      const img = document.createElement('img');
+      img.src = produto.imagem;
+      img.alt = produto.nome;
+      img.onerror = () => img.src = 'imagens/default.png'; // fallback
+
+      const info = document.createElement('div');
+      info.className = 'info';
+      info.innerHTML = `<h2>${produto.nome}</h2><p>Valor base: ${produto.valorBase} ouros</p>`;
+
+      div.appendChild(img);
+      div.appendChild(info);
+      lista.appendChild(div);
+    });
+  </script>
+</body>
+</html>

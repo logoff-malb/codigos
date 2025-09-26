@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Starpreview</title>
+  <link rel="stylesheet" type="text/css" href="estilo.css">
+  <script>
+      function ativarFuncao(funcao) {
+    if (funcao === 'processamento') {
+     const botao = document.querySelector('.btnProcessamento');
+     botao.classList.add('processando');
+      } }
+  </script>
+  <script>
+    function trocarCalendario(estacao) {
+      const calendario = document.getElementById('calendario');
+      calendario.src = `recursos/cal_${estacao}.png`;
+      calendario.alt = `Calendário de ${estacao.charAt(0).toUpperCase() + estacao.slice(1)}`;
+    }
+
+    let diaSelecionado = null;
+
+    function selecionarDia(dia, botao) {
+      document.querySelectorAll('.dia').forEach(btn => btn.classList.remove('selecionado'));
+      botao.classList.add('selecionado');
+      diaSelecionado = dia;
+      console.log("Dia selecionado:", diaSelecionado);
+    }
+  </script>
+</head>
+<body>
+
+<div class="frame-calendario">
+
+<div class="frame">
+ <div class="menu-funcionalidades">
+   <div class="bloco-funcao">
+     <button class="botao-funcao btnPlantio" onclick="ativarFuncao('plantio')">
+      <img src="recursos/enxada.png" class="enxada-estatica" alt="Plantio" title="Plantio">
+      <img src="recursos/enxada.gif" class="enxada-animada" alt="Plantio animado">
+     </button>
+     <div class="rotulo-funcao">Plantio</div>
+   </div>
+    <div class="bloco-funcao">
+    <button class="botao-funcao btnProcessamento" onclick="ativarFuncao('processamento')">
+      <img src="recursos/jarra.png" alt="Processamento" title="Processamento">
+    </button>
+    <div class="rotulo-funcao">Processamento</div>
+    </div>
+   </div>
+      <div class="jogador">
+        <div id="playerBotao" onclick="toggleFormulario()" class="player-botao">
+        <img src="recursos/player.png" alt="Player" title="Player">
+        <span>Player</span>
+         </div>
+
+         <div id="formularioJogador" class="overlay-formulario" style="display: none;">
+         <form id="formJogador">
+         <label>Nome: <input type="text" name="nome" required></label><br>
+         <label>Ano: <input type="number" name="ano" min="1" required></label><br>
+          <label>Dia: <input type="number" name="dia" min="1" max="28" required></label><br>
+         <button type="submit">Salvar</button>
+         </form>
+         </div>
+      </div>
+
+</div>
+
+  <div class="central-calendario">
+   
+
+    <div class="painel-calendario">
+      <div class="botoes-estacao">
+        <button class="btnPrimavera" onclick="trocarCalendario('primavera')">🌸Primavera</button>
+        <button class="btnVerao" onclick="trocarCalendario('verao')">☀️ Verão</button>
+        <button class="btnOutono" onclick="trocarCalendario('outono')">🍂 Outono</button>
+        <button class="btnInverno" onclick="trocarCalendario('inverno')">❄️ Inverno</button>
+      </div>
+
+      <div class="imagem-calendario">
+        <img id="calendario" src="recursos/cal_primavera.png" alt="Calendário da Primavera">
+
+        <!-- Botões dos dias -->
+        <!-- Linha 1 -->
+        <button class="dia" style="top: 65px; left: 16px;" onclick="selecionarDia(1, this)">1</button>
+        <button class="dia" style="top: 65px; left: 80px;" onclick="selecionarDia(2, this)">2</button>
+        <button class="dia" style="top: 65px; left: 144px;" onclick="selecionarDia(3, this)">3</button>
+        <button class="dia" style="top: 65px; left: 208px;" onclick="selecionarDia(4, this)">4</button>
+        <button class="dia" style="top: 65px; left: 272px;" onclick="selecionarDia(5, this)">5</button>
+        <button class="dia" style="top: 65px; left: 336px;" onclick="selecionarDia(6, this)">6</button>
+        <button class="dia" style="top: 65px; left: 400px;" onclick="selecionarDia(7, this)">7</button>
+
+        <!-- Linha 2 -->
+        <button class="dia" style="top: 129px; left: 16px;" onclick="selecionarDia(8, this)">8</button>
+        <button class="dia" style="top: 129px; left: 80px;" onclick="selecionarDia(9, this)">9</button>
+        <button class="dia" style="top: 129px; left: 144px;" onclick="selecionarDia(10, this)">10</button>
+        <button class="dia" style="top: 129px; left: 208px;" onclick="selecionarDia(11, this)">11</button>
+        <button class="dia" style="top: 129px; left: 272px;" onclick="selecionarDia(12, this)">12</button>
+        <button class="dia" style="top: 129px; left: 336px;" onclick="selecionarDia(13, this)">13</button>
+        <button class="dia" style="top: 129px; left: 400px;" onclick="selecionarDia(14, this)">14</button>
+
+        <!-- Linha 3 -->
+        <button class="dia" style="top: 193px; left: 16px;" onclick="selecionarDia(15, this)">15</button>
+        <button class="dia" style="top: 193px; left: 80px;" onclick="selecionarDia(16, this)">16</button>
+        <button class="dia" style="top: 193px; left: 144px;" onclick="selecionarDia(17, this)">17</button>
+        <button class="dia" style="top: 193px; left: 208px;" onclick="selecionarDia(18, this)">18</button>
+        <button class="dia" style="top: 193px; left: 272px;" onclick="selecionarDia(19, this)">19</button>
+        <button class="dia" style="top: 193px; left: 336px;" onclick="selecionarDia(20, this)">20</button>
+        <button class="dia" style="top: 193px; left: 400px;" onclick="selecionarDia(21, this)">21</button>
+
+        <!-- Linha 4 -->
+        <button class="dia" style="top: 257px; left: 16px;" onclick="selecionarDia(22, this)">22</button>
+        <button class="dia" style="top: 257px; left: 80px;" onclick="selecionarDia(23, this)">23</button>
+        <button class="dia" style="top: 257px; left: 144px;" onclick="selecionarDia(24, this)">24</button>
+        <button class="dia" style="top: 257px; left: 208px;" onclick="selecionarDia(25, this)">25</button>
+        <button class="dia" style="top: 257px; left: 272px;" onclick="selecionarDia(26, this)">26</button>
+        <button class="dia" style="top: 257px; left: 336px;" onclick="selecionarDia(27, this)">27</button>
+        <button class="dia" style="top: 257px; left: 400px;" onclick="selecionarDia(28, this)">28</button>
+      </div>
+    </div>
+  </div>
+</div> <!-- une frame com calendario -->
+</body>
+</html>

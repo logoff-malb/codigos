@@ -1,0 +1,53 @@
+.dia {
+  position: absolute;
+  width: 65px;
+  height: 66px;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.dia.selecionado {
+  border: 2px solid red;
+  box-sizing: border-box;
+}
+
+
+
+function gerarDias() {
+  const calendario = document.getElementById("calendario");
+
+  // Remove dias antigos
+  document.querySelectorAll(".dia").forEach(el => el.remove());
+
+  const larguraUtil = 480 - 16 - 15;
+  const alturaUtil  = 336 - 64 - 15;
+  const cols = 7;
+  const rows = 4;
+  const sizeX = larguraUtil / cols;
+  const sizeY = alturaUtil / rows;
+
+  for (let i = 1; i <= 28; i++) {
+    const btn = document.createElement("button");
+    btn.className = "dia";
+    btn.style.width = sizeX + "px";
+    btn.style.height = sizeY + "px";
+    const row = Math.floor((i - 1) / cols);
+    const col = (i - 1) % cols;
+    btn.style.top = (64 + row * sizeY) + "px";
+    btn.style.left = (16 + col * sizeX) + "px";
+    btn.textContent = i;
+
+    // Marca como selecionado se for o dia atual
+    if (i === diaSelecionado) btn.classList.add("selecionado");
+
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".dia").forEach(b => b.classList.remove("selecionado"));
+      btn.classList.add("selecionado");
+      diaSelecionado = i;
+      salvarPersonagem();
+    });
+
+    calendario.appendChild(btn);
+  }
+}

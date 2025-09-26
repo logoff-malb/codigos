@@ -1,0 +1,261 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-image: url('recursos/fazenda.png');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
+
+.frame {
+  width: 100%;
+  background-image: url('recursos/textbox.png');
+  background-repeat: repeat-x;
+  background-size: auto 100%; /* cobre altura total do frame */
+  padding: 20px 0;
+  display: flex;
+  justify-content: center; /* centraliza conteúdo horizontalmente */
+  align-items: center;
+  position: relative; /* permite posicionamento interno absoluto se precisar */
+  box-sizing: border-box;
+}
+
+
+.frame-calendario {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.imagem-calendario {
+  position: relative;
+  width: 480px;
+  height: 336px;
+  margin-top: 20px;
+  border: 4px solid #ccc;
+  border-radius: 8px;
+  background-size: cover;
+  background-position: center;
+}
+
+/* Botões invisíveis sobre os dias */
+.dia {
+  position: absolute;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.dia:focus {
+  outline: none;
+}
+
+.dia.selecionado {
+  border: 2px solid red;
+  box-sizing: border-box;
+  background-color: rgba(255, 0, 0, 0.15);
+}
+
+.central-calendario {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px; /* ajusta o espaço entre frame e calendário */
+  min-height: 100vh;
+}
+
+.container-geral {
+  display: flex;
+  flex-direction: column; /* frame em cima, calendário embaixo */
+  align-items: center;    /* alinha os dois no mesmo centro */
+  justify-content: flex-start;
+  min-height: 100vh;
+  gap: 20px; /* espaço fixo entre os blocos */
+}
+
+.frame {
+  width: 100%; /* deixa o conteúdo ajustar ao necessário */
+  max-width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0;
+  background-image: url('recursos/textbox.png');
+  background-repeat: repeat-x;
+  background-size: auto 100%;
+}
+
+
+/* Botões de funcionalidades */
+.botao-funcao {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  padding: 0;
+  background-color: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(1px);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.botao-funcao:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+}
+
+.botao-funcao img {
+  width: 72px;
+  height: 72px;
+  image-rendering: pixelated;
+  top: 0;
+  left: 0;
+}
+
+.enxada-animada {
+  display: none;
+}
+
+.botao-funcao:hover .enxada-estatica {
+  display: none;
+}
+
+.botao-funcao:hover .enxada-animada {
+  display: block;
+}
+
+.btnPrimavera,
+.btnVerao,
+.btnOutono,
+.btnInverno {
+  width: 120px;
+  height: 60px;
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  border: 3px solid #ffd700;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  margin: 5px;
+  cursor: pointer;
+  border-radius: 8px;
+  text-shadow: 1px 1px 2px black;
+  white-space: nowrap;
+}
+
+.btnPrimavera { background-image: url('recursos/primavera.png'); width: 140px; }
+.btnVerao     { background-image: url('recursos/verao.png'); }
+.btnOutono    { background-image: url('recursos/outono.png'); }
+.btnInverno   { background-image: url('recursos/inverno.png'); }
+
+.menu-funcionalidades {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.bloco-funcao {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.rotulo-funcao {
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff8dc;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.btnProcessamento {
+  width: 72px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background-color: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 0 6px rgba(0, 78, 100, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 10px;
+}
+
+.btnProcessamento img {
+  width: 48px;
+  height: 96px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
+
+@keyframes balancar {
+  0%   { transform: rotate(0deg); }
+  25%  { transform: rotate(2deg); }
+  50%  { transform: rotate(-2deg); }
+  75%  { transform: rotate(2deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.btnProcessamento:hover img {
+  animation: balancar 0.6s infinite ease-in-out;
+  transform-origin: bottom center;
+}
+
+/* Botão Player */
+.btn-player {
+  width: 70px;
+  height: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  background-color: #fafafa;
+  transition: background 0.3s, transform 0.2s;
+}
+.btn-player:hover {
+  background: #eee;
+  transform: scale(1.05);
+}
+.btn-player img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+}
+.btn-player span {
+  font-size: 12px;
+  margin-top: 2px;
+  color: #333;
+}
+
+/* Modal */
+.modal {
+  display: none; 
+  position: fixed; 
+  z-index: 10; 
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  background-color: rgba(0,0,0,0.5);
+}
+.modal-content {
+  background: #fff;
+  margin: 10% auto;
+  padding: 20px;
+  border-radius: 10px;
+  width: 300px;
+  position: relative;
+}
+.close {
+  float: right;
+  cursor: pointer;
+  font-size: 20px;
+}

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Starpreview</title>
+  <link rel="stylesheet" type="text/css" href="estilo.css">
+  <script>
+  let diaSelecionado = null;
+
+  function gerarDias() {
+    const calendario = document.getElementById("calendario");
+
+    // Limpa antes de recriar
+    document.querySelectorAll(".dia").forEach(el => el.remove());
+
+    const larguraUtil = 480 - 16 - 15;  // 450px
+    const alturaUtil  = 336 - 64 - 15;  // 258px
+
+    const cols = 7;
+    const rows = 4;
+
+    const sizeX = larguraUtil / cols;
+    const sizeY = alturaUtil / rows;
+
+    for (let i = 1; i <= 28; i++) {
+      const btn = document.createElement("button");
+      btn.className = "dia";
+
+      const row = Math.floor((i - 1) / cols);
+      const col = (i - 1) % cols;
+
+      btn.style.width = sizeX + "px";
+      btn.style.height = sizeY + "px";
+      btn.style.top = (64 + row * sizeY) + "px";   // respeita margem superior
+      btn.style.left = (16 + col * sizeX) + "px";  // respeita margem esquerda
+
+      btn.title = `Dia ${i}`; // tooltip opcional
+
+      btn.addEventListener("click", () => selecionarDia(i, btn));
+      calendario.appendChild(btn);
+
+      if (i === diaSelecionado) btn.classList.add("selecionado");
+    }
+  }
+
+  function selecionarDia(dia, botao) {
+    document.querySelectorAll(".dia").forEach(b => b.classList.remove("selecionado"));
+    botao.classList.add("selecionado");
+    diaSelecionado = dia;
+    console.log("Dia selecionado:", diaSelecionado);
+  }
+
+  function trocarCalendario(estacao) {
+    const calendario = document.getElementById("calendario");
+    calendario.style.backgroundImage = `url("recursos/cal_${estacao}.png")`;
+    calendario.setAttribute("aria-label", `Calendário de ${estacao}`);
+    gerarDias(); // recria os botões sobre a nova imagem
+  }
+
+  window.addEventListener("DOMContentLoaded", gerarDias);
+  </script>
+  <script>
+
+</script>
+
+</head>
+<body>
+  <div class="container-geral">
+  <div class="frame">
+    <div class="menu-funcionalidades">
+      <div class="bloco-funcao">
+        <button class="botao-funcao btnPlantio" onclick="ativarFuncao('plantio')">
+          <img src="recursos/enxada.png" class="enxada-estatica" alt="Plantio" title="Plantio">
+          <img src="recursos/enxada.gif" class="enxada-animada" alt="Plantio animado">
+        </button>
+        <div class="rotulo-funcao">Plantio</div>
+      </div>
+
+      <div class="bloco-funcao">
+        <button class="botao-funcao btnProcessamento" onclick="ativarFuncao('processamento')">
+          <img src="recursos/jarra.png" alt="Processamento" title="Processamento"></button>
+        <div class="rotulo-funcao">Processamento</div>
+      </div>
+
+      <!-- Novo botão Player -->
+      <button type="button" class="btn-player" id="btnCadastro">
+        <img src="recursos/player.png" alt="Player">
+        <span>Player</span>
+      </button>
+
+
+    </div>
+  </div>
+
+  <div class="central-calendario">
+    <div class="botoes-estacao">
+      <button class="btnPrimavera" onclick="trocarCalendario('primavera')">🌸 Primavera</button>
+      <button class="btnVerao" onclick="trocarCalendario('verao')">☀️ Verão</button>
+      <button class="btnOutono" onclick="trocarCalendario('outono')">🍂 Outono</button>
+      <button class="btnInverno" onclick="trocarCalendario('inverno')">❄️ Inverno</button>
+    </div>
+
+    <div class="imagem-calendario" id="calendario" 
+         style="background-image: url('recursos/cal_primavera.png');" 
+         aria-label="Calendário de Primavera">
+    </div>
+  </div>
+  </div>
+
+<!-- Modal de cadastro -->
+<div id="cadastroModal" class="modal">
+  <div class="modal-content" id="cadastroContent">
+    <span id="fecharModal" class="close">&times;</span>
+    <h2>Cadastrar Personagem</h2>
+    
+    <label>Nome:
+      <input type="text" id="nome" title="Digite o nome do personagem">
+    </label><br>
+
+    <label title="Dia de jogo. Pode preencher manualmente ou clicar no botão para usar o dia e estação selecionados no calendário.">
+      Dia de jogo:
+      <input type="number" id="dia" min="1" max="28">
+      <button type="button" id="usarDiaSelecionado">Usar dia selecionado</button>
+    </label><br>
+
+    <label>Estação:
+      <select id="estacao" title="Selecione a estação do dia do calendário">
+        <option value="primavera">🌸 Primavera</option>
+        <option value="verao">☀️ Verão</option>
+        <option value="outono">🍂 Outono</option>
+        <option value="inverno">❄️ Inverno</option>
+      </select>
+    </label><br>
+
+    <label>Ano de jogo:
+      <input type="number" id="ano" min="1" value="1">
+    </label><br>
+
+    <label>Resort da Ilha Gengibre:
+      <input type="checkbox" id="resort">
+    </label><br>
+
+    <label>Deserto desbloqueado:
+      <input type="checkbox" id="deserto">
+    </label><br>
+
+    <label>Esgoto desbloqueado:
+      <input type="checkbox" id="esgoto">
+    </label><br>
+
+    <label>Estufa desbloqueada:
+      <input type="checkbox" id="estufa">
+    </label><br>
+
+    <button type="button" id="exportar">Exportar JSON</button>
+    <input type="file" id="importarFile" accept=".json">
+    <button type="button" id="importar">Importar JSON</button>
+  </div>
+</div>
+<!-- Mensagem flutuante -->
+<div id="mensagemAtualizada" style="
+    position: fixed; bottom: 20px; right: 20px;
+    background: #4caf50; color: white; padding: 10px 15px;
+    border-radius: 5px; display: none; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    font-family: sans-serif; z-index: 9999;">
+  Informações atualizadas
+</div>
+
+<!-- script do modal de cadastro-->
+<script>
+let personagem = {};
+
+// Abre modal
+document.getElementById('btnCadastro').onclick = () => {
+  const modal = document.getElementById('cadastroModal');
+  modal.style.display = 'block';
+
+  // Preencher valores salvos ou padrão
+  document.getElementById('nome').value = personagem.nome || "";
+  document.getElementById('ano').value = personagem.ano || 1;
+  document.getElementById('dia').value = personagem.dia || 1;
+  document.getElementById('estacao').value = personagem.estacao || estacaoAtual || 'primavera';
+  document.getElementById('resort').checked = personagem.resort || false;
+  document.getElementById('deserto').checked = personagem.deserto || false;
+  document.getElementById('esgoto').checked = personagem.esgoto || false;
+  document.getElementById('estufa').checked = personagem.estufa || false;
+};
+
+// Botão "Usar dia selecionado"
+document.getElementById('usarDiaSelecionado').onclick = () => {
+  if (diaSelecionado) document.getElementById('dia').value = diaSelecionado;
+  document.getElementById('estacao').value = estacaoAtual || 'primavera';
+  salvarPersonagem();
+};
+
+// Salvar em memória
+function salvarPersonagem() {
+  personagem = {
+    nome: document.getElementById('nome').value,
+    ano: parseInt(document.getElementById('ano').value) || 1,
+    dia: parseInt(document.getElementById('dia').value) || 1,
+    estacao: document.getElementById('estacao').value || estacaoAtual || 'primavera',
+    resort: document.getElementById('resort').checked,
+    deserto: document.getElementById('deserto').checked,
+    esgoto: document.getElementById('esgoto').checked,
+    estufa: document.getElementById('estufa').checked,
+  };
+}
+
+// Fechar modal
+function mostrarMensagemAtualizada() {
+  const msg = document.getElementById('mensagemAtualizada');
+  msg.style.display = 'block';
+  setTimeout(() => { msg.style.display = 'none'; }, 2500);
+}
+
+document.getElementById('fecharModal').onclick = () => {
+  document.getElementById('cadastroModal').style.display = 'none';
+  mostrarMensagemAtualizada();
+};
+
+window.addEventListener('click', e => {
+  const modal = document.getElementById('cadastroModal');
+  if (e.target === modal) {
+    modal.style.display = 'none';
+    mostrarMensagemAtualizada();
+  }
+});
+
+// Salvar automaticamente ao digitar/mudar
+document.querySelectorAll('#cadastroModal input, #cadastroModal select').forEach(el => {
+  el.addEventListener('input', salvarPersonagem);
+  el.addEventListener('change', salvarPersonagem);
+});
+
+// Campo dia: somente 1-28
+document.getElementById('dia').addEventListener('input', e => {
+  let val = e.target.value.replace(/\D/g, "");
+  if (val !== "") val = Math.max(1, Math.min(28, parseInt(val)));
+  e.target.value = val;
+  salvarPersonagem();
+});
+
+// Exportar JSON
+document.getElementById('exportar').onclick = () => {
+  const blob = new Blob([JSON.stringify(personagem, null, 2)], {type: "application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "personagem.json";
+  a.click();
+};
+
+// Importar JSON
+document.getElementById('importar').onclick = () => {
+  const fileInput = document.getElementById('importarFile');
+  if (fileInput.files.length > 0) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      personagem = JSON.parse(e.target.result);
+      alert("Personagem importado!");
+      document.getElementById('nome').value = personagem.nome || "";
+      document.getElementById('ano').value = personagem.ano || 1;
+      document.getElementById('dia').value = personagem.dia || diaSelecionado || 1;
+      document.getElementById('estacao').value = personagem.estacao || estacaoAtual || 'primavera';
+      document.getElementById('resort').checked = personagem.resort || false;
+      document.getElementById('deserto').checked = personagem.deserto || false;
+      document.getElementById('esgoto').checked = personagem.esgoto || false;
+      document.getElementById('estufa').checked = personagem.estufa || false;
+    };
+    reader.readAsText(fileInput.files[0]);
+  } else alert("Selecione um arquivo JSON para importar.");
+};
+</script>
+
+
+</body>
+</html>
