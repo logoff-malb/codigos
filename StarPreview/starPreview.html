@@ -6,6 +6,46 @@
   <link rel="stylesheet" type="text/css" href="estilo.css">
   <script>
   let diaSelecionado = null;
+  let estacaoAtual = "primavera";
+  
+ const Estacao = {
+  primavera: null,
+  verao: null,
+  outono: null,
+  inverno: null
+   };
+
+ const eventosFixos = {
+  primavera: {
+    4: { tipo: "aniversario", nome: "Kent" }, 
+    7: { tipo: "aniversario", nome: "Lewis" },
+    10: { tipo: "aniversario", nome: "Vincent" },
+    13: { tipo: "festival", nome: "Dança das Flores" },
+    14: { tipo: "aniversario", nome: "Hailey" },
+    18: { tipo: "aniversario", nome: "Pam" },
+    20: { tipo: "aniversario", nome: "Shane" },
+    24: { tipo: "festival", nome: "Festival da Primavera" },
+    26: { tipo: "aniversario", nome: "Pierre" },
+    27: { tipo: "aniversario", nome: "Emily" },
+    // ... completar
+  },
+  verao: {
+    4: { tipo: "aniversario", nome: "Jas"},
+    8: { tipo: "aniversario", nome: "Gus"},
+    10: { tipo: "aniversario", nome: "Maru"},
+    11: { tipo: "festival", nome: "Luau" },
+    13: { tipo: "aniversario", nome: "Alex"},
+    17: { tipo: "aniversario", nome: "Sam"},
+    19: { tipo: "aniversario", nome: "Demetrius"},
+    22: { tipo: "aniversario", nome: "Anão"},
+    24: { tipo: "aniversario", nome: "Willy"},
+    26: { tipo: "aniversario", nome: "Leo"},
+    28: { tipo: "festival", nome: "Dança das Medusas-da-Lua" },
+    // aniversários idem...
+  },
+  outono: {},
+  
+  inverno:{}}
 
   function gerarDias() {
     const calendario = document.getElementById("calendario");
@@ -37,32 +77,57 @@
       btn.title = `Dia ${i}`; // tooltip opcional
 
       btn.addEventListener("click", () => selecionarDia(i, btn));
+      const evento = eventosFixos[estacaoAtual]?.[i];
+      if (evento) {
+        btn.classList.add(evento.tipo);
+        btn.title = `${evento.nome} (${evento.tipo})`;
+      }
+
       calendario.appendChild(btn);
 
       if (i === diaSelecionado) btn.classList.add("selecionado");
     }
   }
 
-  function selecionarDia(dia, botao) {
-    document.querySelectorAll(".dia").forEach(b => b.classList.remove("selecionado"));
-    botao.classList.add("selecionado");
-    diaSelecionado = dia;
-    console.log("Dia selecionado:", diaSelecionado);
+ function selecionarDia(dia, botao) {
+  // limpa seleção visual só do calendário atual
+  document.querySelectorAll(".dia").forEach(b => b.classList.remove("selecionado"));
+  botao.classList.add("selecionado");
+
+  // grava seleção para a estação atual
+  estacao[estacaoAtual] = dia;
+
+  // grava também a estação do dia selecionado
+  diaSelecionado = dia;
+  estacaoDiaSelecionado = estacaoAtual;
+
+  // atualiza painel
+  atualizarPainel();
+
+  // abre painel se estava retraído
+  const painel = document.getElementById("painelEventos");
+  const btn = document.getElementById("togglePainel");
+  if (painel.classList.contains("retraido")) {
+    painel.classList.remove("retraido");
+    if (btn) btn.textContent = "▶";
   }
+}
+
 
   function trocarCalendario(estacao) {
     const calendario = document.getElementById("calendario");
     calendario.style.backgroundImage = `url("recursos/cal_${estacao}.png")`;
     calendario.setAttribute("aria-label", `Calendário de ${estacao}`);
-    gerarDias(); // recria os botões sobre a nova imagem
-  }
+    estacaoAtual = estacao;  // <-- Atualiza a variável global
+   gerarDias(); // recria os botões sobre a nova imagem
+   atualizarPainel();
+    }
+    window.addEventListener("DOMContentLoaded", () => {
+    gerarDias();
+      atualizarPainel();
+    });
 
-  window.addEventListener("DOMContentLoaded", gerarDias);
   </script>
-  <script>
-
-</script>
-
 </head>
 <body>
   <div class="container-geral">
@@ -107,6 +172,27 @@
   </div>
   </div>
 
+  <!--painel lateral esquerdo-->
+  <div id="painelEventos" class="painel-eventos retraido">
+  
+  <div class="painel-conteudo">
+    <div class="secao" id="proxEvento">
+      <h3>Próximo evento</h3>
+      <div id="proxEventoConteudo">Nenhum evento encontrado.</div>
+    </div>
+
+    <div class="secao" id="listaEventos">
+      <h3>Eventos da estação</h3>
+      <ul id="listaEventosConteudo"></ul>
+    </div>
+
+    <div class="secao" id="eventoSelecionado">
+      <h3>Evento selecionado</h3>
+      <div id="eventoSelecionadoConteudo">Clique em um dia para ver.</div>
+    </div>
+  </div>
+</div>
+<button id="togglePainel" class="toggle-btn">◀</button>
 <!-- Modal de cadastro -->
 <div id="cadastroModal" class="modal">
   <div class="modal-content" id="cadastroContent">
@@ -120,7 +206,7 @@
     <label title="Dia de jogo. Pode preencher manualmente ou clicar no botão para usar o dia e estação selecionados no calendário.">
       Dia de jogo:
       <input type="number" id="dia" min="1" max="28">
-      <button type="button" id="usarDiaSelecionado">Usar dia selecionado</button>
+      <button type="button" id="usarDiaSelecionado" title="Usa o dia e a estação atualmente selecionados no calendário">Usar dia selecionado</button>
     </label><br>
 
     <label>Estação:
@@ -152,11 +238,14 @@
       <input type="checkbox" id="estufa">
     </label><br>
 
-    <button type="button" id="exportar">Exportar JSON</button>
-    <input type="file" id="importarFile" accept=".json">
-    <button type="button" id="importar">Importar JSON</button>
+    <!-- Explicação e botões de import/export -->
+    <p title="Opcional: usar para ganhar tempo ao salvar ou carregar o perfil do personagem.">Importar ou exportar perfil é opcional para ganhar tempo.</p>
+    <button type="button" id="exportar" title="Exporta o perfil atual para um arquivo JSON">Exportar perfil</button>
+    <button type="button" id="importar" title="Importa um perfil de um arquivo JSON selecionado">Importar perfil</button>
+    <input type="file" id="importarFile" accept=".json" style="display:none">
   </div>
 </div>
+
 <!-- Mensagem flutuante -->
 <div id="mensagemAtualizada" style="
     position: fixed; bottom: 20px; right: 20px;
@@ -170,12 +259,10 @@
 <script>
 let personagem = {};
 
-// Abre modal
+// Abrir modal
 document.getElementById('btnCadastro').onclick = () => {
   const modal = document.getElementById('cadastroModal');
   modal.style.display = 'block';
-
-  // Preencher valores salvos ou padrão
   document.getElementById('nome').value = personagem.nome || "";
   document.getElementById('ano').value = personagem.ano || 1;
   document.getElementById('dia').value = personagem.dia || 1;
@@ -205,6 +292,8 @@ function salvarPersonagem() {
     esgoto: document.getElementById('esgoto').checked,
     estufa: document.getElementById('estufa').checked,
   };
+  localStorage.setItem("personagem", JSON.stringify(personagem));
+
 }
 
 // Fechar modal
@@ -227,7 +316,7 @@ window.addEventListener('click', e => {
   }
 });
 
-// Salvar automaticamente ao digitar/mudar
+// Salvar automaticamente
 document.querySelectorAll('#cadastroModal input, #cadastroModal select').forEach(el => {
   el.addEventListener('input', salvarPersonagem);
   el.addEventListener('change', salvarPersonagem);
@@ -241,38 +330,183 @@ document.getElementById('dia').addEventListener('input', e => {
   salvarPersonagem();
 });
 
-// Exportar JSON
+// Exportar perfil
 document.getElementById('exportar').onclick = () => {
+  salvarPersonagem();
   const blob = new Blob([JSON.stringify(personagem, null, 2)], {type: "application/json"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "personagem.json";
+  a.download = "perfil.json";
   a.click();
 };
 
-// Importar JSON
+// Importar perfil
 document.getElementById('importar').onclick = () => {
-  const fileInput = document.getElementById('importarFile');
-  if (fileInput.files.length > 0) {
-    const reader = new FileReader();
-    reader.onload = e => {
-      personagem = JSON.parse(e.target.result);
-      alert("Personagem importado!");
-      document.getElementById('nome').value = personagem.nome || "";
-      document.getElementById('ano').value = personagem.ano || 1;
-      document.getElementById('dia').value = personagem.dia || diaSelecionado || 1;
+  document.getElementById('importarFile').click();
+};
+
+document.getElementById('importarFile').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      // Validação básica
+      if (!data.nome || !data.dia || !data.ano) {
+        alert("Arquivo inválido: precisa conter nome, dia e ano do personagem.");
+        return;
+      }
+      personagem = data;
+      alert("Perfil importado com sucesso!");
+      // Atualiza campos do modal
+      document.getElementById('nome').value = personagem.nome;
+      document.getElementById('ano').value = personagem.ano;
+      document.getElementById('dia').value = personagem.dia;
       document.getElementById('estacao').value = personagem.estacao || estacaoAtual || 'primavera';
       document.getElementById('resort').checked = personagem.resort || false;
       document.getElementById('deserto').checked = personagem.deserto || false;
       document.getElementById('esgoto').checked = personagem.esgoto || false;
       document.getElementById('estufa').checked = personagem.estufa || false;
-    };
-    reader.readAsText(fileInput.files[0]);
-  } else alert("Selecione um arquivo JSON para importar.");
-};
+    } catch {
+      alert("Erro ao ler arquivo JSON.");
+    }
+  };
+  reader.readAsText(file);
+});
 </script>
 
+<!--painel lateral esquerdo-->>
+<script>
+  // Atualiza painel lateral
+function atualizarPainel() {
+  atualizarProxEvento();
+  atualizarListaEventos();
+}
+let estacaoDiaSelecionado = null;//recebe estação e dias clicados no calendário
+
+// Atualiza o campo "Evento selecionado"
+function atualizarDiaSelecionado() {
+  const conteudo = document.getElementById("eventoSelecionadoConteudo");
+  if (diaSelecionado !== null && estacaoDiaSelecionado !== null) {
+    const evento = eventosFixos[estacaoDiaSelecionado]?.[diaSelecionado];
+    if (evento) {
+      conteudo.innerText = `${evento.nome} (Dia ${diaSelecionado}, ${evento.tipo}, ${estacaoDiaSelecionado})`;
+    } else {
+      conteudo.innerText = `Dia ${diaSelecionado} (${estacaoDiaSelecionado}) — Nenhum evento.`;
+    }
+  } else {
+    conteudo.innerText = "Nenhum dia selecionado.";
+  }
+}
+
+
+//abre e fecha painel
+const btnToggle = document.getElementById("togglePainel");
+
+btnToggle.addEventListener("click", (e) => {
+  e.stopPropagation(); // evita que o clique feche o painel pelo document
+  const painel = document.getElementById("painelEventos");
+  painel.classList.toggle("retraido");
+
+  // muda a setinha dependendo do estado
+  btnToggle.textContent = painel.classList.contains("retraido") ? "◀" : "▶";
+});
+
+
+document.addEventListener("click", (e) => {
+  const painel = document.getElementById("painelEventos");
+  const calendario = document.getElementById("calendario");
+  const menu = document.querySelector(".menu-funcionalidades");
+  const botoesEstacao = document.querySelector(".botoes-estacao");
+  // se o clique NÃO for no calendário nem nos botões da menu-funcionalidades nem no próprio painel
+  if (!calendario.contains(e.target) &&
+      !menu.contains(e.target) &&
+      !botoesEstacao.contains(e.target) &&
+      !painel.contains(e.target)) {
+    painel.classList.add("retraido");
+    document.getElementById("togglePainel").textContent = "◀";
+  }
+});
+
+
+// Atualiza próximo evento considerando o dia e estação selecionados
+function atualizarProxEvento() {
+  const lista = Object.entries(eventosFixos[estacaoAtual] || {})
+    .map(([dia, evento]) => ({ dia: parseInt(dia), ...evento }))
+    .sort((a, b) => a.dia - b.dia);
+
+  const conteudo = document.getElementById("proxEventoConteudo");
+
+  if (lista.length === 0) {
+    conteudo.innerText = "Nenhum evento nesta estação.";
+    return;
+  }
+
+  // Se o usuário selecionou um dia, procura o próximo evento a partir desse dia
+  let referenciaDia = 1; // padrão se nada selecionado
+  if (diaSelecionado !== null && estacaoDiaSelecionado !== null) {
+    referenciaDia = diaSelecionado;
+  }
+
+  // Encontra o próximo evento maior ou igual ao dia selecionado
+  let proximo = lista.find(e => e.dia >= referenciaDia) || lista[0];
+
+  conteudo.innerText = `${proximo.nome} (Dia ${proximo.dia}, ${proximo.tipo})`;
+}
+
+// Lista todos os eventos da estação
+// Atualiza lista de eventos da estação atual
+function atualizarListaEventos() {
+  const ul = document.getElementById("listaEventosConteudo");
+  ul.innerHTML = "";
+
+  const lista = Object.entries(eventosFixos[estacaoAtual] || {})
+    .map(([dia, evento]) => ({ dia: parseInt(dia), ...evento }))
+    .sort((a, b) => a.dia - b.dia);
+
+  if (lista.length === 0) {
+    ul.innerHTML = "<li>Nenhum evento nesta estação.</li>";
+    return;
+  }
+
+  lista.forEach(e => {
+    const li = document.createElement("li");
+    li.textContent = `Dia ${e.dia}: ${e.nome}`;
+    li.classList.add(e.tipo);
+    ul.appendChild(li);
+  });
+  }
+  lista.forEach(e => {
+    const li = document.createElement("li");
+    li.textContent = `Dia ${e.dia}: ${e.nome}`;
+    li.classList.add(e.tipo);
+    ul.appendChild(li);
+  });
+
+
+function atualizarPainel() {
+  atualizarListaEventos();
+  atualizarDiaSelecionado();
+  atualizarProxEvento();
+}
+
+// Mostrar evento do dia clicado no calendário (exibe também a estação do evento)
+function mostrarEvento(estacao) {
+  const dia = mostrarEvento[estacaoAtual];
+  const conteudo = document.getElementById("eventoSelecionadoConteudo");
+  if (dia && eventosFixos[estacao]?.[dia]) {
+    const evento = eventosFixos[estacao][dia];
+    conteudo.innerText = `${evento.nome} (Dia ${dia}, ${evento.tipo}, ${estacao})`;
+  } else if (dia) {
+    conteudo.innerText = `Dia ${dia} (${estacao}) — Nenhum evento.`;
+  } else {
+    conteudo.innerText = "Nenhum dia selecionado.";
+  }
+}
+
+</script>
 
 </body>
 </html>

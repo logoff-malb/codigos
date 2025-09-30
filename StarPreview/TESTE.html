@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Localizador Genérico de Personagens (Stardew Valley)</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #38761d;
+        }
+        label, button {
+            display: block;
+            margin-bottom: 8px;
+        }
+        input, select, button, textarea {
+            padding: 10px;
+            width: 100%;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        textarea {
+            min-height: 150px;
+            font-family: monospace;
+            white-space: pre;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .input-group > div {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        /* Estilo para alinhar os checkboxes */
+        .checkbox-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            font-weight: normal;
+        }
+        .checkbox-label input[type="checkbox"] {
+            width: auto;
+            margin: 0 5px 0 0;
+        }
+        button {
+            background-color: #38761d;
+            color: white;
+            cursor: pointer;
+            border: none;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #275a14;
+        }
+        #resultado {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #b6d7a8;
+            background-color: #eaf1e7;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Localizador de Personagem Stardew Valley</h1>
+
+    <label for="scheduleJson">Cole o JSON do Agendamento do Personagem aqui:</label>
+    <textarea id="scheduleJson">
+{
+  "rain": "800 ManorHouse 8 5 0/1000 ManorHouse 7 5 0 square_5_1_0/1400 Saloon 12 20 0/1950 ManorHouse 7 5 0 square_5_1_0/2200 ManorHouse 22 4 1 lewis_sleep",
+  "GreenRain": "0 Saloon 12 20 2",
+  "DesertFestival_1": "610 ManorHouse 8 5 0/800 Desert 22 32 2 \"Strings\\1_6_Strings:DesertFestival_Lewis\"/2500 bed",
+  "fall_9": "800 ManorHouse 8 5 0/1030 Hospital 12 14 0/1330 Hospital 4 6 1 \"Strings\\schedules\\Lewis:fall_9.000\"/1700 Saloon 9 22 3 lewis_drink/2100 AnimalShop 13 5 3",
+  "winter_16": "800 ManorHouse 8 5 0/1000 Town 62 88 0/1040 Town 65 86 3 lewis_garden/1140 Town 30 56 2/1400 Town 41 57 0/1620 Beach 40 34 2 \"Strings\\schedules\\Lewis:winter_16.000\"/2300 ManorHouse 22 4 1 lewis_sleep",
+  "Tue": "800 ManorHouse 8 5 0/1000 Town 62 88 0/1040 Town 65 86 3 lewis_garden/1140 SeedShop 6 19 0 \"Strings\\schedules\\Lewis:Tue.000\"/1600 ManorHouse 7 5 0 square_5_1_0/2100 ManorHouse 3 6 0/2200 ManorHouse 22 4 1 lewis_sleep",
+  "6": "800 ManorHouse 8 5 0/1000 Blacksmith 4 15 0 \"Strings\\schedules\\Lewis:6.000\"/1300 ArchaeologyHouse 2 10 0 \"Strings\\schedules\\Lewis:6.001\"/1600 ManorHouse 7 5 0 square_5_1_0/2100 ManorHouse 3 6 0/2200 ManorHouse 22 4 1 lewis_sleep",
+  "20": "GOTO 6",
+  "3": "800 ManorHouse 8 5 0/1000 AnimalShop 11 16 0 \"Strings\\schedules\\Lewis:3.000\"/1600 ManorHouse 7 5 0 square_5_1_0/2100 ManorHouse 3 6 0/2200 ManorHouse 22 4 1 lewis_sleep",
+  "24": "GOTO 3",
+  "Fri": "800 ManorHouse 8 5 0/1000 Town 62 88 0/1040 Town 65 86 3 lewis_garden/1140 Town 30 56 2/1400 Town 29 27 3/1700 Saloon 9 22 3 lewis_drink/2300 ManorHouse 22 4 1 lewis_sleep",
+  "winter_Sun": "800 ManorHouse 8 5 0/900 ManorHouse 7 5 0 square_5_1_0/1100 ArchaeologyHouse 22 9 3/1600 ManorHouse 7 5 0 square_5_1_0/2000 ManorHouse 3 6 0/2200 ManorHouse 22 4 1 lewis_sleep",
+  "spring": "800 ManorHouse 8 5 0/900 Town 62 88 0/940 Town 65 86 3 lewis_garden/1040 CommunityCenter 55 6 0/1400 CommunityCenter 47 5 0/1440 CommunityCenter 51 4 2/1600 CommunityCenter 47 13 0/1700 CommunityCenter 33 9 0/1830 ManorHouse 3 6 0/2300 ManorHouse 22 4 1 lewis_sleep",
+  "default": "800 ManorHouse 8 5 0/1000 Town 62 88 0/1040 Town 65 86 3 lewis_garden/1140 Town 30 56 2/1400 Town 41 57 0/1600 ManorHouse 7 5 0 square_5_1_0/2000 ManorHouse 3 6 0/2200 ManorHouse 22 4 1 lewis_sleep"
+}
+    </textarea>
+
+    <hr>
+    
+    <h2>Condições do Dia</h2>
+
+    <div class="input-group">
+        <div>
+            <label for="diaDaSemana">Dia da Semana:</label>
+            <select id="diaDaSemana">
+                <option value="Mon">Segunda (Mon)</option>
+                <option value="Tue">Terça (Tue)</option>
+                <option value="Wed">Quarta (Wed)</option>
+                <option value="Thu" selected>Quinta (Thu)</option>
+                <option value="Fri">Sexta (Fri)</option>
+                <option value="Sat">Sábado (Sat)</option>
+                <option value="Sun">Domingo (Sun)</option>
+            </select>
+        </div>
+        <div>
+            <label for="estacao">Estação:</label>
+            <select id="estacao">
+                <option value="spring">Primavera</option>
+                <option value="summer">Verão</option>
+                <option value="fall">Outono</option>
+                <option value="winter">Inverno</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <div>
+            <label for="horario">Horário (ex: 900, 1430):</label>
+            <input type="number" id="horario" min="0" max="2400" step="10" value="1200"> </div>
+        
+        <div>
+            <label for="diaDoMes">Dia do Mês (1-28):</label>
+            <input type="number" id="diaDoMes" min="1" max="28" step="1" placeholder="Vazio se não for data específica">
+        </div>
+        
+        <div>
+            <label>Condições Climáticas:</label>
+            <div class="checkbox-container">
+                <label class="checkbox-label">
+                    Chuva? <input type="checkbox" id="chovendo">
+                </label>
+                <label class="checkbox-label">
+                    Chuva Verde? <input type="checkbox" id="greenRain">
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <button onclick="encontrarLocalizacao()">Verificar Localização do Personagem</button>
+
+    <div id="resultado">Insira o JSON e as condições para descobrir onde o personagem está.</div>
+</div>
+
+<script>
+    // --- Lógica Principal do Agendamento ---
+
+    /**
+     * Determina a chave de agendamento correta, seguindo a hierarquia de prioridade do jogo.
+     * AGORA AVALIA 'greenRain' COMO UMA CONDIÇÃO ESTREITA E DE ALTA PRIORIDADE.
+     */
+    function getScheduleKey(data, dia, estacao, diaDoMes, chovendo, greenRain) {
+        
+        // 1. Prioridade para Condições Especiais (Clima/Eventos)
+        // Só verifica GreenRain SE o usuário marcou o checkbox
+        if (greenRain && data.GreenRain) return 'GreenRain'; 
+        if (chovendo && data.rain) return 'rain';
+
+        // 2. Prioridade para Chave de Estação + Dia da Semana (Ex: 'winter_Sun')
+        const estacaoDiaKey = `${estacao}_${dia}`;
+        if (data[estacaoDiaKey]) return estacaoDiaKey;
+        
+        // 3. Prioridade para Dias Específicos do Mês
+        if (diaDoMes !== null) {
+            // Verifica se há uma chave exata para Estação_Dia (ex: 'fall_9', 'winter_16')
+            const dataDiaKey = `${estacao}_${diaDoMes}`;
+            if (data[dataDiaKey]) return dataDiaKey;
+            
+            // Verifica se há uma chave apenas para o número do dia (Ex: '6', '20')
+            const numeroDiaKey = diaDoMes.toString();
+            if (data[numeroDiaKey]) return numeroDiaKey;
+        }
+
+        // 4. Prioridade para Dia da Semana (Ex: 'Tue', 'Fri')
+        if (data[dia]) return dia;
+
+        // 5. Prioridade para Estação (Fallback)
+        if (data[estacao]) return estacao;
+        
+        // 6. Chave 'default' (Último recurso)
+        if (data.default) return 'default';
+        
+        return null;
+    }
+
+    // Função que resolve chaves 'GOTO' recursivamente
+    function resolveGoto(data, key) {
+        let currentKey = key;
+        const visitedKeys = new Set();
+        
+        while (data[currentKey] && typeof data[currentKey] === 'string' && data[currentKey].startsWith("GOTO")) {
+            if (visitedKeys.has(currentKey)) {
+                console.error("Loop infinito detectado em GOTO:", currentKey);
+                return null;
+            }
+            visitedKeys.add(currentKey);
+            
+            const nextKey = data[currentKey].substring(5).trim();
+            currentKey = nextKey;
+        }
+
+        return currentKey;
+    }
+
+
+    /**
+     * Analisa o agendamento do dia e encontra a localização do personagem em um determinado horário.
+     */
+    function findLocationInSchedule(scheduleString, horarioInput) {
+        const steps = scheduleString.split('/').filter(step => step.trim().match(/^\d{3,4}\s+/));
+
+        let localizacao = "Localização Inicial (Assumida)";
+        let coordenadas = "(N/A)";
+        let ultimoHorario = 0; 
+        let status = "Movendo-se / Padrão";
+
+        const validSteps = steps.map(step => {
+            const match = step.trim().match(/^(\d{3,4})\s+(.*)/);
+            if (!match) return null; 
+
+            const stepTime = parseInt(match[1]);
+            const locationDetails = match[2].trim().split(/\s+/);
+            
+            if (locationDetails.length < 3) return null; 
+
+            const locationName = locationDetails[0];
+            const coordX = locationDetails[1];
+            const coordY = locationDetails[2];
+
+            const stepStatus = locationDetails.some(detail => detail.toLowerCase().includes('sleep') || detail.toLowerCase().includes('bed')) ? 'Dormindo' : 'Padrão';
+
+            return { stepTime, locationName, coordX, coordY, stepStatus };
+        }).filter(step => step !== null);
+
+        if (validSteps.length === 0) {
+             return { localizacao: "Desconhecida", coordenadas: "(N/A)", status: "Agendamento Vazio/Inválido" };
+        }
+
+        if (horarioInput < validSteps[0].stepTime && validSteps[0].stepTime > 10) { 
+            localizacao = "Ponto de Partida (Casa/Quarto)";
+            coordenadas = "(N/A)"; 
+            status = "Aguardando o primeiro movimento";
+        }
+
+
+        for (const step of validSteps) {
+            
+            if (step.stepTime <= horarioInput) {
+                localizacao = step.locationName;
+                coordenadas = `(${step.coordX}, ${step.coordY})`;
+                ultimoHorario = step.stepTime;
+                status = step.stepStatus;
+            } else if (step.stepTime > horarioInput) {
+                break;
+            }
+        }
+
+        return { localizacao, coordenadas, status };
+    }
+
+
+    // --- Função de UI e Execução ---
+
+    function encontrarLocalizacao() {
+        const jsonText = document.getElementById('scheduleJson').value;
+        const dia = document.getElementById('diaDaSemana').value;
+        const estacao = document.getElementById('estacao').value;
+        const horarioInput = parseInt(document.getElementById('horario').value);
+        
+        // Leitura de todos os novos controles
+        const chovendo = document.getElementById('chovendo').checked;
+        const greenRain = document.getElementById('greenRain').checked; // NOVO
+        const diaDoMesInput = document.getElementById('diaDoMes').value; 
+        
+        const resultadoDiv = document.getElementById('resultado');
+        
+        const diaDoMes = diaDoMesInput ? parseInt(diaDoMesInput) : null;
+        
+        // 1. Validação
+        let scheduleData;
+        try {
+            scheduleData = JSON.parse(jsonText);
+        } catch (e) {
+            resultadoDiv.innerHTML = `<span style="color: red;">❌ Erro: O JSON fornecido é inválido.</span>`;
+            return;
+        }
+
+        if (isNaN(horarioInput) || horarioInput < 0 || horarioInput > 2400) {
+            resultadoDiv.innerHTML = "❌ Por favor, insira um horário válido (0 a 2400).";
+            return;
+        }
+
+        // 2. Determinação da Chave do Agendamento (Com GreenRain no argumento)
+        let scheduleKey = getScheduleKey(scheduleData, dia, estacao, diaDoMes, chovendo, greenRain);
+        
+        if (!scheduleKey || !scheduleData[scheduleKey]) {
+            resultadoDiv.innerHTML = `❌ Não foi possível encontrar um agendamento válido. (Chave procurada: **${scheduleKey || 'N/A'}**)`;
+            return;
+        }
+        
+        // 3. Resolução de GOTO
+        const finalScheduleKey = resolveGoto(scheduleData, scheduleKey);
+        
+        if (!finalScheduleKey || !scheduleData[finalScheduleKey]) {
+            resultadoDiv.innerHTML = `❌ Erro ao resolver o GOTO para a chave **${scheduleKey}**.`;
+            return;
+        }
+
+        let scheduleString = scheduleData[finalScheduleKey];
+
+        // 4. Encontrar a Localização
+        const { localizacao, coordenadas, status } = findLocationInSchedule(scheduleString, horarioInput);
+
+        // 5. Exibir o Resultado
+        resultadoDiv.innerHTML = `
+            ✅ Localizado!
+            O Personagem está em: <strong>${localizacao}</strong>, 
+            nas coordenadas: <strong>${coordenadas}</strong>.<br>
+            Status/Ação: <strong>${status}</strong>.<br>
+            <small>Agendamento final utilizado: <strong>${finalScheduleKey.toUpperCase()}</strong> (Busca iniciada em: ${scheduleKey.toUpperCase()})</small>
+        `;
+    }
+</script>
+
+</body>
+</html>
