@@ -298,7 +298,39 @@ body {
   right: 0;
 }
 
-/* Modal */
+/* Painel esquerdo personalizado */
+/* Painel esquerdo */
+#painelPess {
+  left: 0;
+  right: auto;
+  transform: translateX(-100%);
+}
+#painelPess.retraido {
+  transform: translateX(-100%);
+}
+#painelPess:not(.retraido) {
+  transform: translateX(0);
+}
+
+/* Botão do painel esquerdo */
+#togglePessBtn {
+  top: 50;
+  left: 0px; 
+  transform: translateY(-50%);
+  right: auto;
+  border-radius: 0 5px 5px 0;
+  background: #ddd;
+  border: 1px solid #aaa;
+  border-radius: 0 5px 5px 0;
+  padding: 10px;
+  cursor: pointer;
+  z-index: 1001;
+}
+#togglePessBtn:hover {
+  background: #bbb;
+}
+
+/* Modal player*/
 .modal {
   display: none; 
   position: fixed; 
@@ -319,4 +351,45 @@ body {
   float: right;
   cursor: pointer;
   font-size: 20px;
+}
+
+/*itens de plantio */
+.lista-itens-plantio {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* 100px é a largura mínima do item */
+    gap: 10px;
+    max-height: 300px; /* Limita a altura para ter scroll */
+    overflow-y: auto;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-top: 15px;
+}
+
+.item-plantio {
+    text-align: center;
+    padding: 5px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.item-plantio:hover {
+    border-color: gold; /* Destaque ao passar o mouse */
+    background-color: #f0f0f0;
+}
+
+.item-plantio img {
+    width: 64px; /* Tamanho da imagem da semente */
+    height: 64px;
+    display: block;
+    margin: 0 auto 5px;
+}
+
+.item-plantio p {
+    font-size: 0.8em;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

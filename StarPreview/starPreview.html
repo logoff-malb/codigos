@@ -22,12 +22,14 @@
     10: { tipo: "aniversario", nome: "Vincent" },
     13: { tipo: "festival", nome: "Dança das Flores" },
     14: { tipo: "aniversario", nome: "Hailey" },
+    15: { tipo: "festival", nome: "festival do deserto dia 1" },
+    16: { tipo: "festival", nome: "festival do deserto dia 2" },
+    17: { tipo: "festival", nome: "festival do deserto dia 3" },
     18: { tipo: "aniversario", nome: "Pam" },
     20: { tipo: "aniversario", nome: "Shane" },
     24: { tipo: "festival", nome: "Festival da Primavera" },
     26: { tipo: "aniversario", nome: "Pierre" },
     27: { tipo: "aniversario", nome: "Emily" },
-    // ... completar
   },
   verao: {
     4: { tipo: "aniversario", nome: "Jas"},
@@ -41,9 +43,18 @@
     24: { tipo: "aniversario", nome: "Willy"},
     26: { tipo: "aniversario", nome: "Leo"},
     28: { tipo: "festival", nome: "Dança das Medusas-da-Lua" },
-    // aniversários idem...
   },
-  outono: {},
+  outono: {
+            2: { tipo: "aniversario", nome: "Penny"},
+           5: { tipo: "aniversario", nome: "Elliot"},
+           11: { tipo: "aniversario", nome: "Jodi"},
+           13: { tipo: "aniversario", nome: "Abigail"},
+           15: { tipo: "aniversario", nome: "Sandy"},
+           16: { tipo: "festival", nome: "Feira do vale do orvalho"},
+           18: { tipo: "aniversario", nome: "Robin"},
+           24: { tipo: "aniversario", nome: "George"},
+           27: { tipo: "festival", nome: "Véspera do dia dos espíritos"},
+          },
   
   inverno:{}}
 
@@ -172,7 +183,14 @@
   </div>
   </div>
 
-  <!--painel lateral esquerdo-->
+  <!-- Painel lateral esquerdo -->
+<div id="painelPess" class="painel-eventos retraido" style="left:0; right:auto;">
+  <h3>Eventos Personalizados</h3>
+  <div id="listaPess"></div>
+</div>
+<button id="togglePessBtn" class="toggle-btn">❯📜</button>
+
+  <!--painel lateral direito--->
   <div id="painelEventos" class="painel-eventos retraido">
   
   <div class="painel-conteudo">
@@ -193,6 +211,7 @@
   </div>
 </div>
 <button id="togglePainel" class="toggle-btn">◀</button>
+
 <!-- Modal de cadastro -->
 <div id="cadastroModal" class="modal">
   <div class="modal-content" id="cadastroContent">
@@ -239,7 +258,7 @@
     </label><br>
 
     <!-- Explicação e botões de import/export -->
-    <p title="Opcional: usar para ganhar tempo ao salvar ou carregar o perfil do personagem.">Importar ou exportar perfil é opcional para ganhar tempo.</p>
+    <p title="as Informações preenchidas são armazenadas no cache do navegador, mas você pode salvar as Informações em um arquivo .json">Opcional: você pode salvar ou carregar o perfil do personagem em seu dispositivo</p>
     <button type="button" id="exportar" title="Exporta o perfil atual para um arquivo JSON">Exportar perfil</button>
     <button type="button" id="importar" title="Importa um perfil de um arquivo JSON selecionado">Importar perfil</button>
     <input type="file" id="importarFile" accept=".json" style="display:none">
@@ -254,6 +273,24 @@
     font-family: sans-serif; z-index: 9999;">
   Informações atualizadas
 </div>
+
+<!--modal plantio-->
+<div id="modal-plantio" class="modal">
+  <div class="modal-content">
+        <span class="close" id="fecharPlantio">&times;</span>
+        <h2>Cadastrar Plantio</h2>
+
+        <div class="secao-pesquisa">
+            <label for="buscaTexto">Pesquisar por Nome:</label>
+            <input type="text" id="buscaTexto" placeholder="Digite o nome da semente...">
+        </div>
+        
+        <div id="listaItens" class="lista-itens-plantio">
+            <p>Carregando itens...</p>
+        </div>
+
+        </div>
+  <div>
 
 <!-- script do modal de cadastro-->
 <script>
@@ -377,7 +414,35 @@ document.getElementById('importarFile').addEventListener('change', e => {
 });
 </script>
 
-<!--painel lateral esquerdo-->>
+<!--modal de tarefas de plantio-->
+<script>
+  const modalPlantio = document.getElementById('modal-plantio');
+const listaItensContainer = document.getElementById('listaItens');
+const buscaTextoInput = document.getElementById('buscaTexto');
+
+// 1. Funções de Abertura/Fechamento
+document.querySelector('.btnPlantio').onclick = () => {
+    modalPlantio.style.display = 'block';
+    // Carrega os itens na abertura
+    carregarItensPlantio(); 
+};
+
+document.getElementById('fecharPlantio').onclick = () => {
+    modalPlantio.style.display = 'none';
+};
+
+// Fechar ao clicar fora
+window.addEventListener('click', e => {
+    if (e.target === modalPlantio) {
+        modalPlantio.style.display = 'none';
+    }
+});
+
+// Listener para a pesquisa
+buscaTextoInput.addEventListener('input', filtrarItens);
+</script>
+
+<!--painel lateral direito eventos fixos-->
 <script>
   // Atualiza painel lateral
 function atualizarPainel() {
@@ -392,7 +457,7 @@ function atualizarDiaSelecionado() {
   if (diaSelecionado !== null && estacaoDiaSelecionado !== null) {
     const evento = eventosFixos[estacaoDiaSelecionado]?.[diaSelecionado];
     if (evento) {
-      conteudo.innerText = `${evento.nome} (Dia ${diaSelecionado}, ${evento.tipo}, ${estacaoDiaSelecionado})`;
+      conteudo.innerText = `${evento.nome} (Dia ${diaSelecionado}, ${estacaoDiaSelecionado}, ${evento.tipo})`;
     } else {
       conteudo.innerText = `Dia ${diaSelecionado} (${estacaoDiaSelecionado}) — Nenhum evento.`;
     }
@@ -508,5 +573,95 @@ function mostrarEvento(estacao) {
 
 </script>
 
+<!--painel lateral esquerdo, evento personalizados-->
+<script>
+  let eventosPess = [];
+  const STORAGE_KEY_PESS = "sv_eventos_pess";
+
+  const painelPess = document.getElementById("painelPess");
+  const togglePessBtn = document.getElementById("togglePessBtn");
+
+  function carregarPessStorage() {
+    const raw = localStorage.getItem(STORAGE_KEY_PESS);
+    eventosPess = raw ? JSON.parse(raw) : [];
+  }
+  function salvarPessStorage() {
+    localStorage.setItem(STORAGE_KEY_PESS, JSON.stringify(eventosPess));
+  }
+  
+  function renderizarPainelPess() {
+    carregarPessStorage();
+    const container = document.getElementById("listaPess");
+    container.innerHTML = "";
+
+    eventosPess.forEach(ev => {
+    const box = document.createElement("div");
+    box.className = "caixa-evento";
+    box.innerHTML = `
+      <strong>${ev.nome}</strong><br>
+      Plantado: ${ev.dataPlantio}<br>
+      Colheita: ${ev.dataColheita}<br>
+      <span class="status">${ev.status}</span>
+    `
+      box.addEventListener("click", () => mostrarDetalhesEvento(ev));
+    container.appendChild(box);});
+
+    if (eventosPess.length === 0) {
+             container.innerHTML = "<p style='padding: 10px; color: #aaa;'>Nenhum evento personalizado.</p>";
+        }
+    
+    }
+    window.addEventListener("DOMContentLoaded", () =>{
+    renderizarPainelPess();
+    });
+
+  togglePessBtn.addEventListener("click", () => {
+    painelPess.classList.toggle("retraido");
+    togglePessBtn.textContent = painelPess.classList.contains("retraido") ? "❯" : "❮";
+    });
+    
+    //função para buscar itens na pesquisa
+  function renderizarItens(itens) {
+    listaItensContainer.innerHTML = "";
+    
+    if (itens.length === 0) {
+        listaItensContainer.innerHTML = "<p>Nenhum item encontrado.</p>";
+        return;
+    }
+
+    itens.forEach(item => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'item-plantio';
+        itemDiv.title = `Estação: ${item.estacao}, Colheita em ${item.dias} dias`;
+        
+        // Adiciona um listener para quando o usuário clicar no item
+        itemDiv.addEventListener('click', () => selecionarItem(item));
+
+        itemDiv.innerHTML = `
+            <img src="${item.img}" alt="${item.nome}">
+            <p>${item.nome}</p>
+        `;
+        listaItensContainer.appendChild(itemDiv);
+    });
+}
+  //Funções para Carregar e Filtrar (Pesquisa por Texto)
+function carregarItensPlantio() {
+    // Renderiza todos os itens inicialmente
+    renderizarItens(itensPlantioJSON);
+}
+
+function filtrarItens() {
+    const termo = buscaTextoInput.value.toLowerCase().trim();
+    
+    const itensFiltrados = itensPlantioJSON.filter(item => 
+        item.nome.toLowerCase().includes(termo)
+    );
+    
+    renderizarItens(itensFiltrados);
+}
+
+
+
+</script>
 </body>
 </html>

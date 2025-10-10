@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Propriedades de Itens</title>
+    <style>
+        /* Estilos CSS (inalterados) */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+
+        .item-box {
+            border: 2px solid #007bff;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            background-color: #e9f7ff;
+            min-height: 400px;
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+        }
+
+        .item-header h2 {
+            margin: 0;
+            color: #333;
+        }
+
+        .item-header span {
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .form-group.boolean-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-group.boolean-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 5px;
+        }
+        
+        .array-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .navigation-buttons button,
+        #generateJson {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        #prevItem, #nextItem {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        #prevItem:hover, #nextItem:hover {
+            background-color: #5a6268;
+        }
+        
+        #generateJson {
+            background-color: #28a745;
+            color: white;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        #generateJson:hover {
+            background-color: #218838;
+        }
+
+        #prevItem:disabled, #nextItem:disabled {
+            background-color: #adb5bd;
+            cursor: not-allowed;
+        }
+
+        #outputJsonContainer {
+            margin-top: 30px;
+            padding: 15px;
+            border: 1px dashed #007bff;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+        }
+
+        #outputJson {
+            width: 100%;
+            height: 300px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+            font-family: 'Consolas', 'Courier New', monospace;
+            white-space: pre-wrap;
+            background-color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Editor de Propriedades de Itens</h1>
+        
+        <div class="item-box" id="itemBox">
+            Carregando dados...
+        </div>
+        
+        <div class="navigation-buttons">
+            <button id="prevItem" disabled>← Anterior</button>
+            <button id="nextItem">Próximo →</button>
+        </div>
+        
+        <button id="generateJson">Gerar JSON Preenchido</button>
+        
+        <div id="outputJsonContainer" style="display:none;">
+            <h2>JSON de Saída</h2>
+            <textarea id="outputJson" readonly></textarea>
+        </div>
+    </div>
+
+    <script>
+        // DADOS JSON - O campo 'precoSemente' está incluído, conforme solicitado anteriormente.
+        const initialData = [
+            {"id":1,"nome":"abacaxi","valorBase":300,"tipo":["fruta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/abacaxi.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},            {"id":2,"nome":"abóbora","valorBase":320,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/abobora.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":3,"nome":"abobrinha de verão","valorBase":45,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/abobrinha.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":4,"nome":"alcachofra","valorBase":160,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/alcachofra.png","diaPlantio":"" ,"diaColheita":"","estacao":["primavera"],"precoSemente":""},
+            {"id":5,"nome":"alho","valorBase":60,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/alho.png","diaPlantio":"" ,"diaColheita":"4","estacao":["primavera"],"precoSemente":""},
+            {"id":6,"nome":"alho-poró","valorBase":60,"tipo":["vegetal","coleta"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/alho_poro.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":7,"nome":"amaranto","valorBase":150,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/amaranto.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":8,"nome":"ameixa selvagem","valorBase":80,"tipo":["fruta","coleta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/ameixa_selvagem.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":9,"nome":"amora","valorBase":20,"tipo":["fruta","coleta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/amora.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":10,"nome":"arroz não moído","valorBase":30,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/arroz.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":11,"nome":"avelã","valorBase":90,"tipo":["coleta"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/avela.png","diaPlantio":"7" ,"diaColheita":"0","estacao":["outono"],"precoSemente":""},
+            {"id":12,"nome":"banana","valorBase":150,"tipo":["fruta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/banana.png","diaPlantio":"" ,"diaColheita":"1","estacao":[""],"precoSemente":""},
+            {"id":13,"nome":"batata","valorBase":80,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/batata.png","diaPlantio":"" ,"diaColheita":"","estacao":["primavera"],"precoSemente":""},
+            {"id":14,"nome":"berinjela","valorBase":60,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/berinjela.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":15,"nome":"beterraba","valorBase":100,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/beterraba.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":16,"nome":"broto de samambaia","valorBase":120,"tipo":["vegetal","coleta"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/broto_de_samambaia.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":17,"nome":"café de jardim","valorBase":80,"tipo":["fruta","coleta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/cafe_de_jardim.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":18,"nome":"carambola","valorBase":750,"tipo":["fruta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/carambola.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":19,"nome":"cebolinha","valorBase":8,"tipo":["coleta"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/cebolinha.png","diaPlantio":"0" ,"diaColheita":"0","estacao":["outono"],"precoSemente":""},
+            {"id":20,"nome":"cenoura","valorBase":30,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/cenoura.png","diaPlantio":"" ,"diaColheita":"","estacao":["primavera"],"precoSemente":""},
+            {"id":21,"nome":"cereja","valorBase":80,"tipo":["fruta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/cereja.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":22,"nome":"cereja de joia doce","valorBase":3000,"tipo":["fruta"],"prVinho":false,"prGeleia":false,"prSuco":false,"prPicles":false,"except":true,"imagem":"imagens/cereja_de_joia_doce.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":23,"nome":"chirívia","valorBase":35,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/chirivia.png","diaPlantio":"4" ,"diaColheita":"","estacao":["primavera"],"precoSemente":""},
+            {"id":24,"nome":"coco","valorBase":100,"tipo":["fruta","coleta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/coco.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":25,"nome":"cogumelo comum","valorBase":40,"tipo":["coleta"],"prVinho":false,"prGeleia":false,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/cogumelo.png","diaPlantio":"7" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":26,"nome":"couve","valorBase":110,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/couve.png","diaPlantio":"" ,"diaColheita":"","estacao":["primavera"],"precoSemente":""},
+            {"id":27,"nome":"couve-chinesa","valorBase":80,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/couve_chinesa.png","diaPlantio":"4" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":28,"nome":"couve-flor","valorBase":175,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/couve_flor.png","diaPlantio":"" ,"diaColheita":"","estacao":["primavera"],"precoSemente":""},
+            {"id":29,"nome":"damasco","valorBase":50,"tipo":["fruta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/damasco.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":30,"nome":"dente-de-leão","valorBase":45,"tipo":["flor","coleta"],"prVinho":false,"prGeleia":false,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/dentedeleao.png","diaPlantio":"7" ,"diaColheita":"0","estacao":[""],"precoSemente":""},
+            {"id":31,"nome":"ervilha-de-cheiro","valorBase":50,"tipo":["flor","coleta"],"prVinho":false,"prGeleia":false,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/ervilhadecheiro.png","diaPlantio":"7" ,"diaColheita":"0","estacao":[""],"precoSemente":""},
+            {"id":32,"nome":"fibra","valorBase":1,"tipo":["coleta"],"prVinho":false,"prGeleia":false,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/fibra.png","diaPlantio":"7" ,"diaColheita":"0","estacao":[""],"precoSemente":""},
+            {"id":33,"nome":"flor de açafrão","valorBase":60,"tipo":["flor","coleta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/cranberry.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":34,"nome":"flor-miçanga","valorBase":75,"tipo":["flor","coleta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/cranberry.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":35,"nome":"folhas de chá","valorBase":50,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":false,"prPicles":false,"except":true,"imagem":"imagens/folhas_de_cha.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":36,"nome":"fruta antiga","valorBase":550,"tipo":["fruta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/fruta_antiga.png","diaPlantio":"" ,"diaColheita":"","estacao":["primavera"],"precoSemente":""},
+            {"id":37,"nome":"fruta Qi","valorBase":1,"tipo":["fruta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":true,"except":true,"imagem":"imagens/fruta_qi.png","diaPlantio":"4" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":38,"nome":"fruta de cristal","valorBase":150,"tipo":["fruta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/fruta_de_cristal.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":39,"nome":"fruta do cacto","valorBase":75,"tipo":["fruta","coleta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/fruta_do_cacto.png","diaPlantio":"" ,"diaColheita":"","estacao":["primavera"],"precoSemente":""},
+            {"id":40,"nome":"gengibre","valorBase":60,"tipo":["vegetal","coleta"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/gengibre.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":41,"nome":"girassol","valorBase":75,"tipo":["flor"],"prVinho":false,"prGeleia":false,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/cranberry.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":42,"nome":"grão de café","valorBase":75,"tipo":["fruta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/cranberry.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":43,"nome":"inhame","valorBase":160,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/inhame.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":44,"nome":"inhame da neve","valorBase":80,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/inhame_da_neve.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":45,"nome":"inhame-coco","valorBase":160,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/inhame.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":46,"nome":"jasmin-azul","valorBase":160,"tipo":["flor"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/inhame.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":47,"nome":"laranja","valorBase":100,"tipo":["flor"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/laranja.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":48,"nome":"lúpulo","valorBase":25,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":false,"prPicles":false,"except":true,"imagem":"imagens/lupulo.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":49,"nome":"maçã","valorBase":100,"tipo":["fruta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/maca.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":50,"nome":"manga","valorBase":130,"tipo":["fruta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/manga.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":51,"nome":"melão","valorBase":250,"tipo":["fruta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/melao.p[ng]","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":52,"nome":"melão-poeiro","valorBase":250,"tipo":["fruta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/melao.p[ng]","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":53,"nome":"milho","valorBase":50,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/milho.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":54,"nome":"mirtilo","valorBase":50,"tipo":["fruta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/mirtilo.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":55,"nome":"morango","valorBase":120,"tipo":["fruta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/morango.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":56,"nome":"narciso","valorBase":250,"tipo":["flor"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/melao.p[ng]","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":57,"nome":"oxicoco","valorBase":75,"tipo":["fruta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/cranberry.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":58,"nome":"papoula","valorBase":250,"tipo":["flor"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/melao.p[ng]","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":59,"nome":"pêssego","valorBase":140,"tipo":["fruta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/pessego.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":60,"nome":"pimenta-quente","valorBase":40,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/pimenta_quente.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":61,"nome":"rabanete","valorBase":90,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/rabanete.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":62,"nome":"raiz-forte","valorBase":50,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/raiz_forte.png","diaPlantio":"" ,"diaColheita":"","estacao":["primavera"],"precoSemente":""},
+            {"id":63,"nome":"repolho roxo","valorBase":260,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/repolho_roxo.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":64,"nome":"romã","valorBase":140,"tipo":["fruta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/roma.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":65,"nome":"rosa-de-fada","valorBase":250,"tipo":["flor"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/melao.p[ng]","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":66,"nome":"ruibarbo","valorBase":220,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/ruibarbo.png","diaPlantio":"" ,"diaColheita":"","estacao":["primavera"],"precoSemente":""},
+            {"id":67,"nome":"tomate","valorBase":50,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/tomate.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":68,"nome":"trigo","valorBase":25,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":true,"imagem":"imagens/trigo.png","diaPlantio":"4" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":69,"nome":"tulipa","valorBase":250,"tipo":["flor"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/melao.p[ng]","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":70,"nome":"uva","valorBase":80,"tipo":["fruta"],"prVinho":true,"prGeleia":true,"prSuco":false,"prPicles":false,"except":false,"imagem":"imagens/uva.png","diaPlantio":"" ,"diaColheita":"","estacao":[""],"precoSemente":""},
+            {"id":71,"nome":"vagem","valorBase":80,"tipo":["vegetal"],"prVinho":false,"prGeleia":false,"prSuco":true,"prPicles":true,"except":false,"imagem":"imagens/vagem.png","diaPlantio":"" ,"diaColheita":"","estacao":["primavera"],"precoSemente":""}
+        ];
+
+        // Variáveis Globais
+        let editableData = JSON.parse(JSON.stringify(initialData));
+        let currentIndex = 0;
+
+        // Mapeamento de chaves para nomes de campo (para exibição)
+        const fieldLabels = {
+            id: 'ID',
+            nome: 'Nome',
+            valorBase: 'Valor Base (numérico)',
+            precoSemente: 'Preço Semente (string)', 
+            tipo: 'Tipo (Separar por vírgula)',
+            prVinho: 'Preparo Vinho?',
+            prGeleia: 'Preparo Geleia?',
+            prSuco: 'Preparo Suco?',
+            prPicles: 'Preparo Picles?',
+            except: 'Exceção?',
+            imagem: 'Caminho Imagem',
+            diaPlantio: 'Dia Plantio (string)',
+            diaColheita: 'Dia Colheita (string)',
+            estacao: 'Estação (Separar por vírgula)'
+        };
+
+        let itemBox, prevButton, nextButton, generateJsonButton, outputJsonContainer, outputJsonTextarea;
+        
+        function initializeDomReferences() {
+            itemBox = document.getElementById('itemBox');
+            prevButton = document.getElementById('prevItem');
+            nextButton = document.getElementById('nextItem');
+            generateJsonButton = document.getElementById('generateJson');
+            outputJsonContainer = document.getElementById('outputJsonContainer');
+            outputJsonTextarea = document.getElementById('outputJson');
+        }
+
+        /**
+         * Gera o formulário HTML para o item atual.
+         */
+        function renderItemForm(item) {
+            let html = `
+                <div class="item-header">
+                    <h2>${item.nome}</h2>
+                    <span>Item ${currentIndex + 1} de ${editableData.length} (ID: ${item.id})</span>
+                </div>
+                <form id="itemForm">
+            `;
+
+            for (const key in item) {
+                if (key === 'id' || key === 'nome') {
+                    html += `
+                        <div class="form-group">
+                            <label for="${key}">${fieldLabels[key] || key}:</label>
+                            <input type="text" id="${key}" value="${item[key] || ''}" disabled>
+                        </div>
+                    `;
+                    continue;
+                }
+
+                const label = fieldLabels[key] || key;
+
+                if (typeof item[key] === 'boolean') {
+                    const checked = item[key] ? 'checked' : '';
+                    html += `
+                        <div class="form-group boolean-group">
+                            <label for="${key}">${label}:</label>
+                            <input type="checkbox" id="${key}" data-key="${key}" ${checked}>
+                        </div>
+                    `;
+                } else if (Array.isArray(item[key])) {
+                    // Exibe array vazio [] como string vazia no textarea para edição
+                    const value = item[key].length === 0 || (item[key].length === 1 && item[key][0] === "") ? "" : item[key].join(', '); 
+                    html += `
+                        <div class="form-group">
+                            <label for="${key}">${label}:</label>
+                            <textarea id="${key}" class="array-input" data-key="${key}" rows="2">${value}</textarea>
+                        </div>
+                    `;
+                } else {
+                    // Trata 'valorBase' como número e os demais (incluindo 'diaPlantio', 'diaColheita', 'precoSemente') como texto
+                    const type = key === 'valorBase' ? 'number' : 'text'; 
+                    const value = item[key] !== undefined && item[key] !== null ? item[key] : '';
+                    
+                    const firstEditableAttr = (key === 'valorBase') ? 'data-first-editable' : ''; 
+
+                    html += `
+                        <div class="form-group">
+                            <label for="${key}">${label}:</label>
+                            <input type="${type}" id="${key}" data-key="${key}" value="${value}" ${type === 'number' ? 'min="0"' : ''} ${firstEditableAttr}>
+                        </div>
+                    `;
+                }
+            }
+
+            html += '</form>';
+            return html;
+        }
+
+        /**
+         * Salva os dados do formulário atual no objeto editableData.
+         */
+        function saveCurrentItem() {
+            const currentItem = editableData[currentIndex];
+            const form = document.getElementById('itemForm');
+            if (!form) return;
+
+            for (const key in currentItem) {
+                const element = document.getElementById(key);
+
+                if (!element || key === 'id' || key === 'nome') continue;
+
+                if (element.type === 'checkbox') {
+                    currentItem[key] = element.checked;
+                } else if (Array.isArray(currentItem[key])) {
+                    // Lógica corrigida para arrays: Se o campo estiver vazio, salva como []
+                    const rawValue = element.value.trim();
+                    if (rawValue) {
+                        currentItem[key] = rawValue.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                    } else {
+                        currentItem[key] = []; // Salva como array vazio se estiver em branco
+                    }
+                } else if (element.type === 'number') {
+                    const numValue = parseFloat(element.value);
+                    // Garante que se o campo tiver um valor (incluindo "0"), ele seja salvo corretamente
+                    currentItem[key] = element.value === "" ? "" : (isNaN(numValue) ? element.value : numValue);
+                } else {
+                    // Lógica para campos de string (como diaColheita, diaPlantio, precoSemente): 
+                    // Salva exatamente o que está no campo, incluindo "0" ou ""
+                    currentItem[key] = element.value;
+                }
+            }
+        }
+
+        /**
+         * Navega para um novo índice de item.
+         */
+        function navigateToItem(newIndex) {
+            if (newIndex >= 0 && newIndex < editableData.length) {
+                saveCurrentItem();
+                
+                currentIndex = newIndex;
+                
+                itemBox.innerHTML = renderItemForm(editableData[currentIndex]);
+                
+                // Rola para o topo e foca
+                itemBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                const firstField = document.querySelector('#itemBox [data-first-editable]');
+                if (firstField) {
+                    firstField.focus();
+                }
+
+                updateNavigationButtons();
+            }
+        }
+
+        /**
+         * Atualiza o estado dos botões Anterior e Próximo.
+         */
+        function updateNavigationButtons() {
+            prevButton.disabled = currentIndex === 0;
+            nextButton.disabled = currentIndex === editableData.length - 1;
+        }
+
+        /**
+         * Lida com a navegação por teclado.
+         */
+        function handleKeyDown(event) {
+            // Verifica se o foco está em um campo de entrada editável
+            const activeTag = document.activeElement.tagName;
+            const isInputFocused = activeTag === 'INPUT' || activeTag === 'TEXTAREA';
+            
+            // Navega para o próximo item
+            if (event.key === 'ArrowRight' && !isInputFocused) {
+                event.preventDefault(); 
+                navigateToItem(currentIndex + 1);
+            }
+            
+            // Navega para o item anterior
+            if (event.key === 'ArrowLeft' && !isInputFocused) {
+                event.preventDefault(); 
+                navigateToItem(currentIndex - 1);
+            }
+        }
+
+        /**
+         * Event handler para o botão 'Gerar JSON'.
+         */
+        function handleGenerateJson() {
+            saveCurrentItem(); 
+            
+            outputJsonContainer.style.display = 'block';
+
+            // Gerador JSON: Não aplica nenhuma substituição de valor, garantindo que "" ou [] sejam salvos como estão.
+            const jsonOutput = JSON.stringify(editableData, null, 4); 
+
+            outputJsonTextarea.value = jsonOutput;
+            outputJsonTextarea.focus();
+            outputJsonTextarea.select(); 
+        }
+
+        /**
+         * Função de inicialização principal.
+         */
+        function initializeEditor() {
+            initializeDomReferences();
+
+            // 1. Carrega o primeiro item (Abacaxi)
+            navigateToItem(0);
+
+            // 2. Configura os Listeners de eventos
+            prevButton.addEventListener('click', () => {
+                navigateToItem(currentIndex - 1);
+            });
+
+            nextButton.addEventListener('click', () => {
+                navigateToItem(currentIndex + 1);
+            });
+
+            generateJsonButton.addEventListener('click', handleGenerateJson);
+            
+            // Listener para navegação por teclado (Seta Direita e Seta Esquerda)
+            window.addEventListener('keydown', handleKeyDown);
+        }
+
+        // Garante que a inicialização só ocorra após o DOM estar pronto
+        window.addEventListener('load', initializeEditor);
+
+    </script>
+</body>
+</html>
