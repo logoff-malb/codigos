@@ -1,7 +1,7 @@
 body {
   margin: 0;
   padding: 0;
-  background-image: url('recursos/fazenda.png');
+  background-image: url('../recursos/fazenda.png');
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
@@ -9,7 +9,7 @@ body {
 
 .frame {
   width: 100%;
-  background-image: url('recursos/textbox.png');
+  background-image: url('../recursos/textbox.png');
   background-repeat: repeat-x;
   background-size: auto 100%; /* cobre altura total do frame */
   padding: 20px 0;
@@ -83,7 +83,7 @@ body {
   justify-content: center;
   align-items: center;
   padding: 20px 0;
-  background-image: url('recursos/textbox.png');
+  background-image: url('../recursos/textbox.png');
   background-repeat: repeat-x;
   background-size: auto 100%;
 }
@@ -146,10 +146,10 @@ body {
   white-space: nowrap;
 }
 
-.btnPrimavera { background-image: url('recursos/primavera.png'); width: 140px; }
-.btnVerao     { background-image: url('recursos/verao.png'); }
-.btnOutono    { background-image: url('recursos/outono.png'); }
-.btnInverno   { background-image: url('recursos/inverno.png'); }
+.btnPrimavera { background-image: url('../recursos/primavera.png'); width: 140px; }
+.btnVerao     { background-image: url('../recursos/verao.png'); }
+.btnOutono    { background-image: url('../recursos/outono.png'); }
+.btnInverno   { background-image: url('../recursos/inverno.png'); }
 
 .menu-funcionalidades {
   display: flex;
@@ -208,34 +208,7 @@ body {
   transform-origin: bottom center;
 }
 
-/* Botão Player */
-.btn-player {
-  width: 70px;
-  height: 96px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  border: 2px solid #ccc;
-  border-radius: 10px;
-  background-color: #F9BA66;
-  transition: background 0.3s, transform 0.2s;
-}
-.btn-player:hover {
-  background: #eee;
-  transform: scale(1.05);
-}
-.btn-player img {
-  width: 50px;
-  height: 50px;
-  object-fit: contain;
-}
-.btn-player span {
-  font-size: 12px;
-  margin-top: 2px;
-  color: #333;
-}
+
 
 .painel-eventos {
   position: fixed;
@@ -330,28 +303,6 @@ body {
   background: #bbb;
 }
 
-/* Modal player*/
-.modal {
-  display: none; 
-  position: fixed; 
-  z-index: 10; 
-  left: 0; top: 0;
-  width: 100%; height: 100%;
-  background-color: rgba(0,0,0,0.5);
-}
-.modal-content {
-  background: #fff;
-  margin: 10% auto;
-  padding: 20px;
-  border-radius: 10px;
-  width: 300px;
-  position: relative;
-}
-.close {
-  float: right;
-  cursor: pointer;
-  font-size: 20px;
-}
 
 /*itens de plantio */
 .lista-itens-plantio {
@@ -394,7 +345,7 @@ body {
     text-overflow: ellipsis;
 }
 /*modal plantio*/ 
-/* ==== NOVO MODAL DE PLANTIO (ESTILO SV) ==== */
+/* ==== NOVO MODAL DE PLANTIO (ESTILO SV) ==== *//* Estilização do Modal Dialog */
 dialog#modalPlantio {
     border: none;
     padding: 0;
@@ -404,20 +355,18 @@ dialog#modalPlantio {
     border: 4px solid #643925;
 }
 
-/* O container interno simula a caixa de diálogo do jogo */
 .modal-conteudo-plantio {
     display: flex;
     width: 600px;
     height: 450px;
 }
 
-
 .modal-barra-lateral-plantio {
-    background: rgba(100, 57, 37, 0.1);
-    padding: 20px;
     width: 200px;
+    background: rgba(0,0,0,0.05);
+    padding: 15px;
     text-align: center;
-    border-right: 3px solid #643925;
+    border-right: 2px solid #643925;
 }
 
 .modal-barra-lateral-plantio img {
@@ -428,6 +377,7 @@ dialog#modalPlantio {
     border: 2px solid #643925;
     border-radius: 8px;
 }
+
 
 .modal-principal-plantio {
     flex: 1;
@@ -449,6 +399,7 @@ dialog#modalPlantio {
   overflow-y: scroll; /* Garante que a barra de rolagem esteja sempre lá ou apareça quando necessário */
   border: 2px solid #643925; /* Estilo Stardew */
 }
+
 .item-plantio {
     cursor: pointer;
     text-align: center;
@@ -456,6 +407,7 @@ dialog#modalPlantio {
     border-radius: 4px;
     border: 2px solid transparent;
 }
+
 .item-plantio:hover { background: #e2d3a8; }
 .item-plantio.selecionado { border-color: #38733C; background: #d5e8d4; }
 
@@ -469,4 +421,3 @@ dialog#modalPlantio {
     justify-content: flex-end;
     gap: 10px;
 }
-.btn-cancelar { background: #723333 !important; }
