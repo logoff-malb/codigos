@@ -394,76 +394,89 @@ body {
     text-overflow: ellipsis;
 }
 /*modal plantio*/ 
-/* ==== MODAL DE PLANTIO ==== */
-.modal-plantio {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
+/* ==== NOVO MODAL DE PLANTIO (ESTILO SV) ==== */
+dialog#modalPlantio {
+    border: none;
+    padding: 0;
+    border-radius: 8px;
+    background: #f4e4bc; /* Cor de pergaminho Stardew */
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    border: 4px solid #643925;
 }
 
+/* O container interno simula a caixa de diálogo do jogo */
 .modal-conteudo-plantio {
-  display: flex;
-  background: #fff;
-  border-radius: 12px;
-  overflow: hidden;
-  width: 700px;
-  max-height: 80vh;
+    display: flex;
+    width: 600px;
+    height: 450px;
 }
+
 
 .modal-barra-lateral-plantio {
-  background: #f2f2f2;
-  padding: 15px;
-  width: 180px;
-  text-align: center;
-  border-right: 1px solid #ccc;
+    background: rgba(100, 57, 37, 0.1);
+    padding: 20px;
+    width: 200px;
+    text-align: center;
+    border-right: 3px solid #643925;
 }
 
 .modal-barra-lateral-plantio img {
-  width: 100%;
-  height: auto;
-  border-radius: 8px;
+    width: 80px;
+    image-rendering: pixelated; /* Mantém os sprites nítidos */
+    background: #fff;
+    padding: 10px;
+    border: 2px solid #643925;
+    border-radius: 8px;
+}
+/* Estilo do ícone do botão planta adulta */
+#statusAdultaIcon {
+    width: 20px;
+    height: auto;
+    vertical-align: middle;
+    margin-right: 5px;
+    /* Remove o fundo preto mantendo as cores vivas */
+    filter: drop-shadow(0 0 1px white); 
+    image-rendering: pixelated; /* Deixa o sprite nítido como no jogo */
 }
 
 .modal-principal-plantio {
-  flex: 1;
-  padding: 15px;
-  display: flex;
-  flex-direction: column;
-}
-
-.filtro-container-plantio {
-  margin-bottom: 10px;
+    flex: 1;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
 }
 
 #listaItens {
-  flex: 1;
-  overflow-y: auto;
-  list-style: none;
-  padding: 0;
-  margin: 0;
+    flex: 1;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 10px;
+    background: #fffef0;
+    border: 2px solid #643925;
+    padding: 10px;
+    max-height: 250px; /* Limita a altura para não empurrar os botões para fora */
+  overflow-y: scroll; /* Garante que a barra de rolagem esteja sempre lá ou apareça quando necessário */
+  border: 2px solid #643925; /* Estilo Stardew */
 }
-
-#listaItens li {
-  cursor: pointer;
-  padding: 6px 8px;
-  border-bottom: 1px solid #ddd;
+.item-plantio {
+    cursor: pointer;
+    text-align: center;
+    padding: 5px;
+    border-radius: 4px;
+    border: 2px solid transparent;
 }
+.item-plantio:hover { background: #e2d3a8; }
+.item-plantio.selecionado { border-color: #38733C; background: #d5e8d4; }
 
-#listaItens li:hover {
-  background: #f9f9f9;
-}
+.item-plantio img { width: 32px; height: 32px; }
+.item-plantio p { font-size: 10px; margin: 5px 0 0; }
 
+/* Botões do Modal */
 .botoes-modal-plantio {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 10px;
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
 }
-   
+.btn-cancelar { background: #723333 !important; }

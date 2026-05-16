@@ -237,61 +237,111 @@ body {
   color: #333;
 }
 
+/* Painel Direito (Eventos do Calendário) */
+/* Painel Direito (Eventos do Calendário) */
 .painel-eventos {
   position: fixed;
   top: 0;
   right: 0;
   width: 300px;
   height: 100%;
-  background: #f5f5f5;
+  background: #f4e4bc; /* Fundo pergaminho idêntico ao esquerdo */
   box-shadow: -2px 0 5px rgba(0,0,0,0.3);
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease; /* Animação nativa por hardware */
   z-index: 1000;
   overflow-y: auto;
+  border-left: 4px solid #643925; /* Borda Stardew na esquerda */
+  padding: 15px;
+  box-sizing: border-box;
+  font-family: sans-serif;
 }
-#painelEventos h3 {
-  margin: 5px 0;
-  font-size: 16px;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 3px;
-}
+
+/* Estado Retraído usando Transform (Não mexe no comportamento do JS) */
 .painel-eventos.retraido {
   transform: translateX(100%);
 }
 
-#painelEventos .secao {
-  margin-bottom: 15px;
+/* Comportamento Dinâmico do Botão Original por Seletor de Adjacência */
+#painelEventos.retraido + #togglePainel {
+  right: 0px; /* Gruda na borda da tela quando fechado */
 }
 
-.painel-conteudo {
-  flex: 1;
-  padding: 10px;
-  overflow-y: auto;
+#painelEventos:not(.retraido) + #togglePainel {
+  right: 300px; /* É empurrado perfeitamente quando o painel expande */
 }
+
+/* Estilização do Botão de Aba Direito */
+#togglePainel {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  left: auto;
+  border-radius: 5px 0 0 5px; /* Arredondado voltado para o calendário */
+  background: #643925;
+  color: #fffef0;
+  border: 2px solid #ffd700;
+  border-right: none;
+  padding: 10px 8px;
+  cursor: pointer;
+  z-index: 1001;
+  transition: right 0.3s ease, background 0.2s; /* Acompanha o deslize do painel */
+}
+
+#togglePainel:hover {
+  background: #7a4a35;
+}
+
+/* --- TÍTULOS E LISTAS INTERNAS (CORES CUSTOMIZADAS) --- */
+#painelEventos h3 {
+  margin: 15px 0 5px;
+  font-size: 16px;
+  color: #4b2c20;
+  border-bottom: 2px solid rgba(100, 57, 37, 0.3);
+  padding-bottom: 5px;
+  font-weight: bold;
+}
+
 #listaEventosConteudo li {
-  margin: 3px 0;
+  margin: 6px 0;
   font-size: 14px;
   cursor: default;
+  color: #5c3a21; /* Texto padrão marrom rústico */
+  line-height: 1.4;
+  list-style-type: none; /* Remove a bolinha padrão antiga */
+  padding-left: 5px;
 }
 
-#listaEventosConteudo li.festival { color: darkred; font-weight: bold; }
-#listaEventosConteudo li.aniversario { color: darkblue; }
+/* Tons customizados mantendo a lógica de classes do seu sistema */
+#listaEventosConteudo li.festival { 
+  color: #a61c1c !important; /* Vermelho escuro Stardew */
+  font-weight: bold; 
+}
 
-/* Botão fica grudado na lateral direita da tela */
+#listaEventosConteudo li.aniversario { 
+  color: #1a45a6 !important; /* Azul escuro Stardew */
+  font-weight: 500;
+}
+
+/* Botão dinâmico do painel direito */
 .toggle-btn {
   position: fixed;
   top: 50%;
-  right: 300px; /* mesma largura do painel */
+  right: 0px; /* Começa na borda direita quando retraído */
   transform: translateY(-50%);
-  background: #ddd;
-  border: 1px solid #aaa;
+  left: auto;
   border-radius: 5px 0 0 5px;
-  padding: 10px;
+  background: #643925;
+  color: #fffef0;
+  border: 2px solid #ffd700;
+  border-right: none;
+  padding: 10px 6px;
   cursor: pointer;
   z-index: 1001;
+  transition: right 0.3s ease, background 0.2s;
 }
+
 .toggle-btn:hover {
-  background: #bbb;
+  background: #7a4a35;
 }
 /* Quando o painel está retraído, botão cola na borda */
 .painel-eventos.retraido + .toggle-btn {
@@ -300,34 +350,50 @@ body {
 
 /* Painel esquerdo personalizado */
 /* Painel esquerdo */
+/* Painel esquerdo */
 #painelPess {
+  position: fixed;
+  top: 0;
   left: 0;
   right: auto;
-  transform: translateX(-100%);
+  width: 300px;
+  height: 100%;
+  background: #f4e4bc; /* Fundo pergaminho estilo Stardew */
+  box-shadow: 2px 0 5px rgba(0,0,0,0.3);
+  transition: transform 0.3s ease;
+  z-index: 1000;
+  overflow-y: auto;
+  border-right: 4px solid #643925;
 }
+
 #painelPess.retraido {
   transform: translateX(-100%);
 }
+
 #painelPess:not(.retraido) {
   transform: translateX(0);
 }
 
-/* Botão do painel esquerdo */
+/* Botão dinâmico do painel esquerdo */
 #togglePessBtn {
-  top: 50;
-  left: 0px; 
+  position: fixed;
+  top: 50%;
+  left: 0px; /* Começa na borda quando retraído */
   transform: translateY(-50%);
   right: auto;
   border-radius: 0 5px 5px 0;
-  background: #ddd;
-  border: 1px solid #aaa;
-  border-radius: 0 5px 5px 0;
-  padding: 10px;
+  background: #643925; /* Cor combinando com as bordas do jogo */
+  color: #fffef0;
+  border: 2px solid #ffd700;
+  border-left: none;
+  padding: 10px 6px;
   cursor: pointer;
   z-index: 1001;
+  transition: left 0.3s ease, background 0.2s; /* Transição na mesma velocidade do painel */
 }
+
 #togglePessBtn:hover {
-  background: #bbb;
+  background: #7a4a35;
 }
 
 /* Modal player*/
@@ -428,6 +494,16 @@ dialog#modalPlantio {
     border: 2px solid #643925;
     border-radius: 8px;
 }
+/* Estilo do ícone do botão planta adulta */
+#statusAdultaIcon {
+    width: 20px;
+    height: auto;
+    vertical-align: middle;
+    margin-right: 5px;
+    /* Remove o fundo preto mantendo as cores vivas */
+    filter: drop-shadow(0 0 1px white); 
+    image-rendering: pixelated; /* Deixa o sprite nítido como no jogo */
+}
 
 .modal-principal-plantio {
     flex: 1;
@@ -470,3 +546,11 @@ dialog#modalPlantio {
     gap: 10px;
 }
 .btn-cancelar { background: #723333 !important; }
+
+#infoObs{margin-top: 8px !important;
+    font-style: italic !important;
+    color: #311405 !important; /* Marrom escuro denso para contraste legível */
+    border-top: 1px solid rgba(100, 57, 37, 0.3) !important;
+    padding-top: 8px !important;
+    font-weight: 500 !important; /* Dá corpo à fonte sem deixá-la totalmente em negrito */
+    line-height: 1.5 !important;}

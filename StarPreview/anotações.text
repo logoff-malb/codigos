@@ -51,3 +51,137 @@ function gerarDias() {
     calendario.appendChild(btn);
   }
 }
+
+
+function validarPlantioDinamico() {
+    if (!itemSelecionadoPlantio) return;
+
+    const inputDia = document.getElementById('diaPlantio');
+    const msgEl = document.getElementById('msgViabilidade');
+    const btnConfirmar = document.getElementById('confirmarPlantio');
+    
+    // Força o preenchimento visual se estiver vazio
+    if (inputDia && (inputDia.value === "" || inputDia.value === null)) {
+        let diaPadrao = (typeof diaSelecionado !== 'undefined' && diaSelecionado) ? diaSelecionado : 1;
+        inputDia.value = diaPadrao; 
+    }
+
+    const diaAtual = parseInt(inputDia.value, 10) || 1; 
+    const estacaoAtualModal = document.getElementById('estacaoPlantio').value.toLowerCase();
+    const estufa = document.getElementById('checkEstufa').checked;
+    const ilha = document.getElementById('checkIlha').checked;
+    const emAmbienteControlado = estufa || ilha;
+
+    const tipos = Array.isArray(itemSelecionadoPlantio.tipo) ? itemSelecionadoPlantio.tipo : [];
+    const ehArvore = tipos.includes("arvore");
+
+    // MAPEAMENTO PARA VIRADA DE ESTAÇÃO E ANO
+    const proximas = { "primavera": "verao", "verao": "outono", "outono": "inverno", "inverno": "primavera" };
+    // Captura o ano atual do seu objeto personagem ou assume 1
+    let anoCalculado = (personagem && personagem.ano) ? parseInt(personagem.ano, 10) : 1;
+
+    // --- 1. REGRA ESPECIAL: FOLHAS DE CHÁ (ID 43) ---
+    if (itemSelecionadoPlantio.id === 43) {
+        if (estacaoAtualModal === "inverno" && !emAmbienteControlado) {
+            msgEl.innerHTML = `❌ Inviável! Chá não produz no Inverno ao ar livre.`;
+            msgEl.style.color = "#721c24";
+            btnConfirmar.disabled = true;
+            return;
+        }
+
+        if (plantaAdultaAtiva) {
+            msgEl.innerHTML = `✅ <b>Planta Adulta:</b> Produz diariamente entre os dias <b>22 e 28</b> de cada estação.`;
+            msgEl.style.color = "#155724";
+            btnConfirmar.disabled = false;
+        } else {
+            let diaFinal = diaAtual + 20; 
+            let estacaoFinal = estacaoAtualModal;
+            if (diaFinal > 28) {
+                diaFinal -= 28;
+                // Se era inverno e virou primavera, sobe o ano
+                if (estacaoFinal === "inverno") anoCalculado++;
+                estacaoFinal = proximas[estacaoFinal];
+            }
+
+            msgEl.innerHTML = `✅ <b>Crescimento:</b> Estará pronta no Dia ${diaFinal} de ${estacaoFinal.charAt(0).toUpperCase() + estacaoFinal.slice(1)} (Ano ${anoCalculado}). <br><small>Produz apenas entre os dias 22-28.</small>`;
+            msgEl.style.color = "#155724";
+            btnConfirmar.disabled = false;
+
+            // Armazena para o cadastro
+            itemSelecionadoPlantio.diaFinalCalculado = diaFinal;
+            itemSelecionadoPlantio.estacaoFinalCalculada = estacaoFinal.charAt(0).toUpperCase() + estacaoFinal.slice(1);
+            itemSelecionadoPlantio.anoFinalCalculado = anoCalculado;
+        }
+        return;
+    }
+
+    // --- 2. REGRA PARA ÁRVORES (ID 26, 57, 59, etc) ---
+    if (ehArvore) {
+        let diaFinalArvore = diaAtual + 28;
+        let estacaoFinalArvore = estacaoAtualModal;
+        let anoArvore = (personagem && personagem.ano) ? parseInt(personagem.ano, 10) : 1;
+
+        if (diaFinalArvore > 28) {
+            diaFinalArvore -= 28;
+            if (estacaoFinalArvore === "inverno") anoArvore++;
+            estacaoFinalArvore = proximas[estacaoFinalArvore];
+        }
+
+        const estExibicao = estacaoFinalArvore.charAt(0).toUpperCase() + estacaoFinalArvore.slice(1);
+        msgEl.innerHTML = `✅ Viável! Árvore adulta em: <b>Dia ${diaFinalArvore} de ${estExibicao} (Ano ${anoArvore})</b>.`;
+        msgEl.style.color = "#155724";
+        btnConfirmar.disabled = false;
+
+        itemSelecionadoPlantio.diaFinalCalculado = diaFinalArvore;
+        itemSelecionadoPlantio.estacaoFinalCalculada = estExibicao;
+        itemSelecionadoPlantio.anoFinalCalculado = anoArvore;
+        return;
+    }
+
+    // --- 3. LÓGICA GERAL PARA DEMAIS PLANTAS ---
+    let diasCrescimento = plantaAdultaAtiva 
+        ? parseInt(itemSelecionadoPlantio.diaColheita || 1, 10) 
+        : parseInt(itemSelecionadoPlantio.diaPlantio || 0, 10);
+
+    if (plantaAdultaAtiva && diasCrescimento <= 0) diasCrescimento = 1;
+
+    const estacoesAceitas = Array.isArray(itemSelecionadoPlantio.estacao) 
+        ? itemSelecionadoPlantio.estacao.map(e => e.toLowerCase())
+        : [itemSelecionadoPlantio.estacao.toLowerCase()];
+
+    const ehDaEstacaoAtual = estacoesAceitas.includes(estacaoAtualModal);
+
+    if (!ehDaEstacaoAtual && !emAmbienteControlado) {
+        msgEl.innerHTML = `❌ Inviável! <b>${itemSelecionadoPlantio.nome}</b> não cresce em ${estacaoAtualModal}.`;
+        msgEl.style.color = "#721c24";
+        btnConfirmar.disabled = true;
+        return;
+    }
+
+    let diaFinal = diaAtual + (diasCrescimento - 1);
+    let estacaoFinal = estacaoAtualModal;
+
+    if (diaFinal > 28) {
+        diaFinal -= 28;
+        if (estacaoFinal === "inverno") anoCalculado++;
+        estacaoFinal = proximas[estacaoFinal] || estacaoFinal;
+    }
+
+    const viavel = emAmbienteControlado || estacoesAceitas.includes(estacaoFinal);
+
+    if (viavel) {
+        const estExibicao = estacaoFinal.charAt(0).toUpperCase() + estacaoFinal.slice(1);
+        const sufixo = plantaAdultaAtiva ? " (Produção)" : " (Colheita)";
+        msgEl.innerHTML = `✅ Viável! ${sufixo}: <strong>Dia ${diaFinal} de ${estExibicao} (Ano ${anoCalculado})</strong>`;
+        msgEl.style.color = "#155724";
+        
+        itemSelecionadoPlantio.diaFinalCalculado = diaFinal;
+        itemSelecionadoPlantio.estacaoFinalCalculada = estExibicao;
+        itemSelecionadoPlantio.anoFinalCalculado = anoCalculado;
+    } else {
+        msgEl.innerHTML = `❌ Inviável! Morrerá na troca de estação para ${estacaoFinal}.`;
+        msgEl.style.color = "#721c24";
+    }
+
+    btnConfirmar.disabled = !viavel;
+}

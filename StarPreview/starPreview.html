@@ -7,97 +7,81 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
   <!--calendario e variaveis globais-->>
-  <script>
+<script>
+  /* --- ESTADOS GLOBAIS (Restaurados do Backup) --- */
   let diaSelecionado = null;
   let estacaoAtual = "primavera";
+  let estacaoDiaSelecionado = "primavera"; // Essencial para o painel lateral
+  let plantaAdultaAtiva = false; 
 
-  // Variáveis para o Modal e Painel
+  const Estacao = {
+    primavera: null,
+    verao: null,
+    outono: null,
+    inverno: null
+  };
+
+  // Variáveis para o Modal e Dados
   let jsonItens = []; 
   let eventosPess = [];
   const STORAGE_KEY_PESS = "sv_eventos_pess";
   let itemSelecionadoPlantio = null;
-  let modalPlantio, listaItensContainer, filtroSelect;
-  
- const Estacao = {
-  primavera: null,
-  verao: null,
-  outono: null,
-  inverno: null
-   };
+  let modalPlantio, listaItensContainer;
 
- const eventosFixos = {
-  primavera: {
-    4: { tipo: "aniversario", nome: "Kent" }, 
-    7: { tipo: "aniversario", nome: "Lewis" },
-    10: { tipo: "aniversario", nome: "Vincent" },
-    13: { tipo: "festival", nome: "Dança das Flores" },
-    14: { tipo: "aniversario", nome: "Hailey" },
-    15: { tipo: "festival", nome: "festival do deserto dia 1" },
-    16: { tipo: "festival", nome: "festival do deserto dia 2" },
-    17: { tipo: "festival", nome: "festival do deserto dia 3" },
-    18: { tipo: "aniversario", nome: "Pam" },
-    20: { tipo: "aniversario", nome: "Shane" },
-    24: { tipo: "festival", nome: "Festival da Primavera" },
-    26: { tipo: "aniversario", nome: "Pierre" },
-    27: { tipo: "aniversario", nome: "Emily" },
-  },
-  verao: {
-    4: { tipo: "aniversario", nome: "Jas"},
-    8: { tipo: "aniversario", nome: "Gus"},
-    10: { tipo: "aniversario", nome: "Maru"},
-    11: { tipo: "festival", nome: "Luau" },
-    13: { tipo: "aniversario", nome: "Alex"},
-    17: { tipo: "aniversario", nome: "Sam"},
-    19: { tipo: "aniversario", nome: "Demetrius"},
-    22: { tipo: "aniversario", nome: "Anão"},
-    24: { tipo: "aniversario", nome: "Willy"},
-    26: { tipo: "aniversario", nome: "Leo"},
-    28: { tipo: "festival", nome: "Dança das Medusas-da-Lua" },
-  },
-  outono: {
-            2: { tipo: "aniversario", nome: "Penny"},
-           5: { tipo: "aniversario", nome: "Elliot"},
-           11: { tipo: "aniversario", nome: "Jodi"},
-           13: { tipo: "aniversario", nome: "Abigail"},
-           15: { tipo: "aniversario", nome: "Sandy"},
-           16: { tipo: "festival", nome: "Feira do vale do orvalho"},
-           18: { tipo: "aniversario", nome: "Robin"},
-           24: { tipo: "aniversario", nome: "George"},
-           27: { tipo: "festival", nome: "Véspera do dia dos espíritos"},
-          },
-  
-  inverno:{}}
+  /* --- 1. LÓGICA DO PAINEL LATERAL E CALENDÁRIO (CÓDIGO BACKUP) --- */
+  const eventosFixos = {
+    primavera: {
+      4: { tipo: "aniversario", nome: "Kent" }, 7: { tipo: "aniversario", nome: "Lewis" },
+      10: { tipo: "aniversario", nome: "Vincent" }, 13: { tipo: "festival", nome: "Dança das Flores" },
+      14: { tipo: "aniversario", nome: "Hailey" }, 15: { tipo: "festival", nome: "festival do deserto dia 1" },
+      16: { tipo: "festival", nome: "festival do deserto dia 2" }, 17: { tipo: "festival", nome: "festival do deserto dia 3" },
+      18: { tipo: "aniversario", nome: "Pam" }, 20: { tipo: "aniversario", nome: "Shane" },
+      24: { tipo: "festival", nome: "Festival da Primavera" }, 26: { tipo: "aniversario", nome: "Pierre" },
+      27: { tipo: "aniversario", nome: "Emily" },
+    },
+    verao: {
+      4: { tipo: "aniversario", nome: "Jas"}, 8: { tipo: "aniversario", nome: "Gus"},
+      10: { tipo: "aniversario", nome: "Maru"}, 11: { tipo: "festival", nome: "Luau" },
+      13: { tipo: "aniversario", nome: "Alex"}, 17: { tipo: "aniversario", nome: "Sam"},
+      19: { tipo: "aniversario", nome: "Demetrius"}, 22: { tipo: "aniversario", nome: "Anão"},
+      24: { tipo: "aniversario", nome: "Willy"}, 26: { tipo: "aniversario", nome: "Leo"},
+      28: { tipo: "festival", nome: "Dança das Medusas-da-Lua" },
+    },
+    outono: {
+      2: { tipo: "aniversario", nome: "Penny"}, 5: { tipo: "aniversario", nome: "Elliot"},
+      11: { tipo: "aniversario", nome: "Jodi"}, 13: { tipo: "aniversario", nome: "Abigail"},
+      15: { tipo: "aniversario", nome: "Sandy"}, 16: { tipo: "festival", nome: "Feira do vale do orvalho"},
+      18: { tipo: "aniversario", nome: "Robin"}, 24: { tipo: "aniversario", nome: "George"},
+      27: { tipo: "festival", nome: "Véspera do dia dos espíritos"},
+    },
+    inverno:{} //lembrar de preencher os eventos de inverno depois
+  };
 
   function gerarDias() {
     const calendario = document.getElementById("calendario");
-
-    // Limpa antes de recriar
+    if (!calendario) return;
     document.querySelectorAll(".dia").forEach(el => el.remove());
 
-    const larguraUtil = 480 - 16 - 15;  // 450px
-    const alturaUtil  = 336 - 64 - 15;  // 258px
-
+    const larguraUtil = 480 - 16 - 15; 
+    const alturaUtil  = 336 - 64 - 15; 
     const cols = 7;
     const rows = 4;
-
     const sizeX = larguraUtil / cols;
     const sizeY = alturaUtil / rows;
 
     for (let i = 1; i <= 28; i++) {
       const btn = document.createElement("button");
       btn.className = "dia";
-
       const row = Math.floor((i - 1) / cols);
       const col = (i - 1) % cols;
 
       btn.style.width = sizeX + "px";
       btn.style.height = sizeY + "px";
-      btn.style.top = (64 + row * sizeY) + "px";   // respeita margem superior
-      btn.style.left = (16 + col * sizeX) + "px";  // respeita margem esquerda
+      btn.style.top = (64 + row * sizeY) + "px";
+      btn.style.left = (16 + col * sizeX) + "px";
 
-      btn.title = `Dia ${i}`; // tooltip opcional
+      btn.onclick = () => selecionarDia(i, btn);
 
-      btn.addEventListener("click", () => selecionarDia(i, btn));
       const evento = eventosFixos[estacaoAtual]?.[i];
       if (evento) {
         btn.classList.add(evento.tipo);
@@ -105,52 +89,206 @@
       }
 
       calendario.appendChild(btn);
-
-      if (i === diaSelecionado) btn.classList.add("selecionado");
+      if (i === diaSelecionado && estacaoAtual === estacaoDiaSelecionado) btn.classList.add("selecionado");
     }
   }
 
- function selecionarDia(dia, botao) {
-  // limpa seleção visual só do calendário atual
-  document.querySelectorAll(".dia").forEach(b => b.classList.remove("selecionado"));
-  botao.classList.add("selecionado");
+  function selecionarDia(dia, botao) {
+    document.querySelectorAll(".dia").forEach(b => b.classList.remove("selecionado"));
+    botao.classList.add("selecionado");
 
-  // grava seleção para a estação atual
-  Estacao[estacaoAtual] = dia;
+    Estacao[estacaoAtual] = dia;
+    diaSelecionado = dia;
+    estacaoDiaSelecionado = estacaoAtual;
 
-  // grava também a estação do dia selecionado
-  diaSelecionado = dia;
-  estacaoDiaSelecionado = estacaoAtual;
-
-  // atualiza painel
-  atualizarPainel();
-
-  // abre painel se estava retraído
-  const painel = document.getElementById("painelEventos");
-  const btn = document.getElementById("togglePainel");
-  if (painel.classList.contains("retraido")) {
-    painel.classList.remove("retraido");
-    if (btn) btn.textContent = "▶";
-  }
+    // Sincroniza o modal de plantio se estiver aberto (Mantido idêntico)
+const inputDiaModal = document.getElementById('diaPlantio');
+if (inputDiaModal) {
+  inputDiaModal.value = dia;
+  validarPlantioDinamico();
 }
 
+if (typeof atualizarPainel === "function") atualizarPainel();
+
+// Lógica de expansão do painel (Backup) - LIMPA E ATUALIZADA
+const painel = document.getElementById("painelEventos");
+const btnToggle = document.getElementById("togglePainel");
+if (painel && painel.classList.contains("retraido")) {
+  painel.classList.remove("retraido");
+  if (btnToggle) {
+    // Substitui o "▶" antigo pelo emoji correto na direção aberta
+    btnToggle.innerHTML = "<span>📅❯</span>"; 
+  }
+}
+  } 
 
   function trocarCalendario(estacao) {
     const calendario = document.getElementById("calendario");
-    calendario.style.backgroundImage = `url("recursos/cal_${estacao}.png")`;
-    calendario.setAttribute("aria-label", `Calendário de ${estacao}`);
-    estacaoAtual = estacao;  // <-- Atualiza a variável global
-   gerarDias(); // recria os botões sobre a nova imagem
-   atualizarPainel();
+    if (calendario) {
+      calendario.style.backgroundImage = `url("recursos/cal_${estacao}.png")`;
     }
-    window.addEventListener("DOMContentLoaded", () => {
-
-
+    estacaoAtual = estacao;
     gerarDias();
-      atualizarPainel();
+    if (typeof atualizarPainel === "function") atualizarPainel();
+  }
+
+  /* --- 2. LÓGICA DO MODAL DE PLANTIO (CORRIGIDA) --- */
+  
+  // Lógica do botão "Planta Adulta"
+  document.addEventListener('click', function(e) {
+    if (e.target && e.target.id === 'btnPlantaAdulta') {
+      if (!itemSelecionadoPlantio) return; 
+      plantaAdultaAtiva = !plantaAdultaAtiva;
+      const icon = document.getElementById('statusAdultaIcon');
+      if (plantaAdultaAtiva) {
+        e.target.style.backgroundColor = "#2e5a27";
+        e.target.style.color = "#fff";
+        if (icon) icon.style.setProperty('display', 'inline-block', 'important');
+      } else {
+        e.target.style.backgroundColor = "";
+        e.target.style.color = "";
+        if (icon) icon.style.setProperty('display', 'none', 'important');
+      }
+      validarPlantioDinamico();
+    }
+  });
+
+  function validarPlantioDinamico() {
+    if (!itemSelecionadoPlantio) return;
+    const diaIn = parseInt(document.getElementById('diaPlantio').value) || 1;
+    const estIn = document.getElementById('estacaoPlantio').value.toLowerCase();
+    const prot = document.getElementById('checkEstufa').checked || document.getElementById('checkIlha').checked;
+
+    let ciclo = plantaAdultaAtiva 
+      ? (parseInt(itemSelecionadoPlantio.diaColheita) || 1) 
+      : (parseInt(itemSelecionadoPlantio.diaPlantio) || 1);
+
+    // MATEMÁTICA: dia + ciclo - 1
+    let diaFinal = diaIn + (ciclo - 1);
+    let estacaoFinal = estIn;
+
+    if (diaFinal > 28) {
+      diaFinal -= 28;
+      const prox = { "primavera": "verao", "verao": "outono", "outono": "inverno", "inverno": "primavera" };
+      estacaoFinal = prox[estacaoFinal] || estacaoFinal;
+    }
+
+    const aceitas = Array.isArray(itemSelecionadoPlantio.estacao) 
+      ? itemSelecionadoPlantio.estacao.map(e => e.toLowerCase()) 
+      : [itemSelecionadoPlantio.estacao.toLowerCase()];
+
+    const viavel = prot || (aceitas.includes(estIn) && aceitas.includes(estacaoFinal));
+    const msg = document.getElementById('msgViabilidade');
+    const btnC = document.getElementById('confirmarPlantio');
+
+    if (viavel) {
+      const estExib = estacaoFinal.charAt(0).toUpperCase() + estacaoFinal.slice(1);
+      msg.innerHTML = `<span style="color: green;">✅ Viável! Colheita: <b>Dia ${diaFinal} de ${estExib}</b></span>`;
+      if (btnC) btnC.disabled = false;
+      itemSelecionadoPlantio.calc_dia = diaFinal;
+      itemSelecionadoPlantio.calc_est = estExib;
+    } else {
+      msg.innerHTML = `<span style="color: red;">❌ Inviável! Morre na estação.</span>`;
+      if (btnC) btnC.disabled = true;
+    }
+  }
+
+  function abrirModalPlantio() {
+    plantaAdultaAtiva = false;
+    itemSelecionadoPlantio = null;
+    const btnA = document.getElementById('btnPlantaAdulta');
+    const iconA = document.getElementById('statusAdultaIcon');
+    if (btnA) { btnA.style.backgroundColor = ""; btnA.style.color = ""; }
+    if (iconA) iconA.style.setProperty('display', 'none', 'important');
+
+    const dIn = document.getElementById('diaPlantio');
+    const eIn = document.getElementById('estacaoPlantio');
+    if (dIn) dIn.value = diaSelecionado || 1;
+    if (eIn) eIn.value = estacaoAtual;
+
+    const modal = document.getElementById('modalPlantio');
+    if (modal) {
+      modal.showModal();
+      if (typeof atualizarListaItensPlantio === "function") atualizarListaItensPlantio();
+    }
+  }
+  function fecharModalPlantioLimpo() {
+    // 1. Fecha o modal
+    const modal = document.getElementById('modalPlantio');
+    if (modal) modal.close();
+
+    // 2. Reseta o estado global para evitar erros na próxima abertura
+    plantaAdultaAtiva = false; 
+
+    // 3. Reseta visualmente os elementos do DOM
+    const btnAdulta = document.querySelector('.btn-planta-adulta'); // ajuste para a classe real do seu botão
+    if (btnAdulta) btnAdulta.classList.remove('active');
+
+    document.getElementById('checkEstufa').checked = false;
+    document.getElementById('checkIlha').checked = false;
+    
+    // 4. Limpa a mensagem para não piscar o erro do item anterior ao abrir de novo
+    document.getElementById('msgViabilidade').innerHTML = "";
+  }
+  window.addEventListener("DOMContentLoaded", () => {
+    gerarDias();
+    if (typeof atualizarPainel === "function") atualizarPainel();
+  });
+ // Aguarda o DOM carregar para garantir que os elementos existem
+document.addEventListener('DOMContentLoaded', () => {
+    const inputsReativos = ['diaPlantio', 'estacaoPlantio', 'checkEstufa', 'checkIlha'];
+    
+    inputsReativos.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            // 'change' ou 'input' garantem que qualquer mudança dispare a validação
+            el.addEventListener('change', validarPlantioDinamico);
+        }
     });
 
-  </script>
+    // Reatividade do botão Planta Adulta
+    const btnAdulta = document.getElementById('btnPlantaAdulta');
+    if (btnAdulta) {
+        btnAdulta.addEventListener('click', () => {
+            // Inverte o estado da variável global
+            plantaAdultaAtiva = !plantaAdultaAtiva;
+            
+            // Feedback visual do botão (opcional, ajuste a classe se necessário)
+            btnAdulta.classList.toggle('active', plantaAdultaAtiva);
+            
+            // DISPARA A VALIDAÇÃO
+            validarPlantioDinamico();
+        });
+    }
+});
+// Aguarda o DOM carregar para garantir que os elementos existem
+document.addEventListener('DOMContentLoaded', () => {
+    const inputsReativos = ['diaPlantio', 'estacaoPlantio', 'checkEstufa', 'checkIlha'];
+    
+    inputsReativos.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            // 'change' ou 'input' garantem que qualquer mudança dispare a validação
+            el.addEventListener('change', validarPlantioDinamico);
+        }
+    });
+
+    // Reatividade do botão Planta Adulta
+    const btnAdulta = document.getElementById('btnPlantaAdulta');
+    if (btnAdulta) {
+        btnAdulta.addEventListener('click', () => {
+            // Inverte o estado da variável global
+            plantaAdultaAtiva = !plantaAdultaAtiva;
+            
+            // Feedback visual do botão (opcional, ajuste a classe se necessário)
+            btnAdulta.classList.toggle('active', plantaAdultaAtiva);
+            
+            // DISPARA A VALIDAÇÃO
+            validarPlantioDinamico();
+        });
+    }
+});
+</script>
 <!-- FUNÇÃO PARA CARREGAR O JSON-->
  <script>
 // apagado  let jsonItens = []; // global
@@ -187,7 +325,7 @@ window.addEventListener("DOMContentLoaded", () => {
     
     gerarDias();
     if (typeof atualizarPainel === "function") atualizarPainel();
-});jmn
+});
  </script>
 
 </head>
@@ -261,7 +399,7 @@ window.addEventListener("DOMContentLoaded", () => {
     </div>
   </div>
 </div>
-<button id="togglePainel" class="toggle-btn">◀</button>
+<button id="togglePainel" class="toggle-btn">◀📅</button>
 
 <!-- Modal de cadastro -->
 <div id="cadastroModal" class="modal">
@@ -327,16 +465,37 @@ window.addEventListener("DOMContentLoaded", () => {
 
 <dialog id="modalPlantio" class="modal-plantio">
   <div class="modal-conteudo-plantio">
+    
+    <!-- BARRA LATERAL ESQUERDA -->
     <div class="modal-barra-lateral-plantio">
-      <img id="imagemItem" src="" alt="Item" />
-      <h3 id="nomeItem">Selecione</h3>
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <img id="imagemItem" src="" alt="Item" style="width: 64px; height: 64px; object-fit: contain;" />
+        
+        <!-- Nome e Preço Lado a Lado -->
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; width: 100%;">
+          <h3 id="nomeItem" style="margin: 0; font-family: 'Stardew', sans-serif;">Selecione</h3>
+          <div id="containerPreco" style="display: flex; align-items: center; gap: 4px;">
+            <span id="valorTexto" style="font-weight: bold; color: #4b2c20;">0</span>
+            <img src="recursos/gold.png" alt="Ouro" style="width: 22px; height: 22px; object-fit: contain;"> 
+          </div>
+        </div>
+      </div>
       
+      <!-- Contexto (Estufa / Ilha) -->
       <div class="contexto-plantio" style="margin-top: 15px; text-align: left; background: rgba(0,0,0,0.1); padding: 8px; border-radius: 4px;">
         <label><input type="checkbox" id="checkEstufa"> 🏠 Estufa</label><br>
         <label><input type="checkbox" id="checkIlha"> 🌴 Ilha</label>
       </div>
-    </div>
+      
+      <!-- Bloco de Informações Dinâmicas (Estilo Caixa de Destaque) -->
+      <div id="infoCultivoContainer" style="margin-top: 15px; padding: 10px; border-radius: 4px; border: 1px solid #643925; background: rgba(255,255,255,0.3); font-size: 0.9em; line-height: 1.4; color: #4b2c20; min-height: 100px;">
+        <p id="infoCrescimento" style="margin-bottom: 5px; font-weight: bold;"></p>
+        <p id="infoRecolheita" style="margin-bottom: 5px; font-weight: bold; color: #2e5a27;"></p>
+        <p id="infoObs" style="margin-top: 8px; font-style: italic; color: #7a4a35; border-top: 1px solid rgba(100, 57, 37, 0.2); padding-top: 5px; display: none;"></p>
+      </div>
+    </div> <!-- Fim da Barra Lateral -->
 
+    <!-- CONTEÚDO PRINCIPAL DIREITA -->
     <div class="modal-principal-plantio">
       <div class="filtro-container-plantio" style="display: flex; gap: 5px; margin-bottom: 10px;">
         <input type="number" id="diaPlantio" min="1" max="28" value="1" style="width: 45px;">
@@ -346,7 +505,7 @@ window.addEventListener("DOMContentLoaded", () => {
           <option value="outono">Outono</option>
           <option value="inverno">Inverno</option>
         </select>
-        <select id="filtroPlantio">
+        <select id="filtroPlantio" onchange="atualizarListaItensPlantio()">
           <option value="todos">Todos</option>
           <option value="estacao">Da Estação</option>
         </select>
@@ -354,17 +513,23 @@ window.addEventListener("DOMContentLoaded", () => {
 
       <ul id="listaItens"></ul>
 
-      <!-- Nova área de Feedback -->
+      <!-- Feedback de Viabilidade -->
       <div id="feedbackViabilidade" style="margin: 10px 0; padding: 10px; border-radius: 4px; border: 1px solid #643925; background: rgba(255,255,255,0.2); font-size: 0.9em;">
         <span id="msgViabilidade">Selecione uma semente...</span>
       </div>
 
-      <div class="botoes-modal-plantio">
+      <!-- Rodapé de Ações -->
+      <div class="botoes-modal-plantio" style="display: flex; justify-content: flex-end; gap: 10px; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <img id="statusAdultaIcon" src="recursos/arvore-adulta.png" style="display: none;">
+          <button type="button" id="btnPlantaAdulta">planta Adulta</button>
+        </div>
         <button id="confirmarPlantio" disabled>Criar Evento</button>
-        <button type="button" id="fecharModalPlantio" onclick="modalPlantio.close()">Fechar</button>
+        <button type="button" id="fecharModalPlantio" onclick="fecharModalPlantioLimpo()">Fechar</button>
       </div>
-    </div>
-  </div>
+    </div> <!-- Fim do Conteúdo Principal -->
+
+  </div> <!-- Fim do Conteudo Plantio -->
 </dialog>
 <!-- script do modal de cadastro-->
 <script>
@@ -494,7 +659,7 @@ function atualizarPainel() {
   atualizarProxEvento();
   atualizarListaEventos();
 }
-let estacaoDiaSelecionado = null;//recebe estação e dias clicados no calendário
+// removido let estacaoDiaSelecionado = null;//recebe estação e dias clicados no calendário
 
 // Atualiza o campo "Evento selecionado"
 function atualizarDiaSelecionado() {
@@ -521,7 +686,7 @@ btnToggle.addEventListener("click", (e) => {
   painel.classList.toggle("retraido");
 
   // muda a setinha dependendo do estado
-  btnToggle.textContent = painel.classList.contains("retraido") ? "◀" : "▶";
+  btnToggle.textContent = painel.classList.contains("retraido") ? "◀📅" : "📅▶";
 });
 
 
@@ -530,13 +695,30 @@ document.addEventListener("click", (e) => {
   const calendario = document.getElementById("calendario");
   const menu = document.querySelector(".menu-funcionalidades");
   const botoesEstacao = document.querySelector(".botoes-estacao");
-  // se o clique NÃO for no calendário nem nos botões da menu-funcionalidades nem no próprio painel
-  if (!calendario.contains(e.target) &&
-      !menu.contains(e.target) &&
-      !botoesEstacao.contains(e.target) &&
-      !painel.contains(e.target)) {
-    painel.classList.add("retraido");
-    document.getElementById("togglePainel").textContent = "◀";
+  const btnToggleDireito = document.getElementById("togglePainel");
+  
+  // Captura o painel esquerdo e o botão dele para criar o escudo de isolamento
+  const painelEsquerdo = document.getElementById("painelPess");
+  const btnToggleEsquerdo = document.getElementById("togglePessBtn");
+
+  if (!painel || !calendario) return;
+
+  // Se o clique for no calendário, nos menus, no próprio painel direito...
+  // OU dentro do painel esquerdo ou no botão do pergaminho esquerdo, NÃO FAZ NADA!
+  if (calendario.contains(e.target) || 
+      (menu && menu.contains(e.target)) || 
+      (botoesEstacao && botoesEstacao.contains(e.target)) ||
+      painel.contains(e.target) ||
+      (btnToggleDireito && btnToggleDireito.contains(e.target)) ||
+      (painelEsquerdo && painelEsquerdo.contains(e.target)) ||     // 👈 ESCUDO: ignora cliques dentro do esquerdo
+      (btnToggleEsquerdo && btnToggleEsquerdo.contains(e.target))) { // 👈 ESCUDO: ignora cliques no botão esquerdo
+    return;
+  }
+
+  // Só fecha o painel direito se clicar verdadeiramente "fora" de tudo o que importa
+  painel.classList.add("retraido");
+  if (btnToggleDireito) {
+    btnToggleDireito.innerHTML = "<span>📅❮</span>";
   }
 });
 
@@ -649,29 +831,74 @@ function inicializarComponentes() {
 }
 
 function abrirModalPlantio() {
-    // Sincroniza com o estado global do calendário se disponível
-    if (typeof diaSelecionado !== 'undefined') {
-        const diaInput = document.getElementById('diaPlantio');
-        const estacaoInput = document.getElementById('estacaoPlantio');
-        if (diaInput) diaInput.value = diaSelecionado;
-        if (estacaoInput && typeof estacaoAtual !== 'undefined') estacaoInput.value = estacaoAtual;
+    // 1. Captura de elementos do DOM
+    const diaInput = document.getElementById('diaPlantio');
+    const estacaoInput = document.getElementById('estacaoPlantio');
+    const msgViavel = document.getElementById('msgViabilidade');
+    const btnConfirmar = document.getElementById('confirmarPlantio');
+    const nomeItemEl = document.getElementById('nomeItem');
+    const imgItemEl = document.getElementById('imagemItem');
+
+    // 2. SINCRONIZAÇÃO E FALLBACK (Garante que nunca fiquem vazios)
+    if (diaInput) {
+        // Prioridade: 1. diaSelecionado (calendário) | 2. Valor já existente | 3. Padrão "1"
+        diaInput.value = (typeof diaSelecionado !== 'undefined' && diaSelecionado) 
+                         ? diaSelecionado 
+                         : (diaInput.value || 1);
     }
 
-    if (modalPlantio) {
-        modalPlantio.showModal();
-        atualizarListaItensPlantio();
+    if (estacaoInput) {
+        // Prioridade: 1. estacaoAtual (global) | 2. Valor já existente | 3. Padrão "primavera"
+        estacaoInput.value = (typeof estacaoAtual !== 'undefined' && estacaoAtual) 
+                             ? estacaoAtual 
+                             : (estacaoInput.value || "primavera");
+    }
+
+    // 3. RESET DE ESTADO INTERNO
+    itemSelecionadoPlantio = null;
+    plantaAdultaAtiva = false; // Importante resetar aqui também
+
+    // 4. RESET VISUAL DO MODAL
+    if (msgViavel) msgViavel.textContent = "Selecione uma semente...";
+    if (btnConfirmar) btnConfirmar.disabled = true;
+    if (nomeItemEl) nomeItemEl.textContent = "Selecione";
+    
+    if (imgItemEl) {
+        imgItemEl.src = "recursos/enxada.gif";
+        setTimeout(() => {
+            if (itemSelecionadoPlantio === null) {
+                imgItemEl.src = "recursos/enxada.png";
+            }
+        }, 1000); 
+    } 
+
+    const valorTextoEl = document.getElementById('valorTexto');
+    if (valorTextoEl) valorTextoEl.textContent = "0"; 
+    const infC = document.getElementById('infoCrescimento');
+    if (infC) infC.textContent = "Escolha um cultivo para programar.";
+    const infR = document.getElementById('infoRecolheita');
+    if (infR) {
+        infR.textContent = "";
+        infR.style.display = "none";
+    }
+    const infO = document.getElementById('infoObs');
+    if (infO) {
+        infO.textContent = "";
+        infO.style.display = "none";
     }
     
-    itemSelecionadoPlantio = null;
-    const msgViavel = document.getElementById('msgViabilidade');
-    if (msgViavel) msgViavel.textContent = "Selecione uma semente...";
-    
-    document.getElementById('confirmarPlantio').disabled = true;
-    document.getElementById('nomeItem').textContent = "Selecione";
-    document.getElementById('imagemItem').src = "";
+    // 5. EXIBIÇÃO E CARREGAMENTO
+    if (modalPlantio) {
+        modalPlantio.showModal();
+        // Garante que a lista de sementes seja renderizada
+        if (typeof atualizarListaItensPlantio === 'function') {
+            atualizarListaItensPlantio();
+        }
+    }
 }
 
 function atualizarListaItensPlantio() {
+
     if (typeof jsonItens === 'undefined' || !jsonItens.length) return;
     
     const filtroSelect = document.getElementById('filtroPlantio');
@@ -710,161 +937,301 @@ function atualizarListaItensPlantio() {
     // Renderiza a grade final limpa de itens inválidos
     renderizarItensPlantio(listaFiltrada);
 }
+
 function renderizarItensPlantio(itens) {
+    const listaItensContainer = document.getElementById("listaItens");
     if (!listaItensContainer) return;
     listaItensContainer.innerHTML = "";
 
     itens.forEach(item => {
-    const itemDiv = document.createElement("div");
-    itemDiv.className = "item-plantio";
-    
-    // 1. Limpamos o caminho vindo do JSON (converte barras invertidas se houver)
-    const urlImg = item.imagem.replace(/\\/g, "/");
+        const itemDiv = document.createElement("div");
+        itemDiv.className = "item-plantio";
+        
+        // Normaliza o caminho da imagem para evitar problemas de caractere de escape
+        const urlImg = item.imagem ? item.imagem.replace(/\\/g, "/") : "";
 
-    itemDiv.innerHTML = `
-        <img src="${urlImg}" alt="${item.nome}" onerror="this.style.display='none'">
-        <p>${item.nome}</p>
-    `;
-    
-    itemDiv.onclick = () => {
-        itemSelecionadoPlantio = item;
-        document.getElementById('nomeItem').textContent = item.nome;
+        itemDiv.innerHTML = `
+            <img src="${urlImg}" alt="${item.nome}" onerror="this.style.display='none'">
+            <p>${item.nome}</p>
+        `;
         
-        // 2. Garante que a imagem principal do modal também use o caminho correto
-        const imgPrincipal = document.getElementById('imagemItem');
-        if (imgPrincipal) {
-            imgPrincipal.src = urlImg;
-            imgPrincipal.style.display = 'block'; // Garante que apareça se o anterior falhou
-        }
+        itemDiv.onclick = () => {
+            // Define o item global atual para uso nas outras funções de cálculo
+            itemSelecionadoPlantio = item;
+            
+            // 1. Atualização de Cabeçalho e Imagem Principal
+            const nomeEl = document.getElementById('nomeItem');
+            const valorEl = document.getElementById('valorTexto');
+            const imgPrincipal = document.getElementById('imagemItem');
+
+            if (nomeEl) nomeEl.textContent = item.nome;
+            if (valorEl) valorEl.textContent = item.valorBase || 0;
+            if (imgPrincipal) imgPrincipal.src = urlImg;
+
+            // 2. RESET DO ESTADO (Garante que novos itens comecem como sementes)
+            plantaAdultaAtiva = false;
+            
+            // Captura elementos de botão/ícone para garantir o reset visual no escopo correto
+            const btnAdulta = document.getElementById('btnPlantaAdulta');
+            const iconAdulta = document.getElementById('statusAdultaIcon');
+
+            if (btnAdulta) {
+                btnAdulta.style.backgroundColor = "";
+                btnAdulta.style.color = "";
+                btnAdulta.classList.remove('active');
+            }
+            if (iconAdulta) iconAdulta.style.display = "none";
+
+            // 3. Atualização das Informações de Cultivo (Maturidade, Re-colheita e Observações)
+            const crescimento = parseInt(item.diaPlantio || 0, 10);
+            const infoCrescimentoEl = document.getElementById('infoCrescimento');
+            if (infoCrescimentoEl) {
+                infoCrescimentoEl.textContent = crescimento > 0 
+                    ? `Demora ${crescimento} dias até a maturidade.` 
+                    : "Crescimento imediato / Coleta.";
+            }
+
+            const recolheita = parseInt(item.diaColheita || 0, 10);
+            const infoRecolheitaEl = document.getElementById('infoRecolheita');
+            if (infoRecolheitaEl) {
+                if (recolheita > 0) {
+                    infoRecolheitaEl.textContent = `Pode ser colhido novamente em ${recolheita} dias.`;
+                    infoRecolheitaEl.style.display = "block";
+                } else {
+                    infoRecolheitaEl.style.display = "none";
+                }
+            }
+
+            // --- SEU NOVO BLOCO DE OBSERVAÇÃO ---
+            const infoObsEl = document.getElementById('infoObs');
+            if (infoObsEl) {
+                if (item.obs && item.textObs) {
+                    infoObsEl.textContent = `💡 Obs: ${item.textObs}`;
+                    infoObsEl.style.display = "block";
+                } else {
+                    infoObsEl.style.display = "none";
+                }
+            }
+
+            // 4. Gerenciamento Visual da Seleção na Lista
+            document.querySelectorAll(".item-plantio").forEach(el => el.classList.remove("selecionado"));
+            itemDiv.classList.add("selecionado");
+            
+            // 5. DISPARO DA REATIVIDADE
+            // Chama a validação imediatamente após a troca do item para atualizar o texto de viabilidade
+            validarPlantioDinamico();
+        };
         
-        document.querySelectorAll(".item-plantio").forEach(el => el.classList.remove("selecionado"));
-        itemDiv.classList.add("selecionado");
-        validarPlantioDinamico();
-    };
-    listaItensContainer.appendChild(itemDiv);
-});
+        listaItensContainer.appendChild(itemDiv);
+    });
 }
 
+function avancarTempoCalendario(diaInicio, diasParaSomar, estacaoInicio) {
+    const proximas = { "primavera": "verao", "verao": "outono", "outono": "inverno", "inverno": "primavera" };
+    
+    let diaResult = diaInicio + diasParaSomar;
+    let estacaoResult = estacaoInicio.toLowerCase();
+    
+    // Lê estritamente a sua variável global existente. Caso não exista, assume 1.
+    let anoResult = (personagem && personagem.ano) ? parseInt(personagem.ano, 10) : 1;
+
+    while (diaResult > 28) {
+        // Se a estação atual do loop for inverno e vai mudar, avança o ano do personagem
+        if (estacaoResult === "inverno") {
+            anoResult++;
+        }
+        diaResult -= 28;
+        estacaoResult = proximas[estacaoResult] || estacaoResult;
+    }
+
+    return {
+        dia: diaResult,
+        estacao: estacaoResult.charAt(0).toUpperCase() + estacaoResult.slice(1),
+        ano: anoResult
+    };
+}
 function validarPlantioDinamico() {
     if (!itemSelecionadoPlantio) return;
 
-    // 1. Captura de valores do DOM (Exatamente seus elementos e nomes)
     const inputDia = document.getElementById('diaPlantio');
-    
-    // REGRA DE FALLBACK: Garante valor para evitar o NaN no diaAtual
-    if (inputDia && inputDia.value === "") {
-        inputDia.value = (typeof diaSelecionado !== 'undefined' && diaSelecionado) ? diaSelecionado : 1;
-    }
-
-    const diaAtual = parseInt(inputDia.value, 10);
-    const estacaoAtualModal = document.getElementById('estacaoPlantio').value;
-    const estufa = document.getElementById('checkEstufa').checked;
-    const ilha = document.getElementById('checkIlha').checked;
-    const diasCrescimento = parseInt(itemSelecionadoPlantio.diaPlantio || 0, 10);
-
-    // 2. Regra das Árvores (Verificação segura no Array de tipos)
-    const ehArvore = Array.isArray(itemSelecionadoPlantio.tipo) 
-        ? itemSelecionadoPlantio.tipo.includes("arvore") 
-        : itemSelecionadoPlantio.tipo === "arvore";
-
     const msgEl = document.getElementById('msgViabilidade');
     const btnConfirmar = document.getElementById('confirmarPlantio');
+    
+    // Força o preenchimento visual se estiver vazio
+    if (inputDia && (inputDia.value === "" || inputDia.value === null)) {
+        let diaPadrao = (typeof diaSelecionado !== 'undefined' && diaSelecionado) ? diaSelecionado : 1;
+        inputDia.value = diaPadrao; 
+    }
 
-    if (ehArvore) {
-        if (msgEl) {
-            msgEl.innerHTML = "✅ Viável! Árvores frutíferas crescem incondicionalmente em qualquer estação (produzem na estação específica).";
-            msgEl.style.color = "#155724";
+    const diaAtual = parseInt(inputDia.value, 10) || 1; // Fallback final para evitar NaN
+    const estacaoAtualModal = document.getElementById('estacaoPlantio').value.toLowerCase();
+    const estufa = document.getElementById('checkEstufa').checked;
+    const ilha = document.getElementById('checkIlha').checked;
+    const emAmbienteControlado = estufa || ilha;
+
+    const tipos = Array.isArray(itemSelecionadoPlantio.tipo) ? itemSelecionadoPlantio.tipo : [];
+    const ehArvore = tipos.includes("arvore");
+
+    // --- 1. REGRA ESPECIAL: FOLHAS DE CHÁ (ID 43) ---
+    if (itemSelecionadoPlantio.id === 43) {
+        // No inverno, só produz se estiver em ambiente controlado
+        if (estacaoAtualModal === "inverno" && !emAmbienteControlado) {
+            msgEl.innerHTML = `❌ Inviável! Chá não produz no Inverno ao ar livre.`;
+            msgEl.style.color = "#721c24";
+            btnConfirmar.disabled = true;
+            return;
         }
-        if (btnConfirmar) btnConfirmar.disabled = false;
+
+        if (plantaAdultaAtiva) {
+            msgEl.innerHTML = `✅ <b>Planta Adulta:</b> Produz diariamente entre os dias <b>22 e 28</b> de cada estação.`;
+            msgEl.style.color = "#155724";
+            btnConfirmar.disabled = false;
+        } else {
+            // Cálculo de crescimento (20 dias) utilizando a nova utilitária
+            const resultado = avancarTempoCalendario(diaAtual, 20, estacaoAtualModal);
+
+            msgEl.innerHTML = `✅ <b>Crescimento:</b> Estará pronta no Dia ${resultado.dia} de ${resultado.estacao} (Ano ${resultado.ano}). <br><small>Produz apenas entre os dias 22-28.</small>`;
+            msgEl.style.color = "#155724";
+            btnConfirmar.disabled = false;
+
+            // Armazena as propriedades calculadas no item selecionado
+            itemSelecionadoPlantio.diaFinalCalculado = resultado.dia;
+            itemSelecionadoPlantio.estacaoFinalCalculada = resultado.estacao;
+            itemSelecionadoPlantio.anoFinalCalculado = resultado.ano;
+        }
         return;
     }
 
-    // Normaliza os dados para checagem de época
-    const estacaoModalMin = estacaoAtualModal.toLowerCase();
+    // --- 2. REGRA PARA ÁRVORES (ID 26, 57, 59, etc) ---
+    if (ehArvore) {
+        // 1. Se a planta já for adulta, ela não precisa de 28 dias para crescer (tempo = 0)
+        const diasParaSomar = plantaAdultaAtiva ? 0 : 28;
+        const maturidade = avancarTempoCalendario(diaAtual, diasParaSomar, estacaoAtualModal);
+        
+        const estacoesAceitas = Array.isArray(itemSelecionadoPlantio.estacao) 
+            ? itemSelecionadoPlantio.estacao.map(e => e.toLowerCase())
+            : [itemSelecionadoPlantio.estacao.toLowerCase()];
+
+        // Verifica se a estação calculada é uma estação válida de frutos
+        const produzNaMaturidade = estacoesAceitas.includes(maturidade.estacao.toLowerCase());
+
+        if (produzNaMaturidade || emAmbienteControlado) {
+            // Define o texto baseado no estado do botão "planta Adulta"
+            if (plantaAdultaAtiva) {
+                msgEl.innerHTML = `✅ Viável! <b>Planta Adulta:</b> Produzindo diariamente em: <strong>Dia ${maturidade.dia} de ${maturidade.estacao} (Ano ${maturidade.ano})</strong>.`;
+            } else {
+                msgEl.innerHTML = `✅ Viável! Árvore adulta e produzindo em: <strong>Dia ${maturidade.dia} de ${maturidade.estacao} (Ano ${maturidade.ano})</strong>.`;
+            }
+            
+            msgEl.style.color = "#155724";
+            btnConfirmar.disabled = false;
+
+            itemSelecionadoPlantio.diaFinalCalculado = maturidade.dia;
+            itemSelecionadoPlantio.estacaoFinalCalculada = maturidade.estacao;
+            itemSelecionadoPlantio.anoFinalCalculado = maturidade.ano;
+        } else {
+            // CASO DE ESTAÇÃO INCORRETA (Ex: Cereja no Inverno)
+            let estacaoProducao = estacoesAceitas[0]; // Pega a primeira estação válida do JSON
+            let anoProducao = maturidade.ano;
+
+            const ordemEstacoes = ["primavera", "verao", "outono", "inverno"];
+            let idxMaturidade = ordemEstacoes.indexOf(maturidade.estacao.toLowerCase());
+            let idxProducao = ordemEstacoes.indexOf(estacaoProducao);
+
+            if (idxProducao <= idxMaturidade) {
+                anoProducao++; 
+            }
+
+            const estExibicao = estacaoProducao.charAt(0).toUpperCase() + estacaoProducao.slice(1);
+            
+            // Ajusta o texto do aviso dinamicamente
+            if (plantaAdultaAtiva) {
+                msgEl.innerHTML = `⚠️ <b>Aviso:</b> Esta árvore já está adulta, mas <b>só produzirá frutos no Dia 1 de ${estExibicao} (Ano ${anoProducao})</b>.`;
+            } else {
+                msgEl.innerHTML = `⚠️ <b>Aviso:</b> Ficará adulta no Dia ${maturidade.dia} de ${maturidade.estacao}, mas <b>só produzirá no Dia 1 de ${estExibicao} (Ano ${anoProducao})</b>.`;
+            }
+            
+            msgEl.style.color = "#856404";
+            btnConfirmar.disabled = false;
+
+            itemSelecionadoPlantio.diaFinalCalculado = 1;
+            itemSelecionadoPlantio.estacaoFinalCalculada = estExibicao;
+            itemSelecionadoPlantio.anoFinalCalculado = anoProducao;
+        }
+        return;
+    }
+
+    // --- 3. LÓGICA GERAL PARA DEMAIS PLANTAS ---
+    let diasCrescimento = plantaAdultaAtiva 
+        ? parseInt(itemSelecionadoPlantio.diaColheita || 1, 10) 
+        : parseInt(itemSelecionadoPlantio.diaPlantio || 0, 10);
+
+    if (plantaAdultaAtiva && diasCrescimento <= 0) diasCrescimento = 1;
+
     const estacoesAceitas = Array.isArray(itemSelecionadoPlantio.estacao) 
         ? itemSelecionadoPlantio.estacao.map(e => e.toLowerCase())
         : [itemSelecionadoPlantio.estacao.toLowerCase()];
 
-    const emAmbienteControlado = estufa || ilha;
-    const ehDaEstacaoAtual = estacoesAceitas.includes(estacaoModalMin);
+    const ehDaEstacaoAtual = estacoesAceitas.includes(estacaoAtualModal);
 
-    // NOVA REGRA (FORA DE ÉPOCA): Se não for da estação selecionada e não estiver protegido, expõe onde pode plantar
     if (!ehDaEstacaoAtual && !emAmbienteControlado) {
-        if (msgEl) {
-            const estacoesFormatadas = estacoesAceitas
-                .map(e => e.charAt(0).toUpperCase() + e.slice(1))
-                .join(', ');
-            
-            msgEl.innerHTML = `❌ Inviável! <strong>${itemSelecionadoPlantio.nome}</strong> só pode ser plantado nas estações: ${estacoesFormatadas}.`;
-            msgEl.style.color = "#721c24";
-        }
-        if (btnConfirmar) btnConfirmar.disabled = true;
+        msgEl.innerHTML = `❌ Inviável! <b>${itemSelecionadoPlantio.nome}</b> não cresce em ${estacaoAtualModal}.`;
+        msgEl.style.color = "#721c24";
+        btnConfirmar.disabled = true;
         return;
     }
 
-    // 3. Cálculo da Virada de Estação
-    let diaFinal = diaAtual + diasCrescimento;
-    let estacaoFinal = estacaoModalMin;
+    // Matemática: Dia + Ciclo - 1 utilizando a nova utilitária
+    const resultado = avancarTempoCalendario(diaAtual, (diasCrescimento - 1), estacaoAtualModal);
+    const viavel = emAmbienteControlado || estacoesAceitas.includes(resultado.estacao.toLowerCase());
 
-    if (diaFinal > 28) {
-        diaFinal -= 28;
-        const proximas = { 
-            "primavera": "verao", 
-            "verao": "outono", 
-            "outono": "inverno", 
-            "inverno": "primavera" 
-        };
-        estacaoFinal = proximas[estacaoFinal] || estacaoFinal;
+    if (viavel) {
+        const sufixo = plantaAdultaAtiva ? " (Produção)" : " (Colheita)";
+        msgEl.innerHTML = `✅ Viável! ${sufixo}: <strong>Dia ${resultado.dia} de ${resultado.estacao} (Ano ${resultado.ano})</strong>`;
+        msgEl.style.color = "#155724";
+        
+        itemSelecionadoPlantio.diaFinalCalculado = resultado.dia;
+        itemSelecionadoPlantio.estacaoFinalCalculada = resultado.estacao;
+        itemSelecionadoPlantio.anoFinalCalculado = resultado.ano;
+    } else {
+        msgEl.innerHTML = `❌ Inviável! Morrerá na troca de estação para ${resultado.estacao}.`;
+        msgEl.style.color = "#721c24";
     }
 
-    // 4. Verificação de Sobrevivência (Comparando com a estação onde ocorrerá a COLHEITA)
-    const sobreviveNaEstacaoFinal = estacoesAceitas.includes(estacaoFinal);
-
-    // 5. Lógica de Viabilidade
-    const viavel = emAmbienteControlado || (ehDaEstacaoAtual && sobreviveNaEstacaoFinal);
-    
-    if (msgEl) {
-        if (viavel) {
-            // Formatação da string da estação para exibição com primeira letra maiúscula
-            const estacaoExibicao = estacaoFinal.charAt(0).toUpperCase() + estacaoFinal.slice(1);
-            msgEl.innerHTML = `✅ Viável! Colheita: <strong>Dia ${diaFinal} de ${estacaoExibicao}</strong>`;
-            msgEl.style.color = "#155724";
-        } else {
-            // Item é da estação atual, mas foi plantado tarde demais para colher a tempo!
-            msgEl.innerHTML = `❌ Inviável! Morrerá no final da estação.`;
-            msgEl.style.color = "#721c24";
-        }
-    }
-
-    // Habilita ou desabilita o botão de confirmação
-    if (btnConfirmar) btnConfirmar.disabled = !viavel;
+    btnConfirmar.disabled = !viavel;
 }
 function criarEventoPlantio(item) {
     const diaVal = parseInt(document.getElementById('diaPlantio').value, 10);
     const estacaoVal = document.getElementById('estacaoPlantio').value;
     const anoVal = (typeof personagem !== 'undefined' ? (personagem.ano || 1) : 1);
-    const diasCrescimento = parseInt(item.diaPlantio || 0, 10);
+
+    // USANDO AS PROPRIEDADES QUE JÁ SALVAMOS NO OBJETO 'item' DURANTE A VALIDAÇÃO
+    // Evitamos recalcular tudo aqui. Apenas lemos o que o modal já validou.
+    const diaFinal = item.diaFinalCalculado; 
+    const estacaoFinal = item.estacaoFinalCalculada;
 
     const novoEvento = {
         id: Date.now(),
+        idItem: item.id, // Mantendo o padrão de ID do seu JSON
         nome: item.nome,
         dataPlantio: `Dia ${diaVal} - ${estacaoVal} - Ano ${anoVal}`,
         status: "Em andamento",
         colheitas: [{
-            dia: diaVal + diasCrescimento,
-            estacao: estacaoVal,
-            tipo: "Colheita"
+            dia: diaFinal,
+            estacao: estacaoFinal,
+            // Usamos a sua variável global 'plantaAdultaAtiva' para definir o rótulo
+            tipo: plantaAdultaAtiva ? "Produção" : "Colheita"
         }]
     };
 
-    // eventosPess e salvarPessStorage vêm do seu contexto global/lateral
     if (typeof eventosPess !== 'undefined') {
         eventosPess.push(novoEvento);
         if (typeof salvarPessStorage === 'function') salvarPessStorage();
         if (typeof renderizarPainelPess === 'function') renderizarPainelPess();
     }
 
-    if (modalPlantio) modalPlantio.close();
+    // Chama a função de fechar que limpa o estado
+    fecharModalPlantioLimpo();
 }
 </script>
 
@@ -949,20 +1316,29 @@ function renderizarPainelPess() {
     });
 }
 
-/* --- INICIALIZAÇÃO DO PAINEL --- */
-window.addEventListener("DOMContentLoaded", () => {
-    // 1. Configura o botão de abrir/fechar específico deste painel
+  /* --- INICIALIZAÇÃO DO PAINEL --- */
+  window.addEventListener("DOMContentLoaded", () => {
     const btnToggle = document.getElementById("togglePessBtn");
     const painel = document.getElementById("painelPess");
 
     if (btnToggle && painel) {
-        btnToggle.onclick = () => {
+        // Adicionado o (e) aqui para capturar o evento de clique
+        btnToggle.onclick = (e) => {
+            e.stopPropagation(); // 👈 ISSO AQUI impede que o clique suba até o document e feche o painel direito por tabela!
+            
             painel.classList.toggle("retraido");
-            // Atualiza o ícone (❯ para fechar, ❮ para abrir conforme imagem)
-            btnToggle.innerHTML = painel.classList.contains("retraido") ? "<span>❯</span>" : "<span>❮</span>";
+            
+            if (painel.classList.contains("retraido")) {
+                // Se fechou, o botão volta para a borda esquerda da tela
+                btnToggle.style.left = "0px";
+                btnToggle.innerHTML = "<span>❯📜</span>";
+            } else {
+                // Se abriu, o botão é empurrado exatamente para a largura do painel (300px)
+                btnToggle.style.left = "300px";
+                btnToggle.innerHTML = "<span>❮📜</span>";
+            }
         };
     }
-
     // 2. Renderiza os dados iniciais
     renderizarPainelPess();
 });
