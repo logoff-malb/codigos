@@ -399,7 +399,7 @@ window.addEventListener("DOMContentLoaded", () => {
     </div>
   </div>
 </div>
-<button id="togglePainel" class="toggle-btn">◀📅</button>
+<button id="togglePainel" class="toggle-btn">❮📅</button>
 
 <!-- Modal de cadastro -->
 <div id="cadastroModal" class="modal">
@@ -522,7 +522,7 @@ window.addEventListener("DOMContentLoaded", () => {
       <div class="botoes-modal-plantio" style="display: flex; justify-content: flex-end; gap: 10px; align-items: center;">
         <div style="display: flex; align-items: center; gap: 8px;">
           <img id="statusAdultaIcon" src="recursos/arvore-adulta.png" style="display: none;">
-          <button type="button" id="btnPlantaAdulta">planta Adulta</button>
+          <button type="button" id="btnPlantaAdulta" data-tooltip="Adiciona o cultivo em fase adulta, calculando apenas as colheitas">planta Adulta</button>
         </div>
         <button id="confirmarPlantio" disabled>Criar Evento</button>
         <button type="button" id="fecharModalPlantio" onclick="fecharModalPlantioLimpo()">Fechar</button>
@@ -686,7 +686,7 @@ btnToggle.addEventListener("click", (e) => {
   painel.classList.toggle("retraido");
 
   // muda a setinha dependendo do estado
-  btnToggle.textContent = painel.classList.contains("retraido") ? "◀📅" : "📅▶";
+  btnToggle.textContent = painel.classList.contains("retraido") ? "❮📅" : "📅❯";
 });
 
 
@@ -718,7 +718,7 @@ document.addEventListener("click", (e) => {
   // Só fecha o painel direito se clicar verdadeiramente "fora" de tudo o que importa
   painel.classList.add("retraido");
   if (btnToggleDireito) {
-    btnToggleDireito.innerHTML = "<span>📅❮</span>";
+    btnToggleDireito.innerHTML = "<span>❮📅</span>";
   }
 });
 
@@ -1275,8 +1275,7 @@ window.excluirEventoPess = function(id) {
 
 function renderizarPainelPess() {
     carregarPessStorage();
-    
-    // Na imagem image_cdad37.png o ID é "listaPess"
+  
     const container = document.getElementById("listaPess");
     if (!container) return;
 
@@ -1297,6 +1296,12 @@ function renderizarPainelPess() {
         
         // Proteção contra dados incompletos
         const statusClean = ev.status ? ev.status.toLowerCase().replace(/\s/g, '-') : 'pendente';
+        
+        // Extrai a estação da primeira colheita (caso exista), padroniza em minúsculas e remove o acento de 'verão' e 'primavera' se houver
+        const estacaoEvento = (ev.colheitas && ev.colheitas[0]?.estacao) 
+            ? ev.colheitas[0].estacao.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+            : 'primavera';
+
         const colheitasHTML = (ev.colheitas || []).map(c => 
             `<li>✨ ${c.tipo}: Dia ${c.dia} (${c.estacao})</li>`
         ).join('') || '<li>Sem previsão.</li>';
@@ -1309,7 +1314,7 @@ function renderizarPainelPess() {
             <div class="info-plantio">📅 Plantio: ${ev.dataPlantio}</div>
             <ul class="lista-colheitas">${colheitasHTML}</ul>
             <div class="acoes">
-                <button class="btn-delete" onclick="excluirEventoPess(${ev.id})">🗑️</button>
+                <button class="btn-delete" data-estacao="${estacaoEvento}" onclick="excluirEventoPess(${ev.id})"></button>
             </div>
         `;
         container.appendChild(box);

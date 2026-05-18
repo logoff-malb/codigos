@@ -374,6 +374,103 @@ body {
   transform: translateX(0);
 }
 
+/* ========================================================
+   ESTILIZAÇÃO DOS CARTÕES DE EVENTOS PERSONALIZADOS
+   ======================================================== */
+
+/* O contêiner que envolve cada plantio individual */
+.caixa-evento {
+  background: #e6cb95; /* Bege ligeiramente mais escuro para contrastar com o #f4e4bc do painel */
+  border: 3px solid #643925; /* Borda idêntica às bordas principais do jogo */
+  border-radius: 6px;
+  margin: 12px 10px; /* Margem para afastar os blocos entre si e das bordas do painel */
+  padding: 10px;
+  box-sizing: border-box;
+  box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.12); /* Sombra sutil para dar profundidade */
+}
+
+/* Cabeçalho do cartão (Nome e Status) */
+.header-evento {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid rgba(100, 57, 37, 0.25); /* Linha divisória interna */
+  padding-bottom: 4px;
+  margin-bottom: 8px;
+}
+
+.header-evento strong {
+  font-size: 1.05em;
+  color: #4b2c20;
+  text-transform: capitalize; /* Inicial maiúscula automática */
+}
+
+/* Espaçamento e cor das datas e previsões */
+.info-plantio {
+  font-size: 0.9em;
+  color: #5c3a21;
+  margin-bottom: 4px;
+}
+
+.lista-colheitas {
+  margin: 0 0 10px 0;
+  padding-left: 15px; /* Alinha os emojis ✨ de forma organizada */
+  list-style-type: none; /* Remove os marcadores de lista padrão */
+  font-size: 0.9em;
+  color: #5c3a21;
+}
+
+/* Rodapé do cartão que isola e alinha o botão de excluir */
+.acoes {
+  display: flex;
+  justify-content: flex-end; /* Empurra a lixeira para o canto direito */
+  border-top: 1px dashed rgba(100, 57, 37, 0.15); /* Linha tracejada estilizada */
+  padding-top: 6px;
+}
+
+/* ========================================================
+   NOVO BOTÃO DE EXCLUSÃO (ESTILIZADO COM PIXEL ART)
+   ======================================================== */
+.btn-delete {
+  /* Dimensões exatas de uma lixeira individual baseada no arquivo de 270px */
+  width: 33.75px; 
+  height: 62px;   
+  background-image: url('recursos/lixeiraIcon.png'); /* Caminho da imagem da lixeira */
+  background-repeat: no-repeat;
+  background-color: transparent; /* Remove o fundo bege antigo */
+  border: none;                  /* Remove a borda marrom antiga */
+  cursor: pointer;
+  padding: 0;                    /* Zera o padding para não empurrar a imagem */
+  background-size: 270px 62px;
+  
+  /* Força o navegador a manter os pixels nítidos (estilo Stardew Valley) */
+  image-rendering: pixelated; 
+  
+  /* Efeito suave de clique */
+  transition: transform 0.1s ease; 
+}
+
+/* Efeito de clique físico (o botão encolhe de leve) */
+.btn-delete:active { 
+  transform: scale(0.9); 
+}
+
+/* ========================================================
+   ESTADO INICIAL: LIXEIRAS FECHADAS (METADE DIREITA DO ARQUIVO)
+   ======================================================== */
+.btn-delete[data-estacao="primavera"] { background-position: -135px 0px; }
+.btn-delete[data-estacao="verao"]     { background-position: -168.75px 0px; }
+.btn-delete[data-estacao="outono"]    { background-position: -202.5px 0px; }
+.btn-delete[data-estacao="inverno"]   { background-position: -236.25px 0px; }
+
+/* ========================================================
+   ESTADO HOVER: LIXEIRAS ABERTAS (METADE ESQUERDA DO ARQUIVO)
+   ======================================================== */
+.btn-delete[data-estacao="primavera"]:hover { background-position: 0px 0px; }
+.btn-delete[data-estacao="verao"]:hover     { background-position: -33.75px 0px; }
+.btn-delete[data-estacao="outono"]:hover    { background-position: -67.5px 0px; }
+.btn-delete[data-estacao="inverno"]:hover   { background-position: -101.25px 0px; }
+
 /* Botão dinâmico do painel esquerdo */
 #togglePessBtn {
   position: fixed;
@@ -544,8 +641,52 @@ dialog#modalPlantio {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+    flex-shrink: 0;
 }
 .btn-cancelar { background: #723333 !important; }
+
+/* ========================================================
+   ETIQUETA INFORMATIVA (TOOLTIP) - ESTILO STARDEW VALLEY
+   ======================================================== */
+
+/* O próprio botão agora serve de referência para a posição do balão */
+#btnPlantaAdulta {
+  position: relative;
+}
+
+/* O Balão Informativo (Invisível por padrão) */
+#btnPlantaAdulta::after {
+  content: attr(data-tooltip); /* Pega o texto direto do atributo data-tooltip do HTML */
+  position: absolute;
+  bottom: 140%;                /* Flutua perfeitamente logo acima do botão */
+  left: 50%;
+  transform: translateX(-50%) scale(0.9);
+  
+  /* Estilo Caixa de Diálogo Stardew Valley */
+  background-color: #fff3d1;   /* Fundo bege clássico */
+  color: #4a210d;              /* Texto marrom escuro */
+  border: 2px solid #643925;   /* Borda de "madeira" */
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;             /* Tamanho bom para leitura rápida */
+  line-height: 1.4;
+  width: 220px;                /* Largura ideal para não virar um textão vertical */
+  white-space: normal;         /* Permite quebra de linha automática */
+  text-align: center;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+  
+  /* Controle de transição suave */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 9999;               /* Fica acima de qualquer elemento do modal */
+}
+
+/* Mostra a etiqueta quando o usuário passa o mouse pelo botão */
+#btnPlantaAdulta:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) scale(1); /* Leve efeito de crescimento */
+}
 
 #infoObs{margin-top: 8px !important;
     font-style: italic !important;
