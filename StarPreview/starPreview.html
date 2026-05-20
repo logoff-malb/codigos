@@ -1080,10 +1080,9 @@ function criarEventoPlantio(item) {
         let anoFinal = sementeAtiva.anoFinalCalculado;
 
         // 2. TOLERÂNCIA ZERO PARA DADOS INCOMPLETOS:
-        // Se qualquer uma das variáveis cruciais de tempo estiver ausente ou inválida, aborta imediatamente.
         if (diaFinal === undefined || diaFinal === null || isNaN(diaFinal) || !estacaoFinal || anoFinal === undefined || anoFinal === null) {
             console.error("❌ Erro Crítico: Tentativa de criar evento abortada. Os dados calculados pelo validador dinâmico estão ausentes ou corrompidos.", { diaFinal, estacaoFinal, anoFinal });
-            return; // Interrompe a ação por completo
+            return; 
         }
 
         // Padroniza a primeira letra em maiúscula para exibição visual do card
@@ -1103,6 +1102,9 @@ function criarEventoPlantio(item) {
             diaColheita: sementeAtiva.diaColheita || null, 
             naEstufa: naEstufa,
             
+            // 🌟 CORREÇÃO REAL AQUI: O evento agora herda as estações permitidas originais do banco de dados/JSON do item
+            estacao: sementeAtiva.estacao || [],
+
             colheitas: [{
                 dia: diaFinal,
                 estacao: estacaoFinal,
@@ -1301,10 +1303,7 @@ window.excluirEventoPess = function(id) {
     });
 };
 
-// Ação interna do botão: avança o ciclo baseado no rebroto fixo
-// Ação interna do botão: avança o ciclo baseado no rebroto fixo e multiplicador do seletor
 window.recalcularProximaColheita = function(id) {
-    // 1. Localiza o evento atual no seu array global de eventos
     const cultivo = eventosPess.find(ev => ev.id === id);
     if (!cultivo) return;
 
@@ -1314,101 +1313,103 @@ window.recalcularProximaColheita = function(id) {
         if (!isNaN(diasAvanco) && diasAvanco > 0) {
             const seletorQtd = document.getElementById(`qtd-colheita-${id}`);
             const multiplicador = seletorQtd ? parseInt(seletorQtd.value, 10) : 1;
-            
-            // O intervalo de rebroto para árvores frutíferas é de 1 dia (uma colheita diária na estação)
-            // Se o jogador colheu 1x, soma 1 dia. Se colheu 3x acumuladas, soma 3 dias.
             const avancoTotal = diasAvanco * multiplicador;
 
-            // Filtro para identificar rigorosamente se o item é uma árvore frutífera ao ar livre
             const arvoresFrutiferas = ['pêssego', 'pessego', 'banana', 'cereja', 'damasco', 'laranja', 'maçã', 'maca', 'romã', 'roma'];
             const ehArvore = (Array.isArray(cultivo.tipo) && cultivo.tipo.includes('arvore')) || 
                              (diasAvanco === 1 && arvoresFrutiferas.includes(cultivo.nome.toLowerCase()));
 
-            // Lista de estações produtivas (vinda do JSON do cultivo)
-            const estacoesAceitas = Array.isArray(cultivo.estacao) 
-                ? cultivo.estacao.map(e => e.toLowerCase().trim()) 
-                : [String(cultivo.estacao || '').toLowerCase().trim()];
+            // Obtém e sanitiza as estações permitidas pelo JSON do cultivo
+            const estacoesBrutas = Array.isArray(cultivo.estacao) ? cultivo.estacao : (cultivo.estacao ? String(cultivo.estacao).split(',') : []);
+            const estacoesAceitas = estacoesBrutas.map(e => e.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+            const ehAmbienteInterno = cultivo.naEstufa || cultivo.naIlha || cultivo.nome.toLowerCase() === "fruta do cacto";
+
+            let atingiuFimDaVida = false;
 
             cultivo.colheitas.forEach(c => {
-                // Recupera os dados antigos do card (Dia 28, Verão, Ano 1)
+                if (atingiuFimDaVida) return;
+
                 const diaBase = (c.dia === undefined || c.dia === null || isNaN(c.dia)) ? 1 : parseInt(c.dia, 10);
                 const estacaoBase = c.estacao || "Primavera";
                 const anoBase = (c.ano === undefined || c.ano === null || isNaN(c.ano)) ? 1 : parseInt(c.ano, 10);
                 
-                // Calcula o próximo dia linearmente (ex: dia 28 + 1 dia = dia 29)
                 let proximoDia = diaBase + avancoTotal;
 
-                if (ehArvore && !cultivo.naEstufa && !cultivo.naIlha) {
-                    // 🌳 REGRA DE OURO RETROALIMENTADA: Interceptamos o estouro do calendário clássico
+                if (ehArvore && !ehAmbienteInterno) {
                     if (proximoDia > 28) {
-                        // Forçamos o reset rigoroso para o início do próximo ciclo produtivo
                         c.dia = 1;
-                        // Mantém a estação de colheita válida do JSON (Ex: "Verão")
                         const estacaoAlvo = estacoesAceitas[0] || estacaoBase.toLowerCase();
                         c.estacao = estacaoAlvo.charAt(0).toUpperCase() + estacaoAlvo.slice(1);
-                        // Salta explicitamente para o ano seguinte
                         c.ano = anoBase + 1;
                     } else {
-                        // Se não estourou os 28 dias, segue a soma linear dentro da estação
                         c.dia = proximoDia;
                         c.estacao = estacaoBase;
                         c.ano = anoBase;
                     }
                 } else {
-                    // COMPORTAMENTO PADRÃO: Para lavouras comuns ou estufas, o calendário muda de mês normalmente
+                    // Simula a próxima data usando a função oficial de calendário
                     const resultadoNovo = avancarTempoCalendario(diaBase, avancoTotal, estacaoBase);
-                    c.dia = resultadoNovo.dia;
-                    c.estacao = resultadoNovo.estacao;
-                    
-                    // 🌟 CRUCIAL: Identifica se a rotação de estações deu uma volta completa no ano
-                    const ordemEstacoes = ['primavera', 'verao', 'outono', 'inverno'];
-                    const idxAntes = ordemEstacoes.indexOf(estacaoBase.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
-                    const idxDepois = ordemEstacoes.indexOf(resultadoNovo.estacao.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+                    const estacaoNovaLimpa = resultadoNovo.estacao.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-                    // Se a nova estação vem ANTES da estação antiga na linha do tempo (Ex: Inverno -> Primavera), mudou o ano!
-                    if (idxAntes !== -1 && idxDepois !== -1 && idxDepois < idxAntes) {
-                        c.ano = anoBase + 1;
+                    // 🌟 TRAVA REAL DE GRAVAÇÃO: Se for ao ar livre e a nova estação calculada NÃO for aceita pelo JSON, o cultivo para aqui
+                    if (!ehAmbienteInterno && estacoesAceitas.length > 0 && estacoesAceitas[0] !== '' && !estacoesAceitas.includes(estacaoNovaLimpa)) {
+                        atingiuFimDaVida = true;
                     } else {
-                        c.ano = anoBase;
+                        c.dia = resultadoNovo.dia;
+                        c.estacao = resultadoNovo.estacao;
+
+                        const ordemEstacoes = ['primavera', 'verao', 'outono', 'inverno'];
+                        const idxAntes = ordemEstacoes.indexOf(estacaoBase.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+                        const idxDepois = ordemEstacoes.indexOf(estacaoNovaLimpa);
+
+                        if (idxAntes !== -1 && idxDepois !== -1 && idxDepois < idxAntes) {
+                            // Planta comum ao ar livre não dá a volta no ano, ela morre antes.
+                            if (!ehAmbienteInterno) {
+                                atingiuFimDaVida = true;
+                            } else {
+                                c.ano = anoBase + 1;
+                            }
+                        } else {
+                            c.ano = anoBase;
+                        }
                     }
                 }
-                
                 c.tipo = "Produção"; 
             });
 
-            cultivo.status = "Produzindo";
+            if (atingiuFimDaVida) {
+                cultivo.status = "Fora de Época";
+            } else {
+                cultivo.status = "Produzindo";
+            }
             
-            // Sincroniza a propriedade global do card imediatamente para não haver conflitos de renderização
             if (cultivo.colheitas[0]?.ano) {
                 cultivo.anoFinalCalculado = cultivo.colheitas[0].ano;
             }
         }
     }
 
-    // Salva os novos dados e redesenha o painel com as novas datas
     salvarPessStorage();
     renderizarPainelPess();
 
     if (typeof Swal !== 'undefined') {
         Swal.fire({
             toast: true, position: 'top-end', showConfirmButton: false, timer: 2000,
-            icon: 'success', title: 'Colheita Registrada!', background: '#fff3d1', color: '#4a210d', iconColor: '#4a210d'
+            icon: 'success', title: 'Ação Atualizada!', background: '#fff3d1', color: '#4a210d', iconColor: '#4a210d'
         });
     }
 };
+
 // ========================================================
 // 3. SUB-FUNÇÕES DE MONTAGEM
 // ========================================================
-
-// Transforma os dados brutos de Plantio no HTML dos cards //ultima versão com lógica de arvore e estufa
 function gerarHtmlPlantio(ev) {
     const statusClean = ev.status ? ev.status.toLowerCase().replace(/\s/g, '-') : 'pendente';
     
     const estacaoEvento = (ev.colheitas && ev.colheitas[0]?.estacao) 
-        ? ev.colheitas[0].estacao.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+        ? ev.colheitas[0].estacao.toLowerCase() 
         : 'primavera';
 
-    // 🛠️ CORREÇÃO VISUAL: Garante que o Ano calculated apareça na lista HTML
     const colheitasHTML = (ev.colheitas || []).map(c => {
         const diaTratado = (c.dia === undefined || c.dia === null || isNaN(c.dia)) ? 1 : c.dia;
         const estacaoTratada = c.estacao || 'Primavera';
@@ -1430,43 +1431,39 @@ function gerarHtmlPlantio(ev) {
                 ? parseInt(ultimaColheita.dia, 10) 
                 : 1;
 
-            const diaDaProximaColheita = diaDaColheitaAtual + intervaloRebroto;
-
             const arvoresFrutiferas = ['pêssego', 'pessego', 'banana', 'cereja', 'damasco', 'laranja', 'maçã', 'maca', 'romã', 'roma'];
             const renderEhArvore = (Array.isArray(ev.tipo) && ev.tipo.includes('arvore')) || 
                                    (intervaloRebroto === 1 && arvoresFrutiferas.includes(ev.nome.toLowerCase()));
 
-            // 🛠️ LÓGICA SUA ORIGINAL
-            let foraDeEpoca = false;
+            // Se o status no LocalStorage já diz que está fora de época, bloqueia direto
+            let foraDeEpoca = (ev.status === "Fora de Época" || ev.status === "fora-de-epoca");
 
-            if (!renderEhArvore) {
-                if (!ev.naEstufa && !ev.naIlha) {
-                    // Se passar de 28 dias, simulamos a próxima estação antes de bloquear
-                    if (diaDaProximaColheita > 28) {
-                        const estacaoUltimaNorm = ultimaColheita && ultimaColheita.estacao 
-                            ? ultimaColheita.estacao.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() 
-                            : 'primavera';
+            if (!foraDeEpoca && !renderEhArvore) {
+                const ehAmbienteInterno = ev.naEstufa || ev.naIlha || ev.nome.toLowerCase() === "fruta do cacto";
 
-                        const ordEstacoes = ['primavera', 'verao', 'outono', 'inverno'];
-                        const idxAtual = ordEstacoes.indexOf(estacaoUltimaNorm);
-                        const proximaEstacao = idxAtual !== -1 ? ordEstacoes[(idxAtual + 1) % 4] : 'primavera';
+                if (!ehAmbienteInterno) {
+                    const estacoesBrutas = Array.isArray(ev.estacao) ? ev.estacao : String(ev.estacao || '').split(',');
+                    
+                    if (estacoesBrutas.length > 0 && estacoesBrutas[0] !== '') {
+                        const estacoesSuportadas = estacoesBrutas.map(e => e.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+                        const estacaoCardAtual = ultimaColheita ? ultimaColheita.estacao : estacaoEvento;
+                        
+                        // 🌟 SIMULAÇÃO DE EXIBIÇÃO: Pergunta para a função do calendário qual será o próximo mês/estação
+                        const simulacaoProxima = avancarTempoCalendario(diaDaColheitaAtual, intervaloRebroto, estacaoCardAtual);
+                        let estacaoDaProximaColheita = simulacaoProxima.estacao.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-                        const estacoesSuportadas = Array.isArray(ev.estacao) 
-                            ? ev.estacao.map(e => e.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()) 
-                            : [String(ev.estacao || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()];
-
-                        // Se a planta aceitar a próxima estação (como as multiestacionais/Cacto), foraDeEpoca continua false
-                        foraDeEpoca = !estacoesSuportadas.includes(proximaEstacao);
+                        // REGRA DE OURO: O botão desativa se a PRÓXIMA colheita cair em estação inviável
+                        if (!estacoesSuportadas.includes(estacaoDaProximaColheita)) {
+                            foraDeEpoca = true;
+                        }
                     }
                 }
             }
 
             if (foraDeEpoca) {
-                botaoColheitaHTML = `<button class="btn-colheita-recalcular desativado" disabled title="Este item não produz frutos nesta estação">🍂 Fora de Época</button>`;
+                botaoColheitaHTML = `<button class="btn-colheita-recalcular desativado" disabled title="Este item encerrou seu ciclo de produção">🍂 Fora de Época</button>`;
             } else {
                 if (renderEhArvore) {
-                    // Para árvores: o rebroto retroalimentado cuida de saltar os anos no dia 28,
-                    // então a validação dos seletores 2x/3x só precisa olhar para o Dia 28 do mês atual.
                     const ultrapassa2x = (diaDaColheitaAtual + (intervaloRebroto * 2)) > 28 && !ev.naEstufa;
                     const ultrapassa3x = (diaDaColheitaAtual + (intervaloRebroto * 3)) > 28 && !ev.naEstufa;
 
