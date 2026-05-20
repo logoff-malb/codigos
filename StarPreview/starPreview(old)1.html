@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Starpreview</title>
-  <link rel="stylesheet" type="text/css" href="../estilo.css">
+  <link rel="stylesheet" type="text/css" href="estilo.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
   <!--calendario e variaveis globais-->>
@@ -125,7 +125,7 @@ if (painel && painel.classList.contains("retraido")) {
   function trocarCalendario(estacao) {
     const calendario = document.getElementById("calendario");
     if (calendario) {
-      calendario.style.backgroundImage = `url("../recursos/cal_${estacao}.png")`;
+      calendario.style.backgroundImage = `url("recursos/cal_${estacao}.png")`;
     }
     estacaoAtual = estacao;
     gerarDias();
@@ -152,6 +152,47 @@ if (painel && painel.classList.contains("retraido")) {
       validarPlantioDinamico();
     }
   });
+
+  function validarPlantioDinamico() {
+    if (!itemSelecionadoPlantio) return;
+    const diaIn = parseInt(document.getElementById('diaPlantio').value) || 1;
+    const estIn = document.getElementById('estacaoPlantio').value.toLowerCase();
+    const prot = document.getElementById('checkEstufa').checked || document.getElementById('checkIlha').checked;
+
+    let ciclo = plantaAdultaAtiva 
+      ? (parseInt(itemSelecionadoPlantio.diaColheita) || 1) 
+      : (parseInt(itemSelecionadoPlantio.diaPlantio) || 1);
+
+    // MATEMÁTICA: dia + ciclo - 1
+    let diaFinal = diaIn + (ciclo - 1);
+    let estacaoFinal = estIn;
+
+    if (diaFinal > 28) {
+      diaFinal -= 28;
+      const prox = { "primavera": "verao", "verao": "outono", "outono": "inverno", "inverno": "primavera" };
+      estacaoFinal = prox[estacaoFinal] || estacaoFinal;
+    }
+
+    const aceitas = Array.isArray(itemSelecionadoPlantio.estacao) 
+      ? itemSelecionadoPlantio.estacao.map(e => e.toLowerCase()) 
+      : [itemSelecionadoPlantio.estacao.toLowerCase()];
+
+    const viavel = prot || (aceitas.includes(estIn) && aceitas.includes(estacaoFinal));
+    const msg = document.getElementById('msgViabilidade');
+    const btnC = document.getElementById('confirmarPlantio');
+
+    if (viavel) {
+      const estExib = estacaoFinal.charAt(0).toUpperCase() + estacaoFinal.slice(1);
+      msg.innerHTML = `<span style="color: green;">✅ Viável! Colheita: <b>Dia ${diaFinal} de ${estExib}</b></span>`;
+      if (btnC) btnC.disabled = false;
+      itemSelecionadoPlantio.calc_dia = diaFinal;
+      itemSelecionadoPlantio.calc_est = estExib;
+    } else {
+      msg.innerHTML = `<span style="color: red;">❌ Inviável! Morre na estação.</span>`;
+      if (btnC) btnC.disabled = true;
+    }
+  }
+
   function abrirModalPlantio() {
     plantaAdultaAtiva = false;
     itemSelecionadoPlantio = null;
@@ -266,7 +307,7 @@ async function carregarJSON() {
 /* --- CARREGAMENTO DO JSON --- */
 async function carregarJSON() {
     try {
-        const resposta = await fetch('../produtos_stardew.json');
+        const resposta = await fetch('produtos_stardew.json');
         if (!resposta.ok) throw new Error('Erro ao carregar o JSON');
         jsonItens = await resposta.json();
     } catch (erro) {
@@ -294,21 +335,21 @@ window.addEventListener("DOMContentLoaded", () => {
     <div class="menu-funcionalidades">
       <div class="bloco-funcao">
         <button class="botao-funcao btnPlantio" onclick="abrirModalPlantio()">
-          <img src="../recursos/enxada.png" class="enxada-estatica" alt="Plantio" title="Plantio">
-          <img src="../recursos/enxada.gif" class="enxada-animada" alt="Plantio animado">
+          <img src="recursos/enxada.png" class="enxada-estatica" alt="Plantio" title="Plantio">
+          <img src="recursos/enxada.gif" class="enxada-animada" alt="Plantio animado">
         </button>
         <div class="rotulo-funcao">Plantio</div>
       </div>
 
       <div class="bloco-funcao">
         <button class="botao-funcao btnProcessamento" onclick="ativarFuncao('processamento')">
-          <img src="../recursos/jarra.png" alt="Processamento" title="Processamento"></button>
+          <img src="recursos/jarra.png" alt="Processamento" title="Processamento"></button>
         <div class="rotulo-funcao">Processamento</div>
       </div>
 
       <!-- Novo botão Player -->
       <button type="button" class="btn-player" id="btnCadastro">
-        <img src="../recursos/player.png" alt="Player">
+        <img src="recursos/player.png" alt="Player">
         <span>Player</span>
       </button>
 
@@ -325,7 +366,7 @@ window.addEventListener("DOMContentLoaded", () => {
     </div>
 
     <div class="imagem-calendario" id="calendario" 
-         style="background-image: url('../recursos/cal_primavera.png');" 
+         style="background-image: url('recursos/cal_primavera.png');" 
          aria-label="Calendário de Primavera">
     </div>
   </div>
@@ -435,7 +476,7 @@ window.addEventListener("DOMContentLoaded", () => {
           <h3 id="nomeItem" style="margin: 0; font-family: 'Stardew', sans-serif;">Selecione</h3>
           <div id="containerPreco" style="display: flex; align-items: center; gap: 4px;">
             <span id="valorTexto" style="font-weight: bold; color: #4b2c20;">0</span>
-            <img src="../recursos/gold.png" alt="Ouro" style="width: 22px; height: 22px; object-fit: contain;"> 
+            <img src="recursos/gold.png" alt="Ouro" style="width: 22px; height: 22px; object-fit: contain;"> 
           </div>
         </div>
       </div>
@@ -480,7 +521,7 @@ window.addEventListener("DOMContentLoaded", () => {
       <!-- Rodapé de Ações -->
       <div class="botoes-modal-plantio" style="display: flex; justify-content: flex-end; gap: 10px; align-items: center;">
         <div style="display: flex; align-items: center; gap: 8px;">
-          <img id="statusAdultaIcon" src="../recursos/arvore-adulta.png" style="display: none;">
+          <img id="statusAdultaIcon" src="recursos/arvore-adulta.png" style="display: none;">
           <button type="button" id="btnPlantaAdulta" data-tooltip="Adiciona o cultivo em fase adulta, calculando apenas as colheitas">planta Adulta</button>
         </div>
         <button id="confirmarPlantio" disabled>Criar Evento</button>
@@ -823,10 +864,10 @@ function abrirModalPlantio() {
     if (nomeItemEl) nomeItemEl.textContent = "Selecione";
     
     if (imgItemEl) {
-        imgItemEl.src = "../recursos/enxada.gif";
+        imgItemEl.src = "recursos/enxada.gif";
         setTimeout(() => {
             if (itemSelecionadoPlantio === null) {
-                imgItemEl.src = "../recursos/enxada.png";
+                imgItemEl.src = "recursos/enxada.png";
             }
         }, 1000); 
     } 
@@ -1160,96 +1201,47 @@ function validarPlantioDinamico() {
     btnConfirmar.disabled = !viavel;
 }
 function criarEventoPlantio(item) {
-    try {
-        const diaInput = document.getElementById('diaPlantio');
-        const estacaoInput = document.getElementById('estacaoPlantio');
-        
-        const diaVal = diaInput ? parseInt(diaInput.value, 10) : 1;
-        const estacaoVal = estacaoInput ? estacaoInput.value : 'primavera';
-        const anoVal = (typeof personagem !== 'undefined' ? (personagem.ano || 1) : 1);
+    const diaVal = parseInt(document.getElementById('diaPlantio').value, 10);
+    const estacaoVal = document.getElementById('estacaoPlantio').value;
+    const anoVal = (typeof personagem !== 'undefined' ? (personagem.ano || 1) : 1);
 
-        // Ajustado para bater exatamente com os IDs do seu modal: 'checkEstufa' e 'checkIlha'
-        const chkEstufa = document.getElementById('checkEstufa');
-        const chkIlha = document.getElementById('checkIlha');
-        const naEstufa = (chkEstufa?.checked || chkIlha?.checked) || false;
+    // USANDO AS PROPRIEDADES QUE JÁ SALVAMOS NO OBJETO 'item' DURANTE A VALIDAÇÃO
+    // Evitamos recalcular tudo aqui. Apenas lemos o que o modal já validou.
+    const diaFinal = item.diaFinalCalculado; 
+    const estacaoFinal = item.estacaoFinalCalculada;
 
-        // ========================================================
-        // 🛠️ USO DOS CÁLCULOS REAIS GERADOS PELO SEU MODAL (.calc_dia)
-        // ========================================================
-        // Buscamos primeiro na variável global ativa do modal para garantir dados atualizados
-        const sementeAtiva = (typeof itemSelecionadoPlantio !== 'undefined' && itemSelecionadoPlantio) 
-            ? itemSelecionadoPlantio 
-            : item;
+    const novoEvento = {
+        id: Date.now(),
+        idItem: item.id, // Mantendo o padrão de ID do seu JSON
+        nome: item.nome,
+        dataPlantio: `Dia ${diaVal} - ${estacaoVal} - Ano ${anoVal}`,
+        status: "Em andamento",
+        colheitas: [{
+            dia: diaFinal,
+            estacao: estacaoFinal,
+            // Usamos a sua variável global 'plantaAdultaAtiva' para definir o rótulo
+            tipo: plantaAdultaAtiva ? "Produção" : "Colheita"
+        }]
+    };
 
-        // Resgata os nomes exatos de propriedade salvos pela sua função validarPlantioDinamico()
-        let diaFinal = sementeAtiva.calc_dia; 
-        let estacaoFinal = sementeAtiva.calc_est || estacaoVal;
-
-        // Se por um acaso o modal não salvou o cálculo no objeto, pegamos direto do HTML da mensagem
-        if (diaFinal === undefined || diaFinal === null) {
-            const msgViabilidade = document.getElementById('msgViabilidade');
-            if (msgViabilidade) {
-                const matchDia = msgViabilidade.textContent.match(/Dia\s+(\d+)/i);
-                const matchEst = msgViabilidade.textContent.match(/de\s+([a-zA-ZçÇãÃáÁóÓíÍ]+)/i);
-                
-                if (matchDia && matchDia[1]) diaFinal = parseInt(matchDia[1], 10);
-                if (matchEst && matchEst[1]) estacaoFinal = matchEst[1].trim();
-            }
-        }
-
-        // Fallback de segurança definitivo: se nada acima funcionar, faz o cálculo básico aqui
-        if (diaFinal === undefined || diaFinal === null) {
-            let ciclo = (typeof plantaAdultaAtiva !== 'undefined' && plantaAdultaAtiva) 
-                ? (parseInt(sementeAtiva.diaColheita, 10) || 1) 
-                : (parseInt(sementeAtiva.diaPlantio, 10) || 1);
-            
-            let resultadoBruto = diaVal + (ciclo - 1);
-            if (resultadoBruto > 28) resultadoBruto -= 28;
-            diaFinal = resultadoBruto;
-        }
-
-        const novoEvento = {
-            id: Date.now(),
-            idItem: sementeAtiva.id, 
-            nome: sementeAtiva.nome,
-            dataPlantio: `Dia ${diaVal} - ${estacaoVal} - Ano ${anoVal}`,
-            status: "Em andamento",
-            
-            // Grava o intervalo dinâmico vindo diretamente do seu JSON (ex: Oxicoco = 5)
-            diaColheita: sementeAtiva.diaColheita || null, 
-            naEstufa: naEstufa,
-            
-            colheitas: [{
-                dia: diaFinal,
-                estacao: estacaoFinal,
-                tipo: (typeof plantaAdultaAtiva !== 'undefined' && plantaAdultaAtiva) ? "Produção" : "Colheita"
-            }]
-        };
-
-        if (typeof eventosPess !== 'undefined') {
-            eventosPess.push(novoEvento);
-            if (typeof salvarPessStorage === 'function') salvarPessStorage();
-            if (typeof renderizarPainelPess === 'function') renderizarPainelPess();
-        }
-
-        if (typeof fecharModalPlantioLimpo === 'function') {
-            fecharModalPlantioLimpo();
-        }
-
-    } catch (erro) {
-        console.error("Erro ao tentar criar o evento de plantio:", erro);
+    if (typeof eventosPess !== 'undefined') {
+        eventosPess.push(novoEvento);
+        if (typeof salvarPessStorage === 'function') salvarPessStorage();
+        if (typeof renderizarPainelPess === 'function') renderizarPainelPess();
     }
+
+    // Chama a função de fechar que limpa o estado
+    fecharModalPlantioLimpo();
 }
 </script>
 
 <!-- PAINEL LATERAL ESQUERDO (Eventos Personalizados) -->
 <script>
-// ========================================================
-// 1. GERENCIAMENTO DE STORAGE
-// ========================================================
+// Função para garantir que os dados estejam atualizados
 function carregarPessStorage() {
     try {
         const raw = localStorage.getItem(STORAGE_KEY_PESS);
+        // Se STORAGE_KEY_PESS não existir na tag global, evita o crash
         eventosPess = raw ? JSON.parse(raw) : [];
     } catch (e) {
         console.error("Erro ao carregar localStorage:", e);
@@ -1261,13 +1253,11 @@ function salvarPessStorage() {
     localStorage.setItem(STORAGE_KEY_PESS, JSON.stringify(eventosPess));
 }
 
-// ========================================================
-// 2. FUNÇÕES COMPLEMENTARES (ESCOPO GLOBAL)
-// ========================================================
+// Função de exclusão (precisa estar no escopo global para o onclick funcionar)
 window.excluirEventoPess = function(id) {
     Swal.fire({
         title: "Remover plantio?",
-        text: "Isso apagará o evento.",
+        text: "isso apagará o evento.",
         icon: "warning",
         showCancelButton: true,
         confirmButtonColor: "#d33",
@@ -1283,129 +1273,9 @@ window.excluirEventoPess = function(id) {
     });
 };
 
-// Ação interna do botão: avança o ciclo baseado no rebroto fixo
-window.recalcularProximaColheita = function(id) {
-    const cultivo = eventosPess.find(ev => ev.id === id);
-    if (!cultivo) return;
-
-    if (cultivo.colheitas && cultivo.colheitas.length > 0) {
-        const diasAvanco = parseInt(cultivo.diaColheita, 10); 
-        
-        if (!isNaN(diasAvanco) && diasAvanco > 0) {
-            cultivo.colheitas.forEach(c => {
-                // Se o dia antigo armazenado for inválido/undefined, limpa ele assumindo 1 antes de somar
-                const diaBase = (c.dia === undefined || c.dia === null || isNaN(c.dia)) ? 1 : parseInt(c.dia, 10);
-                
-                c.dia = diaBase + diasAvanco;
-                c.tipo = "Produção"; 
-            });
-
-            cultivo.status = "Produzindo";
-        }
-    }
-
-    salvarPessStorage();
-    renderizarPainelPess();
-
-    if (typeof Swal !== 'undefined') {
-        Swal.fire({
-            toast: true, position: 'top-end', showConfirmButton: false, timer: 2000,
-            icon: 'success', title: 'Colheita Registrada!', background: '#fff3d1', color: '#4a210d', iconColor: '#4a210d'
-        });
-    }
-};
-
-// ========================================================
-// 3. SUB-FUNÇÕES DE MONTAGEM
-// ========================================================
-
-// Transforma os dados brutos de Plantio no HTML dos cards
-function gerarHtmlPlantio(ev) {
-    const statusClean = ev.status ? ev.status.toLowerCase().replace(/\s/g, '-') : 'pendente';
-    
-    const estacaoEvento = (ev.colheitas && ev.colheitas[0]?.estacao) 
-        ? ev.colheitas[0].estacao.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
-        : 'primavera';
-
-    // --- BLINDAGEM CONTRA UNDEFINED NA LISTA ---
-    const colheitasHTML = (ev.colheitas || []).map(c => {
-        const diaTratado = (c.dia === undefined || c.dia === null || isNaN(c.dia)) ? 1 : c.dia;
-        const estacaoTratada = c.estacao || 'Primavera';
-        const tipoTratado = c.tipo || 'Colheita';
-        
-        return `<li>✨ ${tipoTratado}: Dia ${diaTratado} (${estacaoTratada})</li>`;
-    }).join('') || '<li>Sem previsão.</li>';
-
-    let botaoColheitaHTML = '';
-    
-    // Verifica se a semente possui intervalo de rebroto válido no JSON original
-    if (ev.diaColheita !== undefined && ev.diaColheita !== null && ev.diaColheita !== "") {
-        const intervaloRebroto = parseInt(ev.diaColheita, 10);
-        
-        if (!isNaN(intervaloRebroto) && intervaloRebroto > 0) {
-            const ultimaColheita = ev.colheitas && ev.colheitas.length > 0 ? ev.colheitas[ev.colheitas.length - 1] : null;
-            
-            const diaDaColheitaAtual = (ultimaColheita && ultimaColheita.dia !== undefined && ultimaColheita.dia !== null && !isNaN(ultimaColheita.dia)) 
-                ? parseInt(ultimaColheita.dia, 10) 
-                : 1;
-
-            // --- 🛠️ TRAVA PREDITIVA APLICADA AQUI ---
-            // Em vez de checar o dia atual, checa se a PRÓXIMA colheita vai estourar o limite de 28 dias
-            const diaDaProximaColheita = diaDaColheitaAtual + intervaloRebroto;
-            const foraDeEpoca = diaDaProximaColheita > 28 && !ev.naEstufa;
-
-            if (foraDeEpoca) {
-                botaoColheitaHTML = `<button class="btn-colheita-recalcular desativado" disabled title="essa foi a ultima colheita antes do fim da estação">🍂 Fora de Época</button>`;
-            } else {
-                botaoColheitaHTML = `<button class="btn-colheita-recalcular" onclick="recalcularProximaColheita(${ev.id})">🌾 Colhido</button>`;
-            }
-        } 
-    }
-
-    return `
-        <div class="caixa-evento animated fadeIn">
-            <div class="header-evento">
-                <strong>${ev.nome}</strong>
-                <span class="status ${statusClean}">${ev.status || 'Pendente'}</span>
-            </div>
-            <div class="info-plantio">📅 Plantio: ${ev.dataPlantio}</div>
-            <ul class="lista-colheitas">${colheitasHTML}</ul>
-            <div class="acoes" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                <div class="acoes-esquerda">
-                    ${botaoColheitaHTML}
-                </div>
-                <div class="acoes-direita">
-                    <button class="btn-delete" data-estacao="${estacaoEvento}" onclick="excluirEventoPess(${ev.id})"></button>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-function gerarHtmlProcessamento(ev) {
-    return `
-        <div class="caixa-evento animated fadeIn secao-processamento">
-            <div class="header-evento">
-                <strong>${ev.nomeProduto}</strong>
-                <span class="status em-andamento">Processando</span>
-            </div>
-            <div class="info-plantio">⚙️ Máquina: ${ev.maquina}</div>
-            <ul class="lista-colheitas">
-                <li>⏱️ Pronto em: ${ev.diasRestantes} dias</li>
-            </ul>
-            <div class="acoes" style="display: flex; justify-content: flex-end; align-items: center; margin-top: 8px;">
-                <button class="btn-delete" data-estacao="item" onclick="excluirProcessamento(${ev.id})"></button>
-            </div>
-        </div>
-    `;
-}
-
-// ========================================================
-// 4. A FUNÇÃO CENTRAL (ORQUESTRADORA REFORMULADA)
-// ========================================================
 function renderizarPainelPess() {
     carregarPessStorage();
-    
+  
     const container = document.getElementById("listaPess");
     if (!container) return;
 
@@ -1414,48 +1284,69 @@ function renderizarPainelPess() {
     if (eventosPess.length === 0) {
         container.innerHTML = `
             <div style="padding: 20px; text-align: center; color: #888;">
-                <p>📜</p>
-                <p style="font-size: 0.85em; font-style: italic;">Nenhuma atividade ativa.</p>
+                <p>🌱</p>
+                <p style="font-size: 0.85em; font-style: italic;">Nenhum plantio ativo.</p>
             </div>`;
         return;
     }
 
-    if (eventosPess.length > 0) {
-        const tituloPlantio = document.createElement("div");
-        tituloPlantio.innerHTML = `<h3 style="font-size: 0.9em; margin: 10px 0 5px 5px; color: #4a210d;">🌱 plantio</h3>`;
-        container.appendChild(tituloPlantio);
+    eventosPess.forEach(ev => {
+        const box = document.createElement("div");
+        box.className = "caixa-evento animated fadeIn";
+        
+        // Proteção contra dados incompletos
+        const statusClean = ev.status ? ev.status.toLowerCase().replace(/\s/g, '-') : 'pendente';
+        
+        // Extrai a estação da primeira colheita (caso exista), padroniza em minúsculas e remove o acento de 'verão' e 'primavera' se houver
+        const estacaoEvento = (ev.colheitas && ev.colheitas[0]?.estacao) 
+            ? ev.colheitas[0].estacao.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+            : 'primavera';
 
-        eventosPess.forEach(ev => {
-            const tempDiv = document.createElement("div");
-            tempDiv.innerHTML = gerarHtmlPlantio(ev);
-            container.appendChild(tempDiv.firstElementChild);
-        });
-    }
+        const colheitasHTML = (ev.colheitas || []).map(c => 
+            `<li>✨ ${c.tipo}: Dia ${c.dia} (${c.estacao})</li>`
+        ).join('') || '<li>Sem previsão.</li>';
+
+        box.innerHTML = `
+            <div class="header-evento">
+                <strong>${ev.nome}</strong>
+                <span class="status ${statusClean}">${ev.status || 'Pendente'}</span>
+            </div>
+            <div class="info-plantio">📅 Plantio: ${ev.dataPlantio}</div>
+            <ul class="lista-colheitas">${colheitasHTML}</ul>
+            <div class="acoes">
+                <button class="btn-delete" data-estacao="${estacaoEvento}" onclick="excluirEventoPess(${ev.id})"></button>
+            </div>
+        `;
+        container.appendChild(box);
+    });
 }
 
-// ========================================================
-// 5. INICIALIZAÇÃO DO PAINEL
-// ========================================================
-window.addEventListener("DOMContentLoaded", () => {
+  /* --- INICIALIZAÇÃO DO PAINEL --- */
+  window.addEventListener("DOMContentLoaded", () => {
     const btnToggle = document.getElementById("togglePessBtn");
     const painel = document.getElementById("painelPess");
 
     if (btnToggle && painel) {
+        // Adicionado o (e) aqui para capturar o evento de clique
         btnToggle.onclick = (e) => {
-            e.stopPropagation(); 
+            e.stopPropagation(); // 👈 ISSO AQUI impede que o clique suba até o document e feche o painel direito por tabela!
+            
             painel.classList.toggle("retraido");
             
             if (painel.classList.contains("retraido")) {
+                // Se fechou, o botão volta para a borda esquerda da tela
                 btnToggle.style.left = "0px";
                 btnToggle.innerHTML = "<span>❯📜</span>";
             } else {
+                // Se abriu, o botão é empurrado exatamente para a largura do painel (300px)
                 btnToggle.style.left = "300px";
                 btnToggle.innerHTML = "<span>❮📜</span>";
             }
         };
     }
+    // 2. Renderiza os dados iniciais
     renderizarPainelPess();
 });
 </script>
 </body>
-</html>         
+</html>

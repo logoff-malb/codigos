@@ -568,19 +568,35 @@ dialog#modalPlantio {
 }
 
 /* O container interno simula a caixa de diálogo do jogo */
+/* Garante que o corpo do modal ocupe a altura inteira disponível */
 .modal-conteudo-plantio {
-    display: flex;
-    width: 600px;
-    height: 450px;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important; /* Força os filhos (a barra) a esticarem até o chão */
+    height: 100% !important;
+    min-height: 400px; /* Alinhe com a altura padrão que o seu modal já tem */
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-
+/* A Barra Lateral perfeitamente ajustada */
 .modal-barra-lateral-plantio {
-    background: rgba(100, 57, 37, 0.1);
-    padding: 20px;
-    width: 200px;
-    text-align: center;
-    border-right: 3px solid #643925;
+    background: rgba(100, 57, 37, 0.1) !important;
+    padding: 15px !important;
+    width: 200px !important;
+    text-align: center !important;
+    border-right: 3px solid #643925 !important;
+    
+    /* Faz ela preencher a altura total do elemento pai (.modal-conteudo-plantio) */
+    align-self: stretch !important; 
+    box-sizing: border-box !important;
+    
+    /* Organização interna dos elementos */
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 15px !important;
 }
 
 .modal-barra-lateral-plantio img {
@@ -607,8 +623,90 @@ dialog#modalPlantio {
     padding: 15px;
     display: flex;
     flex-direction: column;
+    user-select: none;
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none;    /* Firefox */
+    -ms-user-select: none;     /* IE/Edge */
+}
+/* 1. Mudamos o container para 'row' (lado a lado) e aumentamos a largura máxima */
+/* 1. Container principal: Alinha os cards lado a lado e os mantém no topo */
+#containerLojasSementes {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center;
+    align-items: flex-start; /* Impede que os cards estiquem verticalmente */
+    gap: 10px;
+    width: 100%;
+    max-width: 100% !important;
+    margin-top: 18px; /* Distância ideal do valor da abóbora acima */
+    box-sizing: border-box;
 }
 
+/* 2. O CARD UNIFICADO: Ajustado para eliminar o espaço vazio interno */
+#containerLojasSementes > div {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center;
+    justify-content: flex-start; /* Agrupa o conteúdo no topo do card */
+    
+    background: #fff !important;
+    border: 2px solid #4b2c20 !important;
+    border-radius: 8px !important;
+    
+    /* Controle preciso do espaço interno */
+    padding: 6px 4px 5px 4px !important; 
+    min-width: 54px;
+    height: 58px !important; /* Fixa uma altura compacta ideal para o card */
+    box-sizing: border-box;
+}
+
+/* 3. Posicionamento do avatar do NPC */
+#containerLojasSementes > div > img[title] {
+    width: 32px !important;
+    height: 32px !important;
+    object-fit: contain;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* 4. Linha do Preço: Acoplada perfeitamente na base do card */
+#containerLojasSementes > div > div {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-size: 0.75rem !important;
+    font-weight: bold;
+    color: #4b2c20;
+    width: 100%;
+    
+    margin-top: -8px !important; /* Espaço sutil entre o avatar e a divisória */
+    padding-top: 2px !important;
+    border-top: 1px dashed rgba(75, 44, 32, 0.25) !important; /* Divisória delicada */
+}
+
+/* 5. RESET DAS BORDAS INTERNAS: Mantém as moedas e caixas sem bordas sobressalentes */
+#containerLojasSementes > div div,
+#containerLojasSementes > div img {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+
+/* 6. Ajuste milimétrico da moedinha de ouro */
+#containerLojasSementes > div > div img {
+    width: 14px !important;
+    height: 14px !important;
+    object-fit: contain;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Evita distorções causadas por margens automáticas do JS */
+#containerLojasSementes div[style*="margin-left: auto"] {
+    margin-left: 0 !important;
+}
 #listaItens {
     flex: 1;
     overflow-y: auto;
