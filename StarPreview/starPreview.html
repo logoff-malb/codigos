@@ -157,6 +157,8 @@ function abrirModalPlantio() {
     modal.showModal();
     if (typeof atualizarListaItensPlantio === "function") atualizarListaItensPlantio();
   }
+ 
+
 }
 
 function fecharModalPlantioLimpo() {
@@ -432,7 +434,7 @@ window.addEventListener("DOMContentLoaded", () => {
 </div>
       
       <!-- Bloco de Informações Dinâmicas (Estilo Caixa de Destaque) -->
-      <div id="infoCultivoContainer" style="margin-top: 15px; padding: 10px; border-radius: 4px; border: 1px solid #643925; background: rgba(255,255,255,0.3); font-size: 0.9em; line-height: 1.4; color: #4b2c20; min-height: 100px;">
+      <div id="infoCultivoContainer">
         <p id="infoCrescimento" style="margin-bottom: 5px; font-weight: bold;"></p>
         <p id="infoRecolheita" style="margin-bottom: 5px; font-weight: bold; color: #2e5a27;"></p>
         <p id="infoObs" style="margin-top: 8px; font-style: italic; color: #7a4a35; border-top: 1px solid rgba(100, 57, 37, 0.2); padding-top: 5px; display: none;"></p>
@@ -462,7 +464,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   <ul id="listaItens"></ul>
 
-  <div id="feedbackViabilidade" style="margin: 5px 0 10px 0; padding: 10px; border-radius: 4px; border: 1px solid #643925; background: rgba(255,255,255,0.2); font-size: 0.9em;">
+  <div id="feedbackViabilidade">
     <span id="msgViabilidade">Selecione uma semente...</span>
   </div>
 
@@ -768,13 +770,21 @@ function inicializarComponentes() {
             if (itemSelecionadoPlantio) {
                 criarEventoPlantio(itemSelecionadoPlantio);
                 itemSelecionadoPlantio = null;
+                expandirPainelEventos();
             } else {
                 Swal.fire("Atenção", "Selecione um item para plantar.", "warning");
             }
         };
     }
 }
-
+function expandirPainelEventos() {
+    const painel = document.getElementById("painelPess");
+    const btnToggle = document.getElementById("togglePessBtn");
+    
+    if (painel && painel.classList.contains("retraido")) {
+        painel.classList.remove("retraido");
+    }
+}
 function abrirModalPlantio() {
     const diaInput = document.getElementById('diaPlantio');
     const estacaoInput = document.getElementById('estacaoPlantio');
