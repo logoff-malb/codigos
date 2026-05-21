@@ -8,18 +8,16 @@ body {
 }
 
 .frame {
-  width: 100%;
+  width: 100%; /* deixa o conteúdo ajustar ao necessário */
+  max-width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0;
   background-image: url('recursos/textbox.png');
   background-repeat: repeat-x;
-  background-size: auto 100%; /* cobre altura total do frame */
-  padding: 20px 0;
-  display: flex;
-  justify-content: center; /* centraliza conteúdo horizontalmente */
-  align-items: center;
-  position: relative; /* permite posicionamento interno absoluto se precisar */
-  box-sizing: border-box;
+  background-size: auto 100%;
 }
-
 
 .frame-calendario {
   display: flex;
@@ -74,18 +72,6 @@ body {
   justify-content: flex-start;
   min-height: 100vh;
   gap: 20px; /* espaço fixo entre os blocos */
-}
-
-.frame {
-  width: 100%; /* deixa o conteúdo ajustar ao necessário */
-  max-width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px 0;
-  background-image: url('recursos/textbox.png');
-  background-repeat: repeat-x;
-  background-size: auto 100%;
 }
 
 
@@ -517,45 +503,55 @@ body {
 }
 
 /*itens de plantio */
+/* Container da lista (corrigido e sem duplicatas) */
 .lista-itens-plantio {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* 100px é a largura mínima do item */
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 10px;
-    max-height: 300px; /* Limita a altura para ter scroll */
+    max-height: 300px;
     overflow-y: auto;
     padding: 10px;
-    border: 1px solid #ddd;
+    border: 10px solid #643925; /* Borda estilo Stardew */
     border-radius: 5px;
     margin-top: 15px;
+    background: #fffef0;
 }
 
+/* Item de plantio consolidado */
 .item-plantio {
+    cursor: pointer;
     text-align: center;
     padding: 5px;
-    cursor: pointer;
+    border-radius: 4px;
     border: 2px solid transparent;
-    transition: border-color 0.2s;
+     transition: border-color 0.2s;
 }
 
-.item-plantio:hover {
-    border-color: gold; /* Destaque ao passar o mouse */
-    background-color: #f0f0f0;
+/* Estados do item */
+.item-plantio:hover { 
+    background: #e2d3a8; 
+    border-color: #643925; 
 }
 
-.item-plantio img {
-    width: 64px; /* Tamanho da imagem da semente */
-    height: 64px;
-    display: block;
-    margin: 0 auto 5px;
+.item-plantio.selecionado { 
+    border-color: #38733C; 
+    background: #d5e8d4; 
 }
 
-.item-plantio p {
-    font-size: 0.8em;
-    margin: 0;
-    white-space: nowrap;
+/* Imagem e Texto (Sprites ajustados para 32px) */
+.item-plantio img { 
+    width: 32px; 
+    height: 32px; 
+    
+}
+
+.item-plantio p { 
+    font-size: 10px; 
+    margin: 0; 
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
 /*modal plantio*/ 
 /* ==== NOVO MODAL DE PLANTIO (ESTILO SV) ==== */
 dialog#modalPlantio {
@@ -565,38 +561,36 @@ dialog#modalPlantio {
     background: #f4e4bc; /* Cor de pergaminho Stardew */
     box-shadow: 0 0 20px rgba(0,0,0,0.5);
     border: 4px solid #643925;
-}
+    max-width: 95vw;   /* Responsivo para telas pequenas */
+    
+  }
 
 /* O container interno simula a caixa de diálogo do jogo */
 /* Garante que o corpo do modal ocupe a altura inteira disponível */
 .modal-conteudo-plantio {
+    align-items: flex-start !important;
     display: flex !important;
     flex-direction: row !important;
-    align-items: stretch !important; /* Força os filhos (a barra) a esticarem até o chão */
-    height: 100% !important;
-    min-height: 400px; /* Alinhe com a altura padrão que o seu modal já tem */
+    height: 450px; /* Altura total do modal, ajustável conforme necessário */
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    width: 600px; /* Largura total do modal, ajustável conforme necessário */
+    
 }
 
 /* A Barra Lateral perfeitamente ajustada */
 .modal-barra-lateral-plantio {
-    background: rgba(100, 57, 37, 0.1) !important;
-    padding: 15px !important;
-    width: 200px !important;
-    text-align: center !important;
-    border-right: 3px solid #643925 !important;
-    
-    /* Faz ela preencher a altura total do elemento pai (.modal-conteudo-plantio) */
-    align-self: stretch !important; 
-    box-sizing: border-box !important;
-    
-    /* Organização interna dos elementos */
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 15px !important;
+    background: rgba(100, 57, 37, 0.1);
+    border-right: 3px solid #643925;
+    flex: 0 0 250px;       /* Largura fixa de 250px para a barra lateral */
+    overflow-y: auto;      /* ATIVA O SCROLL APENAS AQUI */
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;         /* Necessário para alinhar o conteúdo interno */
+    flex-direction: column;
+    text-align: center;
+    width: 200px;
 }
 
 .modal-barra-lateral-plantio img {
@@ -609,7 +603,8 @@ dialog#modalPlantio {
 }
 /* Estilo do ícone do botão planta adulta */
 #statusAdultaIcon {
-    width: 20px;
+  display: none; /* Inicia escondido como no seu HTML */
+    width: 20px;   /* Ajuste o tamanho se necessário */
     height: auto;
     vertical-align: middle;
     margin-right: 5px;
@@ -618,15 +613,17 @@ dialog#modalPlantio {
     image-rendering: pixelated; /* Deixa o sprite nítido como no jogo */
 }
 
+/* Container Principal (Direita) */
 .modal-principal-plantio {
-    flex: 1;
-    padding: 15px;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    flex: 1; /* Ocupa o espaço disponível, mas respeita o pai */
+    min-width: 0;
+    overflow: hidden;
+    padding: 15px;
     user-select: none;
-    -webkit-user-select: none; /* Safari */
-    -moz-user-select: none;    /* Firefox */
-    -ms-user-select: none;     /* IE/Edge */
+    width: 100%;
 }
 /* 1. Mudamos o container para 'row' (lado a lado) e aumentamos a largura máxima */
 /* 1. Container principal: Alinha os cards lado a lado e os mantém no topo */
@@ -708,38 +705,27 @@ dialog#modalPlantio {
     margin-left: 0 !important;
 }
 #listaItens {
-    flex: 1;
-    overflow-y: auto;
+    background: #fffef0;
+    border: 2px solid #643925;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
     gap: 10px;
-    background: #fffef0;
-    border: 2px solid #643925;
+    height: 100px;
     padding: 10px;
-    max-height: 250px; /* Limita a altura para não empurrar os botões para fora */
-  overflow-y: scroll; /* Garante que a barra de rolagem esteja sempre lá ou apareça quando necessário */
-  border: 2px solid #643925; /* Estilo Stardew */
+    flex: 2; /* Permite que a lista cresça e encolha conforme necessário */
+    flex-grow: 1; /* Faz a lista crescer e empurrar os botões para baixo */
+    overflow-y: scroll;
+    max-height: 250px; /* Garante visibilidade mínima */
 }
-.item-plantio {
-    cursor: pointer;
-    text-align: center;
-    padding: 5px;
-    border-radius: 4px;
-    border: 2px solid transparent;
-}
-.item-plantio:hover { background: #e2d3a8; }
-.item-plantio.selecionado { border-color: #38733C; background: #d5e8d4; }
-
-.item-plantio img { width: 32px; height: 32px; }
-.item-plantio p { font-size: 10px; margin: 5px 0 0; }
-
 /* Botões do Modal */
 .botoes-modal-plantio {
-    margin-top: 10px;
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-    flex-shrink: 0;
+    align-items: center;
+    margin-top: 10px; /* Garante que fiquem colados no fundo */
+    padding-top: 5px;
+    flex-shrink: 0;   /* Impede que os botões encolham */
 }
 .btn-cancelar { background: #723333 !important; }
 

@@ -8,18 +8,16 @@ body {
 }
 
 .frame {
-  width: 100%;
+  width: 100%; /* deixa o conteúdo ajustar ao necessário */
+  max-width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0;
   background-image: url('recursos/textbox.png');
   background-repeat: repeat-x;
-  background-size: auto 100%; /* cobre altura total do frame */
-  padding: 20px 0;
-  display: flex;
-  justify-content: center; /* centraliza conteúdo horizontalmente */
-  align-items: center;
-  position: relative; /* permite posicionamento interno absoluto se precisar */
-  box-sizing: border-box;
+  background-size: auto 100%;
 }
-
 
 .frame-calendario {
   display: flex;
@@ -74,18 +72,6 @@ body {
   justify-content: flex-start;
   min-height: 100vh;
   gap: 20px; /* espaço fixo entre os blocos */
-}
-
-.frame {
-  width: 100%; /* deixa o conteúdo ajustar ao necessário */
-  max-width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px 0;
-  background-image: url('recursos/textbox.png');
-  background-repeat: repeat-x;
-  background-size: auto 100%;
 }
 
 
@@ -237,61 +223,111 @@ body {
   color: #333;
 }
 
+/* Painel Direito (Eventos do Calendário) */
+/* Painel Direito (Eventos do Calendário) */
 .painel-eventos {
   position: fixed;
   top: 0;
   right: 0;
   width: 300px;
   height: 100%;
-  background: #f5f5f5;
+  background: #f4e4bc; /* Fundo pergaminho idêntico ao esquerdo */
   box-shadow: -2px 0 5px rgba(0,0,0,0.3);
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease; /* Animação nativa por hardware */
   z-index: 1000;
   overflow-y: auto;
+  border-left: 4px solid #643925; /* Borda Stardew na esquerda */
+  padding: 15px;
+  box-sizing: border-box;
+  font-family: sans-serif;
 }
-#painelEventos h3 {
-  margin: 5px 0;
-  font-size: 16px;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 3px;
-}
+
+/* Estado Retraído usando Transform (Não mexe no comportamento do JS) */
 .painel-eventos.retraido {
   transform: translateX(100%);
 }
 
-#painelEventos .secao {
-  margin-bottom: 15px;
+/* Comportamento Dinâmico do Botão Original por Seletor de Adjacência */
+#painelEventos.retraido + #togglePainel {
+  right: 0px; /* Gruda na borda da tela quando fechado */
 }
 
-.painel-conteudo {
-  flex: 1;
-  padding: 10px;
-  overflow-y: auto;
+#painelEventos:not(.retraido) + #togglePainel {
+  right: 300px; /* É empurrado perfeitamente quando o painel expande */
 }
+
+/* Estilização do Botão de Aba Direito */
+#togglePainel {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  left: auto;
+  border-radius: 5px 0 0 5px; /* Arredondado voltado para o calendário */
+  background: #643925;
+  color: #fffef0;
+  border: 2px solid #ffd700;
+  border-right: none;
+  padding: 10px 8px;
+  cursor: pointer;
+  z-index: 1001;
+  transition: right 0.3s ease, background 0.2s; /* Acompanha o deslize do painel */
+}
+
+#togglePainel:hover {
+  background: #7a4a35;
+}
+
+/* --- TÍTULOS E LISTAS INTERNAS (CORES CUSTOMIZADAS) --- */
+#painelEventos h3 {
+  margin: 15px 0 5px;
+  font-size: 16px;
+  color: #4b2c20;
+  border-bottom: 2px solid rgba(100, 57, 37, 0.3);
+  padding-bottom: 5px;
+  font-weight: bold;
+}
+
 #listaEventosConteudo li {
-  margin: 3px 0;
+  margin: 6px 0;
   font-size: 14px;
   cursor: default;
+  color: #5c3a21; /* Texto padrão marrom rústico */
+  line-height: 1.4;
+  list-style-type: none; /* Remove a bolinha padrão antiga */
+  padding-left: 5px;
 }
 
-#listaEventosConteudo li.festival { color: darkred; font-weight: bold; }
-#listaEventosConteudo li.aniversario { color: darkblue; }
+/* Tons customizados mantendo a lógica de classes do seu sistema */
+#listaEventosConteudo li.festival { 
+  color: #a61c1c !important; /* Vermelho escuro Stardew */
+  font-weight: bold; 
+}
 
-/* Botão fica grudado na lateral direita da tela */
+#listaEventosConteudo li.aniversario { 
+  color: #1a45a6 !important; /* Azul escuro Stardew */
+  font-weight: 500;
+}
+
+/* Botão dinâmico do painel direito */
 .toggle-btn {
   position: fixed;
   top: 50%;
-  right: 300px; /* mesma largura do painel */
+  right: 0px; /* Começa na borda direita quando retraído */
   transform: translateY(-50%);
-  background: #ddd;
-  border: 1px solid #aaa;
+  left: auto;
   border-radius: 5px 0 0 5px;
-  padding: 10px;
+  background: #643925;
+  color: #fffef0;
+  border: 2px solid #ffd700;
+  border-right: none;
+  padding: 10px 6px;
   cursor: pointer;
   z-index: 1001;
+  transition: right 0.3s ease, background 0.2s;
 }
+
 .toggle-btn:hover {
-  background: #bbb;
+  background: #7a4a35;
 }
 /* Quando o painel está retraído, botão cola na borda */
 .painel-eventos.retraido + .toggle-btn {
@@ -300,34 +336,147 @@ body {
 
 /* Painel esquerdo personalizado */
 /* Painel esquerdo */
+/* Painel esquerdo */
 #painelPess {
+  position: fixed;
+  top: 0;
   left: 0;
   right: auto;
-  transform: translateX(-100%);
+  width: 300px;
+  height: 100%;
+  background: #f4e4bc; /* Fundo pergaminho estilo Stardew */
+  box-shadow: 2px 0 5px rgba(0,0,0,0.3);
+  transition: transform 0.3s ease;
+  z-index: 1000;
+  overflow-y: auto;
+  border-right: 4px solid #643925;
 }
+
 #painelPess.retraido {
   transform: translateX(-100%);
 }
+
 #painelPess:not(.retraido) {
   transform: translateX(0);
 }
 
-/* Botão do painel esquerdo */
+/* ========================================================
+   ESTILIZAÇÃO DOS CARTÕES DE EVENTOS PERSONALIZADOS
+   ======================================================== */
+
+/* O contêiner que envolve cada plantio individual */
+.caixa-evento {
+  background: #e6cb95; /* Bege ligeiramente mais escuro para contrastar com o #f4e4bc do painel */
+  border: 3px solid #643925; /* Borda idêntica às bordas principais do jogo */
+  border-radius: 6px;
+  margin: 12px 10px; /* Margem para afastar os blocos entre si e das bordas do painel */
+  padding: 10px;
+  box-sizing: border-box;
+  box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.12); /* Sombra sutil para dar profundidade */
+}
+
+/* Cabeçalho do cartão (Nome e Status) */
+.header-evento {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid rgba(100, 57, 37, 0.25); /* Linha divisória interna */
+  padding-bottom: 4px;
+  margin-bottom: 8px;
+}
+
+.header-evento strong {
+  font-size: 1.05em;
+  color: #4b2c20;
+  text-transform: capitalize; /* Inicial maiúscula automática */
+}
+
+/* Espaçamento e cor das datas e previsões */
+.info-plantio {
+  font-size: 0.9em;
+  color: #5c3a21;
+  margin-bottom: 4px;
+}
+
+.lista-colheitas {
+  margin: 0 0 10px 0;
+  padding-left: 15px; /* Alinha os emojis ✨ de forma organizada */
+  list-style-type: none; /* Remove os marcadores de lista padrão */
+  font-size: 0.9em;
+  color: #5c3a21;
+}
+
+/* Rodapé do cartão que isola e alinha o botão de excluir */
+.acoes {
+  display: flex;
+  justify-content: flex-end; /* Empurra a lixeira para o canto direito */
+  border-top: 1px dashed rgba(100, 57, 37, 0.15); /* Linha tracejada estilizada */
+  padding-top: 6px;
+}
+
+/* ========================================================
+   NOVO BOTÃO DE EXCLUSÃO (ESTILIZADO COM PIXEL ART)
+   ======================================================== */
+.btn-delete {
+  /* Dimensões exatas de uma lixeira individual baseada no arquivo de 270px */
+  width: 33.75px; 
+  height: 62px;   
+  background-image: url('recursos/lixeiraIcon.png'); /* Caminho da imagem da lixeira */
+  background-repeat: no-repeat;
+  background-color: transparent; /* Remove o fundo bege antigo */
+  border: none;                  /* Remove a borda marrom antiga */
+  cursor: pointer;
+  padding: 0;                    /* Zera o padding para não empurrar a imagem */
+  background-size: 270px 62px;
+  
+  /* Força o navegador a manter os pixels nítidos (estilo Stardew Valley) */
+  image-rendering: pixelated; 
+  
+  /* Efeito suave de clique */
+  transition: transform 0.1s ease; 
+}
+
+/* Efeito de clique físico (o botão encolhe de leve) */
+.btn-delete:active { 
+  transform: scale(0.9); 
+}
+
+/* ========================================================
+   ESTADO INICIAL: LIXEIRAS FECHADAS (METADE DIREITA DO ARQUIVO)
+   ======================================================== */
+.btn-delete[data-estacao="primavera"] { background-position: -135px 0px; }
+.btn-delete[data-estacao="verao"]     { background-position: -168.75px 0px; }
+.btn-delete[data-estacao="outono"]    { background-position: -202.5px 0px; }
+.btn-delete[data-estacao="inverno"]   { background-position: -236.25px 0px; }
+
+/* ========================================================
+   ESTADO HOVER: LIXEIRAS ABERTAS (METADE ESQUERDA DO ARQUIVO)
+   ======================================================== */
+.btn-delete[data-estacao="primavera"]:hover { background-position: 0px 0px; }
+.btn-delete[data-estacao="verao"]:hover     { background-position: -33.75px 0px; }
+.btn-delete[data-estacao="outono"]:hover    { background-position: -67.5px 0px; }
+.btn-delete[data-estacao="inverno"]:hover   { background-position: -101.25px 0px; }
+
+/* Botão dinâmico do painel esquerdo */
 #togglePessBtn {
-  top: 50;
-  left: 0px; 
+  position: fixed;
+  top: 50%;
+  left: 0px; /* Começa na borda quando retraído */
   transform: translateY(-50%);
   right: auto;
   border-radius: 0 5px 5px 0;
-  background: #ddd;
-  border: 1px solid #aaa;
-  border-radius: 0 5px 5px 0;
-  padding: 10px;
+  background: #643925; /* Cor combinando com as bordas do jogo */
+  color: #fffef0;
+  border: 2px solid #ffd700;
+  border-left: none;
+  padding: 10px 6px;
   cursor: pointer;
   z-index: 1001;
+  transition: left 0.3s ease, background 0.2s; /* Transição na mesma velocidade do painel */
 }
+
 #togglePessBtn:hover {
-  background: #bbb;
+  background: #7a4a35;
 }
 
 /* Modal player*/
@@ -354,45 +503,57 @@ body {
 }
 
 /*itens de plantio */
+/* Container da lista (corrigido e sem duplicatas) */
 .lista-itens-plantio {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* 100px é a largura mínima do item */
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
     gap: 10px;
-    max-height: 300px; /* Limita a altura para ter scroll */
+    max-height: 300px;
     overflow-y: auto;
     padding: 10px;
-    border: 1px solid #ddd;
+    border: 2px solid #643925; /* Borda estilo Stardew */
     border-radius: 5px;
     margin-top: 15px;
+    background: #fffef0;
 }
 
+/* Item de plantio consolidado */
 .item-plantio {
+    cursor: pointer;
     text-align: center;
     padding: 5px;
-    cursor: pointer;
+    border-radius: 4px;
     border: 2px solid transparent;
-    transition: border-color 0.2s;
+    transition: all 0.2s ease;
 }
 
-.item-plantio:hover {
-    border-color: gold; /* Destaque ao passar o mouse */
-    background-color: #f0f0f0;
+/* Estados do item */
+.item-plantio:hover { 
+    background: #e2d3a8; 
+    border-color: #643925; 
 }
 
-.item-plantio img {
-    width: 64px; /* Tamanho da imagem da semente */
-    height: 64px;
-    display: block;
-    margin: 0 auto 5px;
+.item-plantio.selecionado { 
+    border-color: #38733C; 
+    background: #d5e8d4; 
 }
 
-.item-plantio p {
-    font-size: 0.8em;
-    margin: 0;
+/* Imagem e Texto (Sprites ajustados para 32px) */
+.item-plantio img { 
+    width: 32px; 
+    height: 32px; 
+    display: block; 
+    margin: 0 auto;
+}
+
+.item-plantio p { 
+    font-size: 10px; 
+    margin: 5px 0 0; 
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
 /*modal plantio*/ 
 /* ==== NOVO MODAL DE PLANTIO (ESTILO SV) ==== */
 dialog#modalPlantio {
@@ -402,22 +563,33 @@ dialog#modalPlantio {
     background: #f4e4bc; /* Cor de pergaminho Stardew */
     box-shadow: 0 0 20px rgba(0,0,0,0.5);
     border: 4px solid #643925;
-}
+    width: 700px;      /* Defina uma largura máxima fixa */
+    max-width: 95vw;   /* Responsivo para telas pequenas */
+    height: fit-content;
+  }
 
 /* O container interno simula a caixa de diálogo do jogo */
+/* Garante que o corpo do modal ocupe a altura inteira disponível */
 .modal-conteudo-plantio {
-    display: flex;
-    width: 600px;
-    height: 450px;
+    align-items: flex-start !important;
+    display: flex !important;
+    flex-direction: row !important;
+    height: auto;
+    min-height: 400px; /* Alinhe com a altura padrão que o seu modal já tem */
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-
+/* A Barra Lateral perfeitamente ajustada */
 .modal-barra-lateral-plantio {
-    background: rgba(100, 57, 37, 0.1);
-    padding: 20px;
-    width: 200px;
-    text-align: center;
-    border-right: 3px solid #643925;
+    flex: 0 0 250px;       /* Largura fixa de 250px para a barra lateral */
+    max-height: 100%;      /* Limita a altura ao tamanho do modal */
+    overflow-y: auto;      /* ATIVA O SCROLL APENAS AQUI */
+    padding: 15px;
+    box-sizing: border-box;
+    display: flex;         /* Necessário para alinhar o conteúdo interno */
+    flex-direction: column;
 }
 
 .modal-barra-lateral-plantio img {
@@ -430,7 +602,8 @@ dialog#modalPlantio {
 }
 /* Estilo do ícone do botão planta adulta */
 #statusAdultaIcon {
-    width: 20px;
+  display: none; /* Inicia escondido como no seu HTML */
+    width: 20px;   /* Ajuste o tamanho se necessário */
     height: auto;
     vertical-align: middle;
     margin-right: 5px;
@@ -439,44 +612,171 @@ dialog#modalPlantio {
     image-rendering: pixelated; /* Deixa o sprite nítido como no jogo */
 }
 
+/* Container Principal (Direita) */
 .modal-principal-plantio {
-    flex: 1;
-    padding: 15px;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    flex: 1; /* Ocupa o espaço disponível, mas respeita o pai */
+    min-width: 0;
+    overflow: hidden;
+    padding: 15px;
+    user-select: none;
+    width: 100%;
+}
+/* 1. Mudamos o container para 'row' (lado a lado) e aumentamos a largura máxima */
+/* 1. Container principal: Alinha os cards lado a lado e os mantém no topo */
+#containerLojasSementes {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center;
+    align-items: flex-start; /* Impede que os cards estiquem verticalmente */
+    gap: 10px;
+    width: 100%;
+    max-width: 100% !important;
+    margin-top: 18px; /* Distância ideal do valor da abóbora acima */
+    box-sizing: border-box;
 }
 
+/* 2. O CARD UNIFICADO: Ajustado para eliminar o espaço vazio interno */
+#containerLojasSementes > div {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center;
+    justify-content: flex-start; /* Agrupa o conteúdo no topo do card */
+    
+    background: #fff !important;
+    border: 2px solid #4b2c20 !important;
+    border-radius: 8px !important;
+    
+    /* Controle preciso do espaço interno */
+    padding: 6px 4px 5px 4px !important; 
+    min-width: 54px;
+    height: 58px !important; /* Fixa uma altura compacta ideal para o card */
+    box-sizing: border-box;
+}
+
+/* 3. Posicionamento do avatar do NPC */
+#containerLojasSementes > div > img[title] {
+    width: 32px !important;
+    height: 32px !important;
+    object-fit: contain;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* 4. Linha do Preço: Acoplada perfeitamente na base do card */
+#containerLojasSementes > div > div {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-size: 0.75rem !important;
+    font-weight: bold;
+    color: #4b2c20;
+    width: 100%;
+    
+    margin-top: -8px !important; /* Espaço sutil entre o avatar e a divisória */
+    padding-top: 2px !important;
+    border-top: 1px dashed rgba(75, 44, 32, 0.25) !important; /* Divisória delicada */
+}
+
+/* 5. RESET DAS BORDAS INTERNAS: Mantém as moedas e caixas sem bordas sobressalentes */
+#containerLojasSementes > div div,
+#containerLojasSementes > div img {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+
+/* 6. Ajuste milimétrico da moedinha de ouro */
+#containerLojasSementes > div > div img {
+    width: 14px !important;
+    height: 14px !important;
+    object-fit: contain;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Evita distorções causadas por margens automáticas do JS */
+#containerLojasSementes div[style*="margin-left: auto"] {
+    margin-left: 0 !important;
+}
 #listaItens {
-    flex: 1;
-    overflow-y: auto;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-    gap: 10px;
     background: #fffef0;
     border: 2px solid #643925;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    height: 100px;
     padding: 10px;
-    max-height: 250px; /* Limita a altura para não empurrar os botões para fora */
-  overflow-y: scroll; /* Garante que a barra de rolagem esteja sempre lá ou apareça quando necessário */
-  border: 2px solid #643925; /* Estilo Stardew */
+    margin: 0 0 10px 0; 
+    flex-grow: 0; /* Faz a lista crescer e empurrar os botões para baixo */
+    overflow-y: auto;
+    min-height: 150px; /* Garante visibilidade mínima */
 }
-.item-plantio {
-    cursor: pointer;
-    text-align: center;
-    padding: 5px;
-    border-radius: 4px;
-    border: 2px solid transparent;
-}
-.item-plantio:hover { background: #e2d3a8; }
-.item-plantio.selecionado { border-color: #38733C; background: #d5e8d4; }
-
-.item-plantio img { width: 32px; height: 32px; }
-.item-plantio p { font-size: 10px; margin: 5px 0 0; }
-
 /* Botões do Modal */
 .botoes-modal-plantio {
-    margin-top: 10px;
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+    align-items: center;
+    margin-top: auto; /* Garante que fiquem colados no fundo */
+    padding-top: 5px;
+    flex-shrink: 0;   /* Impede que os botões encolham */
 }
 .btn-cancelar { background: #723333 !important; }
+
+/* ========================================================
+   ETIQUETA INFORMATIVA (TOOLTIP) - ESTILO STARDEW VALLEY
+   ======================================================== */
+
+/* O próprio botão agora serve de referência para a posição do balão */
+#btnPlantaAdulta {
+  position: relative;
+}
+
+/* O Balão Informativo (Invisível por padrão) */
+#btnPlantaAdulta::after {
+  content: attr(data-tooltip); /* Pega o texto direto do atributo data-tooltip do HTML */
+  position: absolute;
+  bottom: 140%;                /* Flutua perfeitamente logo acima do botão */
+  left: 50%;
+  transform: translateX(-50%) scale(0.9);
+  
+  /* Estilo Caixa de Diálogo Stardew Valley */
+  background-color: #fff3d1;   /* Fundo bege clássico */
+  color: #4a210d;              /* Texto marrom escuro */
+  border: 2px solid #643925;   /* Borda de "madeira" */
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;             /* Tamanho bom para leitura rápida */
+  line-height: 1.4;
+  width: 220px;                /* Largura ideal para não virar um textão vertical */
+  white-space: normal;         /* Permite quebra de linha automática */
+  text-align: center;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+  
+  /* Controle de transição suave */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 9999;               /* Fica acima de qualquer elemento do modal */
+}
+
+/* Mostra a etiqueta quando o usuário passa o mouse pelo botão */
+#btnPlantaAdulta:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) scale(1); /* Leve efeito de crescimento */
+}
+
+#infoObs{margin-top: 8px !important;
+    font-style: italic !important;
+    color: #311405 !important; /* Marrom escuro denso para contraste legível */
+    border-top: 1px solid rgba(100, 57, 37, 0.3) !important;
+    padding-top: 8px !important;
+    font-weight: 500 !important; /* Dá corpo à fonte sem deixá-la totalmente em negrito */
+    line-height: 1.5 !important;}
+
+    /*backup */

@@ -440,7 +440,7 @@ window.addEventListener("DOMContentLoaded", () => {
     </div> <!-- Fim da Barra Lateral -->
 
     <!-- CONTEÚDO PRINCIPAL DIREITA -->
-    <div class="modal-principal-plantio" style="display: flex; flex-direction: column; height: 100%; box-sizing: border-box; justify-content: space-between;">
+    <div class="modal-principal-plantio">
   
   <div class="filtro-container-plantio" style="display: flex; gap: 5px; margin-bottom: 10px; align-items: center; flex-wrap: wrap;">
     <input type="number" id="diaPlantio" min="1" max="28" value="1" style="width: 45px;">
@@ -460,15 +460,15 @@ window.addEventListener("DOMContentLoaded", () => {
 </button>
   </div>
 
-  <ul id="listaItens" style="flex-grow: 1; overflow-y: auto; margin: 0 0 10px 0; padding: 0;"></ul>
+  <ul id="listaItens"></ul>
 
   <div id="feedbackViabilidade" style="margin: 5px 0 10px 0; padding: 10px; border-radius: 4px; border: 1px solid #643925; background: rgba(255,255,255,0.2); font-size: 0.9em;">
     <span id="msgViabilidade">Selecione uma semente...</span>
   </div>
 
-  <div class="botoes-modal-plantio" style="display: flex; justify-content: flex-end; gap: 10px; align-items: center; margin-top: auto; padding-top: 5px;">
+  <div class="botoes-modal-plantio">
     <div style="display: flex; align-items: center; gap: 8px;">
-      <img id="statusAdultaIcon" src="recursos/arvore-adulta.png" style="display: none;">
+      <img id="statusAdultaIcon" src="recursos/arvore-adulta.png">
       <button type="button" id="btnPlantaAdulta" data-tooltip="Adiciona o cultivo em fase adulta, calculando apenas as colheitas">planta Adulta</button>
     </div>
     <button id="confirmarPlantio" disabled>Criar Evento</button>
@@ -1148,6 +1148,9 @@ function gerarHtmlPlantio(ev) {
         ? ev.colheitas[0].estacao.toLowerCase() 
         : 'primavera';
 
+    // Define se o card já deve nascer colapsado visualmente baseado nos dados salvos
+    const classeMinimizadoInicial = ev.minimizado ? "card-pergaminho-recolhido" : "";
+
     const colheitasHTML = (ev.colheitas || []).map(c => {
         const diaTratado = (c.dia === undefined || c.dia === null || isNaN(c.dia)) ? 1 : c.dia;
         const estacaoTratada = c.estacao || 'Primavera';
@@ -1219,7 +1222,6 @@ function gerarHtmlPlantio(ev) {
         } 
     }
 
-    // 🌟 ALTERAÇÃO 1: Identificação visual da região de plantio baseada nos checkboxes salvos do modal com os emojis corretos
     let localPlantioTexto = "📍 Vale";
     if (ev.naEstufa) {
         localPlantioTexto = "🏠 Estufa";
@@ -1227,36 +1229,43 @@ function gerarHtmlPlantio(ev) {
         localPlantioTexto = "🌴 Ilha";
     }
 
-    // Limpa caminhos de imagem vindos do JSON do Windows
     const urlImgCard = ev.imagem ? ev.imagem.replace(/\\/g, "/") : "";
 
     return `
-        <div class="caixa-evento animated fadeIn">
+        <div id="card-evento-${ev.id}" class="caixa-evento animated fadeIn ${classeMinimizadoInicial}">
             <div class="header-evento" style="display: flex; justify-content: space-between; align-items: center;">
                 <strong>${ev.nome}</strong>
                 <span class="status ${statusClean}" style="font-size: 0.85em; font-weight: bold;">${localPlantioTexto}</span>
             </div>
             
-            <div class="corpo-card-plantio" style="margin-top: 6px;">
-                <div class="detalhes-plantio">
-                    <div class="info-plantio" style="font-size: 0.85em; margin-bottom: 2px;">📅 Plantio: ${ev.dataPlantio}</div>
-                    <ul class="lista-colheitas" style="margin: 0; padding-left: 14px; font-size: 0.85em;">${colheitasHTML}</ul>
+            <div class="conteudo-pergaminho-rolante">
+                <div class="corpo-card-plantio" style="margin-top: 6px;">
+                    <div class="detalhes-plantio">
+                        <div class="info-plantio" style="font-size: 0.85em; margin-bottom: 2px;">📅 Plantio: ${ev.dataPlantio}</div>
+                        <ul class="lista-colheitas" style="margin: 0; padding-left: 14px; font-size: 0.85em;">${colheitasHTML}</ul>
+                    </div>
+
+                    ${urlImgCard ? `
+                    <div class="container-foto-bloco" style="display: flex; justify-content: center; align-items: center; padding: 8px 0; width: 100%;">
+                        <img src="${urlImgCard}" alt="${ev.nome}" onerror="this.style.display='none'" style="max-width: 48px; max-height: 48px; object-fit: contain; image-rendering: pixelated;">
+                    </div>
+                    ` : ''}
                 </div>
 
-                ${urlImgCard ? `
-                <div class="container-foto-bloco" style="display: flex; justify-content: center; align-items: center; padding: 8px 0; width: 100%;">
-                    <img src="${urlImgCard}" alt="${ev.nome}" onerror="this.style.display='none'" style="max-width: 48px; max-height: 48px; object-fit: contain;">
+                <div class="acoes" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                    <div class="acoes-esquerda">
+                        ${botaoColheitaHTML}
+                    </div>
+                    <div class="acoes-direita">
+                        <button class="btn-delete" data-estacao="${estacaoEvento}" onclick="excluirEventoPess(${ev.id})"></button>
+                    </div>
                 </div>
-                ` : ''}
             </div>
 
-            <div class="acoes" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                <div class="acoes-esquerda">
-                    ${botaoColheitaHTML}
-                </div>
-                <div class="acoes-direita">
-                    <button class="btn-delete" data-estacao="${estacaoEvento}" onclick="excluirEventoPess(${ev.id})"></button>
-                </div>
+            <div class="container-minimizar-inferior">
+                <button class="btn-minimizar-inferior" onclick="alternarMinimizarCard(${ev.id})" title="Minimizar/Expandir">
+                    🔖
+                </button>
             </div>
         </div>
     `;
@@ -1615,7 +1624,6 @@ function gerarHtmlPlantio(ev) {
         } 
     }
 
-    // 🌟 ALTERAÇÃO 1: Identificação visual da região de plantio baseada nos checkboxes salvos do modal com os emojis corretos
     let localPlantioTexto = "📍 Vale";
     if (ev.naEstufa) {
         localPlantioTexto = "🏠 Estufa";
@@ -1623,36 +1631,46 @@ function gerarHtmlPlantio(ev) {
         localPlantioTexto = "🌴 Ilha";
     }
 
-    // Limpa caminhos de imagem vindos do JSON do Windows
     const urlImgCard = ev.imagem ? ev.imagem.replace(/\\/g, "/") : "";
 
+    // Preserva o estado visual minimizado caso o painel seja redesenhado na mesma sessão
+    const classeMinimizadoInicial = ev.minimizado ? "card-pergaminho-recolhido" : "";
+
     return `
-        <div class="caixa-evento animated fadeIn">
+        <div id="card-evento-${ev.id}" class="caixa-evento animated fadeIn ${classeMinimizadoInicial}">
             <div class="header-evento" style="display: flex; justify-content: space-between; align-items: center;">
                 <strong>${ev.nome}</strong>
                 <span class="status ${statusClean}" style="font-size: 0.85em; font-weight: bold;">${localPlantioTexto}</span>
             </div>
             
-            <div class="corpo-card-plantio" style="margin-top: 6px;">
-                <div class="detalhes-plantio">
-                    <div class="info-plantio" style="font-size: 0.85em; margin-bottom: 2px;">📅 Plantio: ${ev.dataPlantio}</div>
-                    <ul class="lista-colheitas" style="margin: 0; padding-left: 14px; font-size: 0.85em;">${colheitasHTML}</ul>
+            <div class="conteudo-pergaminho-rolante">
+                <div class="corpo-card-plantio" style="margin-top: 6px;">
+                    <div class="detalhes-plantio">
+                        <div class="info-plantio" style="font-size: 0.85em; margin-bottom: 2px;">📅 Plantio: ${ev.dataPlantio}</div>
+                        <ul class="lista-colheitas" style="margin: 0; padding-left: 14px; font-size: 0.85em;">${colheitasHTML}</ul>
+                    </div>
+
+                    ${urlImgCard ? `
+                    <div class="container-foto-bloco" style="display: flex; justify-content: center; align-items: center; padding: 8px 0; width: 100%;">
+                        <img src="${urlImgCard}" alt="${ev.nome}" onerror="this.style.display='none'" style="max-width: 48px; max-height: 48px; object-fit: contain;">
+                    </div>
+                    ` : ''}
                 </div>
 
-                ${urlImgCard ? `
-                <div class="container-foto-bloco" style="display: flex; justify-content: center; align-items: center; padding: 8px 0; width: 100%;">
-                    <img src="${urlImgCard}" alt="${ev.nome}" onerror="this.style.display='none'" style="max-width: 48px; max-height: 48px; object-fit: contain;">
+                <div class="acoes" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                    <div class="acoes-esquerda">
+                        ${botaoColheitaHTML}
+                    </div>
+                    <div class="acoes-direita">
+                        <button class="btn-delete" data-estacao="${estacaoEvento}" onclick="excluirEventoPess(${ev.id})"></button>
+                    </div>
                 </div>
-                ` : ''}
             </div>
-
-            <div class="acoes" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                <div class="acoes-esquerda">
-                    ${botaoColheitaHTML}
-                </div>
-                <div class="acoes-direita">
-                    <button class="btn-delete" data-estacao="${estacaoEvento}" onclick="excluirEventoPess(${ev.id})"></button>
-                </div>
+            
+            <div class="container-minimizar-inferior">
+                <button class="btn-minimizar-inferior" onclick="alternarMinimizarCard(${ev.id})" title="Minimizar/Expandir">
+                    🔖
+                </button>
             </div>
         </div>
     `;
@@ -1707,7 +1725,29 @@ function renderizarPainelPess() {
         });
     }
 }
+function alternarMinimizarCard(id) {
+    const cardElemento = document.getElementById(`card-evento-${id}`);
+    if (!cardElemento) return;
 
+    // Alterna a classe de estilização do efeito visual
+    cardElemento.classList.toggle("card-pergaminho-recolhido");
+
+    // Sincroniza o estado de minimização no array de dados para evitar re-abrir ao atualizar o painel
+    const eventoEncontrado = eventosPess.find(e => e.id === id);
+    if (eventoEncontrado) {
+        eventoEncontrado.minimizado = cardElemento.classList.contains("card-pergaminho-recolhido");
+        
+        // Salva as alterações na persistência de dados
+        if (typeof salvarPessStorage === 'function') {
+            salvarPessStorage();
+        }
+        
+        // Força a re-renderização do painel para manter o estado e a árvore do DOM consistentes
+        if (typeof renderizarPainelPess === 'function') {
+            renderizarPainelPess();
+        }
+    }
+}
 // ========================================================
 // 5. INICIALIZAÇÃO DO PAINEL
 // ========================================================
