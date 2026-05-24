@@ -717,14 +717,7 @@ function atualizarListaEventos() {
     ul.appendChild(li);
   });
   }
-  lista.forEach(e => {
-    const li = document.createElement("li");
-    li.textContent = `Dia ${e.dia}: ${e.nome}`;
-    li.classList.add(e.tipo);
-    ul.appendChild(li);
-  });
-
-
+  
 function atualizarPainel() {
   atualizarListaEventos();
   atualizarDiaSelecionado();
@@ -1159,7 +1152,7 @@ function gerarHtmlPlantio(ev) {
         : 'primavera';
 
     // Define se o card já deve nascer colapsado visualmente baseado nos dados salvos
-    const classeMinimizadoInicial = ev.minimizado ? "card-pergaminho-recolhido" : "";
+    const classeMinimizadoInicial = ev.minimizado ? "card-recolhido" : "";
 
     const colheitasHTML = (ev.colheitas || []).map(c => {
         const diaTratado = (c.dia === undefined || c.dia === null || isNaN(c.dia)) ? 1 : c.dia;
@@ -1243,43 +1236,41 @@ function gerarHtmlPlantio(ev) {
 
     return `
         <div id="card-evento-${ev.id}" class="caixa-evento animated fadeIn ${classeMinimizadoInicial}">
-            <div class="header-evento" style="display: flex; justify-content: space-between; align-items: center;">
-                <strong>${ev.nome}</strong>
-                <span class="status ${statusClean}" style="font-size: 0.85em; font-weight: bold;">${localPlantioTexto}</span>
+            
+            <div class="header-evento">
+                <div class="header-titulo">
+                    <button class="btn-minimizar" onclick="alternarMinimizarCard(${ev.id})" title="Minimizar/Expandir">−</button>
+                    <strong>${ev.nome}</strong>
+                </div>
+                <span class="status ${statusClean}">${localPlantioTexto}</span>
             </div>
             
-            <div class="conteudo-pergaminho-rolante">
-                <div class="corpo-card-plantio" style="margin-top: 6px;">
+            <div class="conteudo-card">
+                <div class="corpo-card">
                     <div class="detalhes-plantio">
-                        <div class="info-plantio" style="font-size: 0.85em; margin-bottom: 2px;">📅 Plantio: ${ev.dataPlantio}</div>
-                        <ul class="lista-colheitas" style="margin: 0; padding-left: 14px; font-size: 0.85em;">${colheitasHTML}</ul>
+                        <div class="info-plantio">📅 Plantio: ${ev.dataPlantio}</div>
+                        <ul class="lista-colheitas">${colheitasHTML}</ul>
                     </div>
 
                     ${urlImgCard ? `
-                    <div class="container-foto-bloco" style="display: flex; justify-content: center; align-items: center; padding: 8px 0; width: 100%;">
-                        <img src="${urlImgCard}" alt="${ev.nome}" onerror="this.style.display='none'" style="max-width: 48px; max-height: 48px; object-fit: contain; image-rendering: pixelated;">
+                    <div class="container-foto">
+                        <img src="${urlImgCard}" alt="${ev.nome}" onerror="this.style.display='none'">
                     </div>
                     ` : ''}
                 </div>
 
-                <div class="acoes" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                    <div class="acoes-esquerda">
-                        ${botaoColheitaHTML}
-                    </div>
+                <div class="acoes">
+                    <div class="acoes-esquerda">${botaoColheitaHTML}</div>
                     <div class="acoes-direita">
                         <button class="btn-delete" data-estacao="${estacaoEvento}" onclick="excluirEventoPess(${ev.id})"></button>
                     </div>
                 </div>
             </div>
-
-            <div class="container-minimizar-inferior">
-                <button class="btn-minimizar-inferior" onclick="alternarMinimizarCard(${ev.id})" title="Minimizar/Expandir">
-                    🔖
-                </button>
-            </div>
         </div>
     `;
 }
+
+
 function validarPlantioDinamico() {
     if (!itemSelecionadoPlantio) return;
 
@@ -1646,41 +1637,37 @@ function gerarHtmlPlantio(ev) {
     // Preserva o estado visual minimizado caso o painel seja redesenhado na mesma sessão
     const classeMinimizadoInicial = ev.minimizado ? "card-pergaminho-recolhido" : "";
 
-    return `
+return `
         <div id="card-evento-${ev.id}" class="caixa-evento animated fadeIn ${classeMinimizadoInicial}">
-            <div class="header-evento" style="display: flex; justify-content: space-between; align-items: center;">
-                <strong>${ev.nome}</strong>
-                <span class="status ${statusClean}" style="font-size: 0.85em; font-weight: bold;">${localPlantioTexto}</span>
+            
+            <div class="header-evento">
+                <div class="header-titulo">
+                    <button class="btn-minimizar" onclick="alternarMinimizarCard(${ev.id})" title="Minimizar/Expandir">−</button>
+                    <strong>${ev.nome}</strong>
+                </div>
+                <span class="status ${statusClean}">${localPlantioTexto}</span>
             </div>
             
-            <div class="conteudo-pergaminho-rolante">
-                <div class="corpo-card-plantio" style="margin-top: 6px;">
+            <div class="conteudo-card">
+                <div class="corpo-card">
                     <div class="detalhes-plantio">
-                        <div class="info-plantio" style="font-size: 0.85em; margin-bottom: 2px;">📅 Plantio: ${ev.dataPlantio}</div>
-                        <ul class="lista-colheitas" style="margin: 0; padding-left: 14px; font-size: 0.85em;">${colheitasHTML}</ul>
+                        <div class="info-plantio">📅 Plantio: ${ev.dataPlantio}</div>
+                        <ul class="lista-colheitas">${colheitasHTML}</ul>
                     </div>
 
                     ${urlImgCard ? `
-                    <div class="container-foto-bloco" style="display: flex; justify-content: center; align-items: center; padding: 8px 0; width: 100%;">
-                        <img src="${urlImgCard}" alt="${ev.nome}" onerror="this.style.display='none'" style="max-width: 48px; max-height: 48px; object-fit: contain;">
+                    <div class="container-foto">
+                        <img src="${urlImgCard}" alt="${ev.nome}" onerror="this.style.display='none'">
                     </div>
                     ` : ''}
                 </div>
 
-                <div class="acoes" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                    <div class="acoes-esquerda">
-                        ${botaoColheitaHTML}
-                    </div>
+                <div class="acoes">
+                    <div class="acoes-esquerda">${botaoColheitaHTML}</div>
                     <div class="acoes-direita">
                         <button class="btn-delete" data-estacao="${estacaoEvento}" onclick="excluirEventoPess(${ev.id})"></button>
                     </div>
                 </div>
-            </div>
-            
-            <div class="container-minimizar-inferior">
-                <button class="btn-minimizar-inferior" onclick="alternarMinimizarCard(${ev.id})" title="Minimizar/Expandir">
-                    🔖
-                </button>
             </div>
         </div>
     `;
@@ -1739,23 +1726,20 @@ function alternarMinimizarCard(id) {
     const cardElemento = document.getElementById(`card-evento-${id}`);
     if (!cardElemento) return;
 
-    // Alterna a classe de estilização do efeito visual
-    cardElemento.classList.toggle("card-pergaminho-recolhido");
+    // Alterna a nova classe padrão
+    cardElemento.classList.toggle("card-recolhido");
 
-    // Sincroniza o estado de minimização no array de dados para evitar re-abrir ao atualizar o painel
+    // Sincroniza o estado no array de dados
     const eventoEncontrado = eventosPess.find(e => e.id === id);
     if (eventoEncontrado) {
-        eventoEncontrado.minimizado = cardElemento.classList.contains("card-pergaminho-recolhido");
+        // Atualiza a propriedade minimizado verificando a nova classe
+        eventoEncontrado.minimizado = cardElemento.classList.contains("card-recolhido");
         
-        // Salva as alterações na persistência de dados
+        // Salva e renderiza
         if (typeof salvarPessStorage === 'function') {
             salvarPessStorage();
         }
         
-        // Força a re-renderização do painel para manter o estado e a árvore do DOM consistentes
-        if (typeof renderizarPainelPess === 'function') {
-            renderizarPainelPess();
-        }
     }
 }
 // ========================================================

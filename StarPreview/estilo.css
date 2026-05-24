@@ -377,19 +377,48 @@ body {
 
 /* Cabeçalho do cartão (Nome e Status) */
 .header-evento {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 2px solid rgba(100, 57, 37, 0.25); /* Linha divisória interna */
-  padding-bottom: 4px;
-  margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid rgba(100, 57, 37, 0.25); /* Linha divisória interna */
+    padding-bottom: 4px;
+    margin-bottom: 8px;
+    text-transform: capitalize; /* Deixa o nome do cultivo com a primeira letra maiúscula */
+  }
+.header-titulo {
+    display: flex;
+    align-items: center;
+    gap: 8px;}
+
+.btn-minimizar {
+    background: #dcc088;
+    border: 1px solid #643925;
+    border-radius: 3px;
+    color: #4b2c20;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 0 6px;
+    line-height: 18px;
 }
 
-.header-evento strong {
-  font-size: 1.05em;
-  color: #4b2c20;
-  text-transform: capitalize; /* Inicial maiúscula automática */
+/* Esconde o conteúdo quando o card estiver recolhido */
+.caixa-evento.card-recolhido .conteudo-card {
+    display: none !important;
 }
+
+/* Ajustes visuais limpos */
+.container-foto {
+    display: flex;
+    justify-content: left;
+    padding: 8px 0;
+}
+
+.container-foto img {
+    max-width: 48px;
+    max-height: 48px;
+    image-rendering: pixelated;
+}    
 
 /* Espaçamento e cor das datas e previsões */
 .info-plantio {
