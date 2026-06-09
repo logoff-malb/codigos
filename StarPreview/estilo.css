@@ -82,6 +82,7 @@ body {
   height: 72px;
   padding: 0;
   background-color: rgba(255, 255, 255, 0.08);
+  -webkit-backdrop-filter: blur(1px);
   backdrop-filter: blur(1px);
   box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -167,6 +168,7 @@ body {
   justify-content: center;
   padding: 0;
   background-color: rgba(255, 255, 255, 0.08);
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
   box-shadow: 0 0 6px rgba(0, 78, 100, 0.3);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -218,6 +220,34 @@ body {
   object-fit: contain;
 }
 .btn-player span {
+  font-size: 12px;
+  margin-top: 2px;
+  color: #333;
+}
+/*botão layout */
+.btn-layout {
+  width: 70px;
+  height: 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  background-color: #F9BA66;
+  transition: background 0.3s, transform 0.2s;
+}
+.btn-layout:hover {
+  background: #eee;
+  transform: scale(1.05);
+}
+.btn-layout img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+}
+.btn-layout span {
   font-size: 12px;
   margin-top: 2px;
   color: #333;
@@ -381,14 +411,22 @@ body {
     justify-content: space-between;
     align-items: center;
     border-bottom: 2px solid rgba(100, 57, 37, 0.25); /* Linha divisória interna */
+    padding: 8px;
     padding-bottom: 4px;
     margin-bottom: 8px;
     text-transform: capitalize; /* Deixa o nome do cultivo com a primeira letra maiúscula */
+    gap: 10px; /* Espaço entre o título e o botão de minimizar */
   }
 .header-titulo {
     display: flex;
     align-items: center;
-    gap: 8px;}
+    flex-grow: 1; /* Permite que o título ocupe o espaço restante */
+    gap: 2px;
+    overflow: hidden; /* Evita que o texto ultrapasse os limites do cartão apagar se ficar pequeno */
+  }
+.header-titulo strong {
+    margin-left: 4px; /* Espaçamento extra entre o botão e o texto */
+}
 
 .btn-minimizar {
     background: #dcc088;
@@ -410,7 +448,7 @@ body {
 /* Ajustes visuais limpos */
 .container-foto {
     display: flex;
-    justify-content: left;
+    justify-content: center;
     padding: 8px 0;
 }
 
@@ -419,6 +457,20 @@ body {
     max-height: 48px;
     image-rendering: pixelated;
 }    
+/* 1. Esconde a foto por padrão */
+.foto-header {
+    display: none;
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+
+    image-rendering: pixelated;
+}
+
+/* 2. Quando o card estiver minimizado (classe .card-recolhido), mostra a foto */
+.caixa-evento.card-recolhido .foto-header {
+    display: block !important;
+}
 
 /* Espaçamento e cor das datas e previsões */
 .info-plantio {
@@ -862,3 +914,76 @@ dialog#modalPlantio {
     padding-top: 8px !important;
     font-weight: 500 !important; /* Dá corpo à fonte sem deixá-la totalmente em negrito */
     line-height: 1.5 !important;}
+
+
+/* ==============================modal layout============================== */
+    /* O container que vai receber as células */
+/* No seu estilo.css */
+.modal-stardew {
+    -webkit-user-select: none; /* Safari */
+    user-select: none;   
+    background-color: var(--cor-fundo-modal);
+    border: 4px solid var(--cor-madeira-escura);
+}
+
+.modal-body {
+    display: flex;
+    gap: 20px;
+    height: 70vh; /* O modal ocupa boa parte da tela */
+    overflow: hidden; /* Evita que o conteúdo ultrapasse o modal */
+    background-color: var(--cor-fundo-modal);
+    border: 4px solid var(--cor-madeira-escura);
+  }
+
+:root {
+    --cor-madeira: #4a210d;
+    --espacamento-padrao: 15px;
+    --cor-terra-stardew: #D89D20; /* A cor que você pegou no Paint */
+    --cor-madeira-escura: #4a210d; /* A borda estilo madeira do jogo */
+    --cor-fundo-modal: #fff3d1;    /* A cor de pergaminho dos menus do jogo */
+}
+
+.viewport-edicao {
+    width: 600px;
+    height: 600px;
+    overflow: hidden; /* Importante: hidden para não mostrar a barra de scroll padrão */
+    cursor: grab; /* Cursor de "mãozinha" */
+    position: relative;
+    /*border: 2px solid #8b4513; antigo*/
+    flex-shrink: 0;
+    background-color: var(--cor-terra-stardew);
+   border: 3px solid var(--cor-madeira-escura);
+    border-radius: 4px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+}
+
+.viewport-edicao:active {
+    cursor: grabbing; /* Cursor de "mão fechada" ao clicar */
+}
+
+#grid-fazenda {
+    display: grid;
+    /* Tamanho real dos tiles, ex: 32px ou 48px para facilitar o clique */
+    grid-template-columns: repeat(60, 48px); 
+    width: max-content; /* Garante que o grid tenha o tamanho real total */
+    max-width: 600px; /* Ajuste conforme necessário */
+  }
+
+.celula-grade {
+    width: 48px;
+    height: 48px;
+    border: 0.5px solid rgba(139, 69, 19, 0.2); /* Linhas de grade sutis */
+     background-color: transparent; /* Fundo transparente para mostrar a terra */
+}
+/* Cada quadradinho da grade */
+
+/* Efeito de seleção (aquela cor amarela que você está usando) */
+.celula-grade.selecionada {
+    background-color: rgba(255, 255, 0, 0.4);
+}
+
+.celula-grade:hover {
+    background-color: rgba(255, 255, 0, 0.3); /* Feedback visual ao passar o mouse */
+}
+ 
+

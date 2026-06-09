@@ -377,19 +377,48 @@ body {
 
 /* Cabeçalho do cartão (Nome e Status) */
 .header-evento {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 2px solid rgba(100, 57, 37, 0.25); /* Linha divisória interna */
-  padding-bottom: 4px;
-  margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid rgba(100, 57, 37, 0.25); /* Linha divisória interna */
+    padding-bottom: 4px;
+    margin-bottom: 8px;
+    text-transform: capitalize; /* Deixa o nome do cultivo com a primeira letra maiúscula */
+  }
+.header-titulo {
+    display: flex;
+    align-items: center;
+    gap: 8px;}
+
+.btn-minimizar {
+    background: #dcc088;
+    border: 1px solid #643925;
+    border-radius: 3px;
+    color: #4b2c20;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 0 6px;
+    line-height: 18px;
 }
 
-.header-evento strong {
-  font-size: 1.05em;
-  color: #4b2c20;
-  text-transform: capitalize; /* Inicial maiúscula automática */
+/* Esconde o conteúdo quando o card estiver recolhido */
+.caixa-evento.card-recolhido .conteudo-card {
+    display: none !important;
 }
+
+/* Ajustes visuais limpos */
+.container-foto {
+    display: flex;
+    justify-content: left;
+    padding: 8px 0;
+}
+
+.container-foto img {
+    max-width: 48px;
+    max-height: 48px;
+    image-rendering: pixelated;
+}    
 
 /* Espaçamento e cor das datas e previsões */
 .info-plantio {
@@ -397,6 +426,21 @@ body {
   color: #5c3a21;
   margin-bottom: 4px;
 }
+#infoCultivoContainer {
+    
+    padding: 2px;
+    border-radius: 4px;
+    border: 1px solid #643925;
+    background: rgba(255, 255, 255, 0.3);
+    font-size: 0.9em;
+    line-height: 1.4;
+    color: #4b2c20;
+    
+    /* Isso garante que ele não ultrapasse a área visível da barra */
+    min-height: 100px;
+    overflow-y: auto; 
+}
+
 
 .lista-colheitas {
   margin: 0 0 10px 0;
@@ -555,27 +599,30 @@ body {
 /*modal plantio*/ 
 /* ==== NOVO MODAL DE PLANTIO (ESTILO SV) ==== */
 dialog#modalPlantio {
-    border: none;
+    border: 4px solid #643925;
     padding: 0;
     border-radius: 8px;
-    background: #f4e4bc; /* Cor de pergaminho Stardew */
+    background: #f4e4bc;
     box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    border: 4px solid #643925;
-    max-width: 95vw;   /* Responsivo para telas pequenas */
     
-  }
+    /* Trava o tamanho do elemento que "abre" a tela */
+    width: 600px !important;
+    height: 450px !important;
+    max-width: 95vw;
+    overflow: hidden !important; /* Impede qualquer estouro */
+}
 
 /* O container interno simula a caixa de diálogo do jogo */
 /* Garante que o corpo do modal ocupe a altura inteira disponível */
 .modal-conteudo-plantio {
-    align-items: flex-start !important;
+    
     display: flex !important;
     flex-direction: row !important;
-    height: 450px; /* Altura total do modal, ajustável conforme necessário */
+    height: 100%; /* Altura total do modal, ajustável conforme necessário */
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    width: 600px; /* Largura total do modal, ajustável conforme necessário */
+    width: 100%; /* Largura total do modal, ajustável conforme necessário */
     
 }
 
@@ -583,23 +630,35 @@ dialog#modalPlantio {
 .modal-barra-lateral-plantio {
     background: rgba(100, 57, 37, 0.1);
     border-right: 3px solid #643925;
-    flex: 0 0 250px;       /* Largura fixa de 250px para a barra lateral */
-    overflow-y: auto;      /* ATIVA O SCROLL APENAS AQUI */
+    width: 250px;
+    height: 100%;
+    flex: 0 0 250px;
+    overflow-y: auto;
     padding: 20px;
     box-sizing: border-box;
-    display: flex;         /* Necessário para alinhar o conteúdo interno */
+    display: flex;
+    flex-direction: column;
+    
+   
+}
+/*.modal-barra-lateral-plantio {
+    background: rgba(100, 57, 37, 0.1);
+    border-right: 3px solid #643925;
+    flex: 0 0 250px;      
+    overflow-y: auto;     
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;           Necessário para alinhar o conteúdo interno 
     flex-direction: column;
     text-align: center;
     width: 200px;
-}
+}*/
+
 
 .modal-barra-lateral-plantio img {
     width: 80px;
-    image-rendering: pixelated; /* Mantém os sprites nítidos */
+    image-rendering: pixelated;
     background: #fff;
-    padding: 10px;
-    border: 2px solid #643925;
-    border-radius: 8px;
 }
 
 
@@ -618,14 +677,35 @@ dialog#modalPlantio {
 /* Container Principal (Direita) */
 .modal-principal-plantio {
     box-sizing: border-box;
+    flex: 1;
     display: flex;
     flex-direction: column;
-    flex: 1; /* Ocupa o espaço disponível, mas respeita o pai */
-    min-width: 0;
-    overflow: hidden;
     padding: 15px;
-    user-select: none;
-    width: 100%;
+    overflow: hidden;
+    height: 100%;
+    /* min-height: 0;  Permite que o conteúdo interno controle a altura */
+}
+.filtro-container-plantio {
+    flex-shrink: 0;
+    display: flex;
+    gap: 5px;
+    margin-bottom: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+#feedbackViabilidade {
+    flex-shrink: 0;
+    margin: 5px 0 10px 0;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #643925;
+    background: rgba(255, 255, 255, 0.2);
+    font-size: 0.9em;
+    color: #4b2c20;
+    min-height: 45px;
+    max-height: 80px;
+    overflow-y: auto;
+    box-sizing: border-box;
 }
 /* 1. Mudamos o container para 'row' (lado a lado) e aumentamos a largura máxima */
 /* 1. Container principal: Alinha os cards lado a lado e os mantém no topo */
@@ -712,12 +792,13 @@ dialog#modalPlantio {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
     gap: 10px;
-    height: 100px;
+    /*height: 100px;*/
     padding: 10px;
-    flex: 2; /* Permite que a lista cresça e encolha conforme necessário */
-    flex-grow: 1; /* Faz a lista crescer e empurrar os botões para baixo */
-    overflow-y: scroll;
-    max-height: 250px; /* Garante visibilidade mínima */
+    flex: 1; /* Permite que a lista cresça e encolha conforme necessário */
+    /*flex-grow: 1; /* Faz a lista crescer e empurrar os botões para baixo */
+    overflow-y: auto; /* Adiciona rolagem se os itens excederem a altura */
+    min-height: 0; /* Garante que a lista tenha uma altura mínima */
+    /*max-height: none; /* Garante visibilidade mínima */
 }
 /* Botões do Modal */
 .botoes-modal-plantio {

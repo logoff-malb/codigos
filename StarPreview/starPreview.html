@@ -5,7 +5,7 @@
   <title>Starpreview</title>
   <link rel="stylesheet" type="text/css" href="estilo.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  
+  <script src="farmPlanner.js" defer></script>
   <!--calendario e variaveis globais-->>
 <script>
   /* --- ESTADOS GLOBAIS (Restaurados do Backup) --- */
@@ -294,7 +294,10 @@ window.addEventListener("DOMContentLoaded", () => {
         <img src="recursos/player.png" alt="Player">
         <span>Player</span>
       </button>
-
+      <!--novo botão layout -->
+      <button type="button" class="btn-layout" id="btnLayout" onclick="abrirModalLayout()">
+        <img src="recursos/layout.png" alt="Layout"> <span>Layout</span>
+      </button>
 
     </div>
   </div>
@@ -404,6 +407,21 @@ window.addEventListener("DOMContentLoaded", () => {
     font-family: sans-serif; z-index: 9999;">
   Informações atualizadas
 </div>
+
+<!-- Modal de layout -->
+<dialog id="modalLayout" class="modal-stardew">
+    <div class="modal-header">
+        <h2>Planejador de Fazenda</h2>
+        <button onclick="document.getElementById('modalLayout').close()" class="btn-fechar">X</button>
+    </div>
+    
+    <div class="modal-body">
+    <p>Clique nos quadrados para posicionar itens:</p>
+    <div class="viewport-edicao">
+        <div id="grid-fazenda" class="container-fazenda"></div>
+    </div>
+    </div>
+</dialog>
 
 <dialog id="modalPlantio" class="modal-plantio">
   <div class="modal-conteudo-plantio">
@@ -1236,15 +1254,17 @@ function gerarHtmlPlantio(ev) {
 
     return `
         <div id="card-evento-${ev.id}" class="caixa-evento animated fadeIn ${classeMinimizadoInicial}">
-            
-            <div class="header-evento">
-                <div class="header-titulo">
-                    <button class="btn-minimizar" onclick="alternarMinimizarCard(${ev.id})" title="Minimizar/Expandir">−</button>
-                    <strong>${ev.nome}</strong>
-                </div>
-                <span class="status ${statusClean}">${localPlantioTexto}</span>
-            </div>
-            
+
+        <div class="header-evento">
+        <div class="header-titulo">
+        <button class="btn-minimizar" onclick="alternarMinimizarCard(${ev.id})" title="Minimizar/Expandir">−</button>
+        
+        ${urlImgCard ? `<img src="${urlImgCard}" class="foto-header" alt="${ev.nome}" onerror="this.style.display='none'">` : ''}
+        
+        <strong>${ev.nome}</strog>
+        </div>
+        <span class="status ${statusClean}">${localPlantioTexto}</span>
+        </div>
             <div class="conteudo-card">
                 <div class="corpo-card">
                     <div class="detalhes-plantio">
@@ -1634,43 +1654,39 @@ function gerarHtmlPlantio(ev) {
 
     const urlImgCard = ev.imagem ? ev.imagem.replace(/\\/g, "/") : "";
 
-    // Preserva o estado visual minimizado caso o painel seja redesenhado na mesma sessão
-    const classeMinimizadoInicial = ev.minimizado ? "card-pergaminho-recolhido" : "";
+    
+    const classeMinimizadoInicial = ev.minimizado ? "card-recolhido" : "";
 
 return `
-        <div id="card-evento-${ev.id}" class="caixa-evento animated fadeIn ${classeMinimizadoInicial}">
-            
-            <div class="header-evento">
-                <div class="header-titulo">
-                    <button class="btn-minimizar" onclick="alternarMinimizarCard(${ev.id})" title="Minimizar/Expandir">−</button>
-                    <strong>${ev.nome}</strong>
-                </div>
-                <span class="status ${statusClean}">${localPlantioTexto}</span>
+    <div id="card-evento-${ev.id}" class="caixa-evento animated fadeIn ${classeMinimizadoInicial}">
+        
+        <div class="header-evento">
+            <div class="header-titulo">
+                 <button class="btn-minimizar" onclick="alternarMinimizarCard(${ev.id})" title="Minimizar/Expandir">−</button>
+                 <strong>${ev.nome}</strong>
+                 ${urlImgCard ? `<img src="${urlImgCard}" class="foto-header" alt="${ev.nome}" onerror="this.style.display='none'">` : ''}
             </div>
             
-            <div class="conteudo-card">
-                <div class="corpo-card">
-                    <div class="detalhes-plantio">
-                        <div class="info-plantio">📅 Plantio: ${ev.dataPlantio}</div>
-                        <ul class="lista-colheitas">${colheitasHTML}</ul>
-                    </div>
-
-                    ${urlImgCard ? `
-                    <div class="container-foto">
-                        <img src="${urlImgCard}" alt="${ev.nome}" onerror="this.style.display='none'">
-                    </div>
-                    ` : ''}
+            <span class="status ${statusClean}">${localPlantioTexto}</span>
+        </div>
+        
+        <div class="conteudo-card">
+            <div class="corpo-card">
+                <div class="detalhes-plantio">
+                    <div class="info-plantio">📅 Plantio: ${ev.dataPlantio}</div>
+                    <ul class="lista-colheitas">${colheitasHTML}</ul>
                 </div>
-
-                <div class="acoes">
-                    <div class="acoes-esquerda">${botaoColheitaHTML}</div>
-                    <div class="acoes-direita">
-                        <button class="btn-delete" data-estacao="${estacaoEvento}" onclick="excluirEventoPess(${ev.id})"></button>
-                    </div>
+                ${urlImgCard ? `<div class="container-foto"><img src="${urlImgCard}" alt="${ev.nome}" onerror="this.style.display='none'"></div>` : ''}
+            </div>
+            <div class="acoes">
+                <div class="acoes-esquerda">${botaoColheitaHTML}</div>
+                <div class="acoes-direita">
+                    <button class="btn-delete" data-estacao="${estacaoEvento}" onclick="excluirEventoPess(${ev.id})"></button>
                 </div>
             </div>
         </div>
-    `;
+    </div>
+`;
 }
 function gerarHtmlProcessamento(ev) {
     return `
