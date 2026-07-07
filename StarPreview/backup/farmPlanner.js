@@ -10,56 +10,19 @@ const FarmPlanner = {
     
     matriz: [],
 
-    // --- Configurações dos Objetos e Seus Alcances Matemáticos ---
+    // --- Configurações dos Objetos ---
     objetosConfig: {
-        // Irrigação (Comportamentos Diferentes)
         aspersorC: { 
             categoria: 'Irrigação', 
             alcance: [[0, 0], [0, -1], [0, 1], [-1, 0], [1, 0]] 
-        },
-        aspersorQ: { 
-            categoria: 'Irrigação', 
-            alcance: [
-                [0,0], [-1,-1], [0,-1], [1,-1], [-1,0], [1,0], [-1,1], [0,1], [1,1] // Área quadrada 3x3
-            ] 
-        },
-        aspersorI: { 
-            categoria: 'Irrigação', 
-            alcance: [
-                [-2,-2], [-1,-2], [0,-2], [1,-2], [2,-2],
-                [-2,-1], [-1,-1], [0,-1], [1,-1], [2,-1],
-                [-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0],
-                [-2, 1], [-1, 1], [0, 1], [1, 1], [2, 1],
-                [-2, 2], [-1, 2], [0, 2], [1, 2], [2, 2]  // Área quadrada 5x5
-            ] 
-        },
-
-        // Proteção (Mesmo comportamento de alcance, mudando apenas a skin/sprite)
-        espantalho: { 
-            categoria: 'Proteção', 
-            alcance: [
-                [0,-4],
-                [-1,-3], [0,-3], [1,-3],
-                [-2,-2], [-1,-2], [0,-2], [1,-2], [2,-2],
-                [-3,-1], [-2,-1], [-1,-1], [0,-1], [1,-1], [2,-1], [3,-1],
-                [-4,0],  [-3,0],  [-2,0],  [-1,0],  [0,0],  [1,0],  [2,0],  [3,0],  [4,0],
-                [-3,1],  [-2,1],  [-1,1],  [0,1],  [1,1],  [2,1],  [3,1],
-                [-2,2],  [-1,2],  [0,2],  [1,2],  [2,2],
-                [-1,3],  [0,3],  [1,3],
-                [0,4] // Raio circular clássico de 8 blocos (distância Euclidiana de 4.5 para mapeamento de grade)
-            ] 
-        },
-        espantalhoR1: { categoria: 'Proteção', alcance: [] }, // Usa herança dinâmica do padrão
-        espantalhoR2: { categoria: 'Proteção', alcance: [] }
+        }
+        // Adicione outros aqui no futuro seguindo o mesmo padrão
     },
 
     // --- Estado da Aplicação ---
     estado: {
         objetos: [], // Guarda: {x, y, tipo}
-        visibilidade: { 
-            'Irrigação': true,
-            'Proteção': true 
-        } 
+        visibilidade: { 'Irrigação': true } // Controle de exibição por categoria
     },
 
     ferramentaAtual: 'aspersorC', // Ferramenta que o usuário está usando
@@ -84,10 +47,6 @@ const FarmPlanner = {
             celula.classList.add('celula-grade');
             celula.dataset.index = i;
             celula.onclick = (e) => this.gerenciarClique(e.target);
-            // NOVO: Clique do botão direito
-            celula.oncontextmenu = (e) => { e.preventDefault(); // Impede o menu padrão do Windows/Navegador de abrir
-            this.gerenciarClique(e.target, 'direito');
-    };
             container.appendChild(celula);
         }
         
@@ -95,7 +54,7 @@ const FarmPlanner = {
         this.construirControles();
         this.renderizarObjetos();
 
-        // Lógica de arrastar
+        // Lógica de arrastar (mantida do seu código original)
         const viewport = document.querySelector('.viewport-edicao');
         let isDown = false;
         let startX, startY, scrollLeft, scrollTop;
@@ -122,48 +81,43 @@ const FarmPlanner = {
         });
     },
 
-    // --- Funções de Lógica e Renderização ---
+    // --- Funções de Lógica ---
 
     renderizarObjetos: function() {
         // 1. Limpa todas as marcações de alcance e remove imagens de elementos antigos
         document.querySelectorAll('.celula-grade').forEach(c => {
-            c.className = 'celula-grade'; 
+            c.className = 'celula-grade'; // Reseta classes de alcance/hover
+            
+            // Remove a div filha do sprite se ela existir
             const spriteAntigo = c.querySelector('.objeto-sprite');
             if (spriteAntigo) spriteAntigo.remove();
         });
 
         // 2. Desenha objetos e seus alcances
         this.estado.objetos.forEach(obj => {
-            let config = this.objetosConfig[obj.tipo];
+            const config = this.objetosConfig[obj.tipo];
             if (!config) return;
 
-            // Regra especial: Se for um espantalho raro, ele usa a matriz de alcance do espantalho comum
-            let matrizAlcance = config.alcance;
-            if (obj.tipo.startsWith('espantalho') && matrizAlcance.length === 0) {
-                matrizAlcance = this.objetosConfig['espantalho'].alcance;
-            }
-
-            // --- DESENHA O SPRITE DO OBJETO ---
+            // --- DESENHA O SPRITE DO OBJETO (32px centralizado via CSS) ---
             const indiceCentro = (obj.y * this.config.largura) + obj.x;
             const celulaCentro = document.querySelector(`[data-index="${indiceCentro}"]`);
             if (celulaCentro) {
                 const divSprite = document.createElement('div');
-                divSprite.classList.add('objeto-sprite', `tile-${obj.tipo}`);
+                divSprite.classList.add('objeto-sprite', `obj-${obj.tipo}`);
                 celulaCentro.appendChild(divSprite);
             }
 
             // --- DESENHA O ALCANCE SE A CATEGORIA ESTIVER VISÍVEL ---
             if (this.estado.visibilidade[config.categoria]) {
-                matrizAlcance.forEach(([dx, dy]) => {
+                config.alcance.forEach(([dx, dy]) => {
                     const alvoX = obj.x + dx;
                     const alvoY = obj.y + dy;
                     
+                    // Validação simples de borda para não quebrar as linhas do grid 60x60
                     if (alvoX >= 0 && alvoX < this.config.largura && alvoY >= 0 && alvoY < this.config.altura) {
                         const indice = (alvoY * this.config.largura) + alvoX;
                         const celula = document.querySelector(`[data-index="${indice}"]`);
-                        
-                        // Injeta diretamente a categoria exata (ex: 'Irrigação' ou 'Proteção') como classe CSS
-                        if (celula) celula.classList.add(config.categoria);
+                        if (celula) celula.classList.add(`range-${obj.tipo}`);
                     }
                 });
             }
@@ -171,18 +125,15 @@ const FarmPlanner = {
     },
 
     colocarObjeto: function(x, y, tipo) {
-    // Limpa o objeto anterior da mesma coordenada antes de colocar o novo
-    this.estado.objetos = this.estado.objetos.filter(obj => !(obj.x === x && obj.y === y));
-    
-    this.estado.objetos.push({ x, y, tipo });
-    this.renderizarObjetos();
+        this.estado.objetos.push({ x, y, tipo });
+        this.renderizarObjetos();
     },
 
     construirControles: function() {
         const container = document.getElementById('controles-container');
         if (!container) return;
 
-        container.innerHTML = ''; 
+        container.innerHTML = ''; // Limpa antes de reconstruir
         const categories = [...new Set(Object.values(this.objetosConfig).map(o => o.categoria))];
 
         categories.forEach(cat => {
@@ -196,41 +147,31 @@ const FarmPlanner = {
         });
     },
 
-   gerenciarClique: function(celula, botao) {
-    // Se clicou no sprite filho, redireciona o alvo para a célula pai
-    if (celula.classList.contains('objeto-sprite')) {
-        celula = celula.parentElement;
-    }
+    gerenciarClique: function(celula) {
+        // Ignora cliques caso o usuário clique diretamente em cima do sprite já renderizado
+        if (celula.classList.contains('objeto-sprite')) {
+            celula = celula.parentElement;
+        }
 
-    const indice = parseInt(celula.dataset.index);
-    const x = indice % this.config.largura;
-    const y = Math.floor(indice / this.config.largura);
-    
-    if (botao === 'direito') {
-        // Remove qualquer objeto que esteja nesta exata coordenada
-        this.estado.objetos = this.estado.objetos.filter(obj => !(obj.x === x && obj.y === y));
-        this.renderizarObjetos();
-    } else {
-        // Comportamento padrão: coloca o item selecionado
+        const indice = parseInt(celula.dataset.index);
+        const x = indice % this.config.largura;
+        const y = Math.floor(indice / this.config.largura);
+        
         this.colocarObjeto(x, y, this.ferramentaAtual);
-    }
     },
 
+    // Altera a ferramenta ativa e atualiza o estado visual do menu lateral
     selecionarFerramenta: function(tipo) {
         this.ferramentaAtual = tipo;
         
-        document.querySelectorAll('.botao-ferramenta, .botao-variante').forEach(btn => {
+        const botoes = document.querySelectorAll('.botao-ferramenta');
+        botoes.forEach(btn => {
             btn.classList.remove('ativa');
         });
 
-        const botaoAlvo = document.querySelector(`[onclick*="'${tipo}'"]`);
-        if (botaoAlvo) botaoAlvo.classList.add('ativa');
-
-        const containerPai = botaoAlvo?.closest('.botao-container-expansivel');
-        if (containerPai) {
-            const botaoPrincipal = containerPai.querySelector('.botao-ferramenta');
-            if (botaoPrincipal) botaoPrincipal.classList.add('ativa');
-        }
+        // Adiciona a classe ativa no botão que possui o evento para este item
+        const botaoAtivo = document.querySelector(`.botao-ferramenta[onclick*="${tipo}"]`);
+        if (botaoAtivo) botaoAtivo.classList.add('ativa');
     },
 
     sincronizarScroll: function() {

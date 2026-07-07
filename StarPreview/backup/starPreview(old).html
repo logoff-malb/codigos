@@ -5,7 +5,7 @@
   <title>Starpreview</title>
   <link rel="stylesheet" type="text/css" href="estilo.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  
+  <script src="farmPlanner.js" defer></script>
   <!--calendario e variaveis globais-->>
 <script>
   /* --- ESTADOS GLOBAIS (Restaurados do Backup) --- */
@@ -157,6 +157,8 @@ function abrirModalPlantio() {
     modal.showModal();
     if (typeof atualizarListaItensPlantio === "function") atualizarListaItensPlantio();
   }
+ 
+
 }
 
 function fecharModalPlantioLimpo() {
@@ -292,7 +294,10 @@ window.addEventListener("DOMContentLoaded", () => {
         <img src="recursos/player.png" alt="Player">
         <span>Player</span>
       </button>
-
+      <!--novo botão layout -->
+      <button type="button" class="btn-layout" id="btnLayout" onclick="abrirModalLayout()">
+        <img src="recursos/layout.png" alt="Layout"> <span>Layout</span>
+      </button>
 
     </div>
   </div>
@@ -403,6 +408,31 @@ window.addEventListener("DOMContentLoaded", () => {
   Informações atualizadas
 </div>
 
+<dialog id="modalLayout" class="modal-stardew">
+    <div class="modal-header">
+        <h2>Planejador de Fazenda</h2>
+        <button onclick="document.getElementById('modalLayout').close()" class="btn-fechar">X</button>
+    </div>
+    
+    <div class="modal-body">
+        <div id="menu-ferramentas">
+            <p class="instrucao-menu">Clique nos quadrados para posicionar itens:</p>
+            
+            <div class="grupo-botoes">
+                <button class="botao-ferramenta ativa" onclick="FarmPlanner.selecionarFerramenta('aspersorC')" title="Aspersor Comum"></button>
+                <button class="botao-ferramenta" onclick="FarmPlanner.selecionarFerramenta('aspersorQ')" title="Aspersor de Qualidade"></button>
+                <button class="botao-ferramenta" onclick="FarmPlanner.selecionarFerramenta('aspersorI')" title="Aspersor de Irídio"></button>
+                <button class="botao-ferramenta" onclick="FarmPlanner.selecionarFerramenta('espantalho')" title="Espantalho"></button>
+            </div>
+
+            <div id="controles-container"></div>
+        </div>
+    
+        <div class="viewport-edicao">
+            <div id="grid-fazenda" class="container-fazenda"></div>
+        </div>
+    </div>
+</dialog>
 <dialog id="modalPlantio" class="modal-plantio">
   <div class="modal-conteudo-plantio">
     
@@ -424,12 +454,15 @@ window.addEventListener("DOMContentLoaded", () => {
       
       <!-- Contexto (Estufa / Ilha) -->
       <div class="contexto-plantio" style="margin-top: 15px; text-align: left; background: rgba(0,0,0,0.1); padding: 8px; border-radius: 4px;">
-        <label><input type="checkbox" id="checkEstufa"> 🏠 Estufa</label><br>
-        <label><input type="checkbox" id="checkIlha"> 🌴 Ilha</label>
-      </div>
+  <p style="margin: 0 0 8px 0; font-family: 'Stardew', sans-serif; font-size: 11px; color: #4b2c20; font-weight: bold; line-height: 1.3;">
+    ℹ️ Deixe em branco para plantar no Vale (Fazenda)
+  </p>
+  <label><input type="checkbox" id="checkEstufa"> 🏠 Estufa</label><br>
+  <label><input type="checkbox" id="checkIlha"> 🌴 Ilha</label>
+</div>
       
       <!-- Bloco de Informações Dinâmicas (Estilo Caixa de Destaque) -->
-      <div id="infoCultivoContainer" style="margin-top: 15px; padding: 10px; border-radius: 4px; border: 1px solid #643925; background: rgba(255,255,255,0.3); font-size: 0.9em; line-height: 1.4; color: #4b2c20; min-height: 100px;">
+      <div id="infoCultivoContainer">
         <p id="infoCrescimento" style="margin-bottom: 5px; font-weight: bold;"></p>
         <p id="infoRecolheita" style="margin-bottom: 5px; font-weight: bold; color: #2e5a27;"></p>
         <p id="infoObs" style="margin-top: 8px; font-style: italic; color: #7a4a35; border-top: 1px solid rgba(100, 57, 37, 0.2); padding-top: 5px; display: none;"></p>
@@ -437,7 +470,7 @@ window.addEventListener("DOMContentLoaded", () => {
     </div> <!-- Fim da Barra Lateral -->
 
     <!-- CONTEÚDO PRINCIPAL DIREITA -->
-    <div class="modal-principal-plantio" style="display: flex; flex-direction: column; height: 100%; box-sizing: border-box; justify-content: space-between;">
+    <div class="modal-principal-plantio">
   
   <div class="filtro-container-plantio" style="display: flex; gap: 5px; margin-bottom: 10px; align-items: center; flex-wrap: wrap;">
     <input type="number" id="diaPlantio" min="1" max="28" value="1" style="width: 45px;">
@@ -457,15 +490,15 @@ window.addEventListener("DOMContentLoaded", () => {
 </button>
   </div>
 
-  <ul id="listaItens" style="flex-grow: 1; overflow-y: auto; margin: 0 0 10px 0; padding: 0;"></ul>
+  <ul id="listaItens"></ul>
 
-  <div id="feedbackViabilidade" style="margin: 5px 0 10px 0; padding: 10px; border-radius: 4px; border: 1px solid #643925; background: rgba(255,255,255,0.2); font-size: 0.9em;">
+  <div id="feedbackViabilidade">
     <span id="msgViabilidade">Selecione uma semente...</span>
   </div>
 
-  <div class="botoes-modal-plantio" style="display: flex; justify-content: flex-end; gap: 10px; align-items: center; margin-top: auto; padding-top: 5px;">
+  <div class="botoes-modal-plantio">
     <div style="display: flex; align-items: center; gap: 8px;">
-      <img id="statusAdultaIcon" src="recursos/arvore-adulta.png" style="display: none;">
+      <img id="statusAdultaIcon" src="recursos/arvore-adulta.png">
       <button type="button" id="btnPlantaAdulta" data-tooltip="Adiciona o cultivo em fase adulta, calculando apenas as colheitas">planta Adulta</button>
     </div>
     <button id="confirmarPlantio" disabled>Criar Evento</button>
@@ -712,14 +745,7 @@ function atualizarListaEventos() {
     ul.appendChild(li);
   });
   }
-  lista.forEach(e => {
-    const li = document.createElement("li");
-    li.textContent = `Dia ${e.dia}: ${e.nome}`;
-    li.classList.add(e.tipo);
-    ul.appendChild(li);
-  });
-
-
+  
 function atualizarPainel() {
   atualizarListaEventos();
   atualizarDiaSelecionado();
@@ -765,13 +791,21 @@ function inicializarComponentes() {
             if (itemSelecionadoPlantio) {
                 criarEventoPlantio(itemSelecionadoPlantio);
                 itemSelecionadoPlantio = null;
+                expandirPainelEventos();
             } else {
                 Swal.fire("Atenção", "Selecione um item para plantar.", "warning");
             }
         };
     }
 }
-
+function expandirPainelEventos() {
+    const painel = document.getElementById("painelPess");
+    const btnToggle = document.getElementById("togglePessBtn");
+    
+    if (painel && painel.classList.contains("retraido")) {
+        painel.classList.remove("retraido");
+    }
+}
 function abrirModalPlantio() {
     const diaInput = document.getElementById('diaPlantio');
     const estacaoInput = document.getElementById('estacaoPlantio');
@@ -1068,7 +1102,10 @@ function criarEventoPlantio(item) {
 
         const chkEstufa = document.getElementById('checkEstufa');
         const chkIlha = document.getElementById('checkIlha');
-        const naEstufa = (chkEstufa?.checked || chkIlha?.checked) || false;
+
+        // 🌟 CORREÇÃO 1: Separa corretamente Estufa de Ilha (sem misturar os checkboxes)
+        const naEstufa = chkEstufa ? chkEstufa.checked : false;
+        const naIlha = chkIlha ? chkIlha.checked : false;
 
         const sementeAtiva = (typeof itemSelecionadoPlantio !== 'undefined' && itemSelecionadoPlantio) 
             ? itemSelecionadoPlantio 
@@ -1096,13 +1133,20 @@ function criarEventoPlantio(item) {
             id: Date.now(),
             idItem: sementeAtiva.id, 
             nome: sementeAtiva.nome,
+            
+            // 🌟 CORREÇÃO 2: Salva a imagem herdada do item original para que o card saiba o que renderizar!
+            imagem: sementeAtiva.imagem || "", 
+            
             dataPlantio: `Dia ${diaVal} - ${estacaoVal} - Ano ${anoVal}`,
             status: ehArvore ? "Produzindo" : "Em andamento", 
             tipo: sementeAtiva.tipo || [], 
             diaColheita: sementeAtiva.diaColheita || null, 
-            naEstufa: naEstufa,
             
-            // 🌟 CORREÇÃO REAL AQUI: O evento agora herda as estações permitidas originais do banco de dados/JSON do item
+            // 🌟 CORREÇÃO 3: Propriedades salvas separadamente e de forma correta
+            naEstufa: naEstufa,
+            naIlha: naIlha,
+            
+            // O evento herda as estações permitidas originais do banco de dados/JSON do item
             estacao: sementeAtiva.estacao || [],
 
             colheitas: [{
@@ -1126,7 +1170,138 @@ function criarEventoPlantio(item) {
     } catch (erro) {
         console.error("Erro fatal ao tentar criar o evento de plantio:", erro);
     }
-}function validarPlantioDinamico() {
+}
+
+function gerarHtmlPlantio(ev) {
+    const statusClean = ev.status ? ev.status.toLowerCase().replace(/\s/g, '-') : 'pendente';
+    
+    const estacaoEvento = (ev.colheitas && ev.colheitas[0]?.estacao) 
+        ? ev.colheitas[0].estacao.toLowerCase() 
+        : 'primavera';
+
+    // Define se o card já deve nascer colapsado visualmente baseado nos dados salvos
+    const classeMinimizadoInicial = ev.minimizado ? "card-recolhido" : "";
+
+    const colheitasHTML = (ev.colheitas || []).map(c => {
+        const diaTratado = (c.dia === undefined || c.dia === null || isNaN(c.dia)) ? 1 : c.dia;
+        const estacaoTratada = c.estacao || 'Primavera';
+        const tipoTratado = c.tipo || 'Colheita';
+        const anoTratado = c.ano || ev.anoFinalCalculado || 1; 
+        
+        return `<li>✨ ${tipoTratado}: Dia ${diaTratado} (${estacaoTratada}) - Ano ${anoTratado}</li>`;
+    }).join('') || '<li>Sem previsão.</li>';
+
+    let botaoColheitaHTML = '';
+    
+    if (ev.diaColheita !== undefined && ev.diaColheita !== null && ev.diaColheita !== "") {
+        const intervaloRebroto = parseInt(ev.diaColheita, 10);
+        
+        if (!isNaN(intervaloRebroto) && intervaloRebroto > 0) {
+            const ultimaColheita = ev.colheitas && ev.colheitas.length > 0 ? ev.colheitas[ev.colheitas.length - 1] : null;
+            
+            const diaDaColheitaAtual = (ultimaColheita && ultimaColheita.dia !== undefined && ultimaColheita.dia !== null && !isNaN(ultimaColheita.dia)) 
+                ? parseInt(ultimaColheita.dia, 10) 
+                : 1;
+
+            const arvoresFrutiferas = ['pêssego', 'pessego', 'banana', 'cereja', 'damasco', 'laranja', 'maçã', 'maca', 'romã', 'roma'];
+            const renderEhArvore = (Array.isArray(ev.tipo) && ev.tipo.includes('arvore')) || 
+                                   (intervaloRebroto === 1 && arvoresFrutiferas.includes(ev.nome.toLowerCase()));
+
+            let foraDeEpoca = (ev.status === "Fora de Época" || ev.status === "fora-de-epoca");
+
+            if (!foraDeEpoca && !renderEhArvore) {
+                const ehAmbienteInterno = ev.naEstufa || ev.naIlha || ev.nome.toLowerCase() === "fruta do cacto";
+
+                if (!ehAmbienteInterno) {
+                    const estacoesBrutas = Array.isArray(ev.estacao) ? ev.estacao : String(ev.estacao || '').split(',');
+                    
+                    if (estacoesBrutas.length > 0 && estacoesBrutas[0] !== '') {
+                        const estacoesSuportadas = estacoesBrutas.map(e => e.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+                        const estacaoCardAtual = ultimaColheita ? ultimaColheita.estacao : estacaoEvento;
+                        
+                        const simulacaoProxima = avancarTempoCalendario(diaDaColheitaAtual, intervaloRebroto, estacaoCardAtual);
+                        let estacaoDaProximaColheita = simulacaoProxima.estacao.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+                        if (!estacoesSuportadas.includes(estacaoDaProximaColheita)) {
+                            foraDeEpoca = true;
+                        }
+                    }
+                }
+            }
+
+            if (foraDeEpoca) {
+                botaoColheitaHTML = `<button class="btn-colheita-recalcular desativado" disabled title="Este item encerrou seu ciclo de produção">🍂 Fora de Época</button>`;
+            } else {
+                if (renderEhArvore) {
+                    const ultrapassa2x = (diaDaColheitaAtual + (intervaloRebroto * 2)) > 28 && !ev.naEstufa;
+                    const ultrapassa3x = (diaDaColheitaAtual + (intervaloRebroto * 3)) > 28 && !ev.naEstufa;
+
+                    botaoColheitaHTML = `
+                        <div class="grupo-colheita-arvore" style="display: flex; gap: 4px; align-items: center;">
+                            <select id="qtd-colheita-${ev.id}" style="padding: 2px 4px; border-radius: 4px; border: 1px solid #4a210d; background: #fff3d1; color: #4a210d; font-weight: bold; cursor: pointer;">
+                                <option value="1">1x</option>
+                                <option value="2" ${ultrapassa2x ? 'disabled style="color: #a0a0a0; background-color: #e0e0e0;"' : ''}>2x</option>
+                                <option value="3" ${ultrapassa3x ? 'disabled style="color: #a0a0a0; background-color: #e0e0e0;"' : ''}>3x</option>
+                            </select>
+                            <button class="btn-colheita-recalcular" onclick="recalcularProximaColheita(${ev.id})">🌾 Colhido</button>
+                        </div>
+                    `;
+                } else {
+                    botaoColheitaHTML = `<button class="btn-colheita-recalcular" onclick="recalcularProximaColheita(${ev.id})">🌾 Colhido</button>`;
+                }
+            }
+        } 
+    }
+
+    let localPlantioTexto = "📍 Vale";
+    if (ev.naEstufa) {
+        localPlantioTexto = "🏠 Estufa";
+    } else if (ev.naIlha) {
+        localPlantioTexto = "🌴 Ilha";
+    }
+
+    const urlImgCard = ev.imagem ? ev.imagem.replace(/\\/g, "/") : "";
+
+    return `
+        <div id="card-evento-${ev.id}" class="caixa-evento animated fadeIn ${classeMinimizadoInicial}">
+
+        <div class="header-evento">
+        <div class="header-titulo">
+        <button class="btn-minimizar" onclick="alternarMinimizarCard(${ev.id})" title="Minimizar/Expandir">−</button>
+        
+        ${urlImgCard ? `<img src="${urlImgCard}" class="foto-header" alt="${ev.nome}" onerror="this.style.display='none'">` : ''}
+        
+        <strong>${ev.nome}</strog>
+        </div>
+        <span class="status ${statusClean}">${localPlantioTexto}</span>
+        </div>
+            <div class="conteudo-card">
+                <div class="corpo-card">
+                    <div class="detalhes-plantio">
+                        <div class="info-plantio">📅 Plantio: ${ev.dataPlantio}</div>
+                        <ul class="lista-colheitas">${colheitasHTML}</ul>
+                    </div>
+
+                    ${urlImgCard ? `
+                    <div class="container-foto">
+                        <img src="${urlImgCard}" alt="${ev.nome}" onerror="this.style.display='none'">
+                    </div>
+                    ` : ''}
+                </div>
+
+                <div class="acoes">
+                    <div class="acoes-esquerda">${botaoColheitaHTML}</div>
+                    <div class="acoes-direita">
+                        <button class="btn-delete" data-estacao="${estacaoEvento}" onclick="excluirEventoPess(${ev.id})"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+
+function validarPlantioDinamico() {
     if (!itemSelecionadoPlantio) return;
 
     // Remove propriedades de cálculos anteriores para garantir precisão absoluta
@@ -1434,7 +1609,6 @@ function gerarHtmlPlantio(ev) {
             const renderEhArvore = (Array.isArray(ev.tipo) && ev.tipo.includes('arvore')) || 
                                    (intervaloRebroto === 1 && arvoresFrutiferas.includes(ev.nome.toLowerCase()));
 
-            // Se o status no LocalStorage já diz que está fora de época, bloqueia direto
             let foraDeEpoca = (ev.status === "Fora de Época" || ev.status === "fora-de-epoca");
 
             if (!foraDeEpoca && !renderEhArvore) {
@@ -1447,11 +1621,9 @@ function gerarHtmlPlantio(ev) {
                         const estacoesSuportadas = estacoesBrutas.map(e => e.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
                         const estacaoCardAtual = ultimaColheita ? ultimaColheita.estacao : estacaoEvento;
                         
-                        // 🌟 SIMULAÇÃO DE EXIBIÇÃO: Pergunta para a função do calendário qual será o próximo mês/estação
                         const simulacaoProxima = avancarTempoCalendario(diaDaColheitaAtual, intervaloRebroto, estacaoCardAtual);
                         let estacaoDaProximaColheita = simulacaoProxima.estacao.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-                        // REGRA DE OURO: O botão desativa se a PRÓXIMA colheita cair em estação inviável
                         if (!estacoesSuportadas.includes(estacaoDaProximaColheita)) {
                             foraDeEpoca = true;
                         }
@@ -1483,24 +1655,48 @@ function gerarHtmlPlantio(ev) {
         } 
     }
 
-    return `
-        <div class="caixa-evento animated fadeIn">
-            <div class="header-evento">
-                <strong>${ev.nome}</strong>
-                <span class="status ${statusClean}">${ev.status || 'Pendente'}</span>
+    let localPlantioTexto = "📍 Vale";
+    if (ev.naEstufa) {
+        localPlantioTexto = "🏠 Estufa";
+    } else if (ev.naIlha) {
+        localPlantioTexto = "🌴 Ilha";
+    }
+
+    const urlImgCard = ev.imagem ? ev.imagem.replace(/\\/g, "/") : "";
+
+    
+    const classeMinimizadoInicial = ev.minimizado ? "card-recolhido" : "";
+
+return `
+    <div id="card-evento-${ev.id}" class="caixa-evento animated fadeIn ${classeMinimizadoInicial}">
+        
+        <div class="header-evento">
+            <div class="header-titulo">
+                 <button class="btn-minimizar" onclick="alternarMinimizarCard(${ev.id})" title="Minimizar/Expandir">−</button>
+                 <strong>${ev.nome}</strong>
+                 ${urlImgCard ? `<img src="${urlImgCard}" class="foto-header" alt="${ev.nome}" onerror="this.style.display='none'">` : ''}
             </div>
-            <div class="info-plantio">📅 Plantio: ${ev.dataPlantio}</div>
-            <ul class="lista-colheitas">${colheitasHTML}</ul>
-            <div class="acoes" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                <div class="acoes-esquerda">
-                    ${botaoColheitaHTML}
+            
+            <span class="status ${statusClean}">${localPlantioTexto}</span>
+        </div>
+        
+        <div class="conteudo-card">
+            <div class="corpo-card">
+                <div class="detalhes-plantio">
+                    <div class="info-plantio">📅 Plantio: ${ev.dataPlantio}</div>
+                    <ul class="lista-colheitas">${colheitasHTML}</ul>
                 </div>
+                ${urlImgCard ? `<div class="container-foto"><img src="${urlImgCard}" alt="${ev.nome}" onerror="this.style.display='none'"></div>` : ''}
+            </div>
+            <div class="acoes">
+                <div class="acoes-esquerda">${botaoColheitaHTML}</div>
                 <div class="acoes-direita">
                     <button class="btn-delete" data-estacao="${estacaoEvento}" onclick="excluirEventoPess(${ev.id})"></button>
                 </div>
             </div>
         </div>
-    `;
+    </div>
+`;
 }
 function gerarHtmlProcessamento(ev) {
     return `
@@ -1552,7 +1748,26 @@ function renderizarPainelPess() {
         });
     }
 }
+function alternarMinimizarCard(id) {
+    const cardElemento = document.getElementById(`card-evento-${id}`);
+    if (!cardElemento) return;
 
+    // Alterna a nova classe padrão
+    cardElemento.classList.toggle("card-recolhido");
+
+    // Sincroniza o estado no array de dados
+    const eventoEncontrado = eventosPess.find(e => e.id === id);
+    if (eventoEncontrado) {
+        // Atualiza a propriedade minimizado verificando a nova classe
+        eventoEncontrado.minimizado = cardElemento.classList.contains("card-recolhido");
+        
+        // Salva e renderiza
+        if (typeof salvarPessStorage === 'function') {
+            salvarPessStorage();
+        }
+        
+    }
+}
 // ========================================================
 // 5. INICIALIZAÇÃO DO PAINEL
 // ========================================================
@@ -1576,6 +1791,13 @@ window.addEventListener("DOMContentLoaded", () => {
     }
     renderizarPainelPess();
 });
+const chkEstufa = document.getElementById('checkEstufa');
+const chkIlha = document.getElementById('checkIlha');
+
+if (chkEstufa && chkIlha) {
+    chkEstufa.addEventListener('change', () => { if (chkEstufa.checked) chkIlha.checked = false; });
+    chkIlha.addEventListener('change', () => { if (chkIlha.checked) chkEstufa.checked = false; });
+}
 </script>
 </body>
 </html>

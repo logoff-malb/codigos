@@ -408,7 +408,6 @@ window.addEventListener("DOMContentLoaded", () => {
   Informações atualizadas
 </div>
 
-<!-- Modal de layout -->
 <dialog id="modalLayout" class="modal-stardew">
     <div class="modal-header">
         <h2>Planejador de Fazenda</h2>
@@ -416,13 +415,41 @@ window.addEventListener("DOMContentLoaded", () => {
     </div>
     
     <div class="modal-body">
-    <p>Clique nos quadrados para posicionar itens:</p>
-    <div class="viewport-edicao">
-        <div id="grid-fazenda" class="container-fazenda"></div>
+        <div id="menu-ferramentas">
+            <p class="instrucao-menu">Clique nos quadrados para posicionar itens:</p>
+            
+            <div class="grupo-botoes">
+    
+             <div class="botao-container-expansivel">
+                 <button class="botao-ferramenta ativa" onclick="FarmPlanner.selecionarFerramenta('aspersorC')" title="Aspersores (Passe o mouse)"></button>
+        
+             <div class="submenu-variacoes">
+              <button class="botao-variante ativa" onclick="FarmPlanner.selecionarFerramenta('aspersorC')" title="Aspersor Comum"></button>
+              <button class="botao-variante" onclick="FarmPlanner.selecionarFerramenta('aspersorQ')" title="Aspersor de Qualidade"></button>
+              <button class="botao-variante" onclick="FarmPlanner.selecionarFerramenta('aspersorI')" title="Aspersor de Irídio"></button>
+            </div>
+            </div>
+
+        <div class="botao-container-expansivel">
+            <button class="botao-ferramenta" onclick="FarmPlanner.selecionarFerramenta('espantalho')" title="Espantalhos (Passe o mouse)"></button>
+        
+        <div class="submenu-variacoes">
+            <button class="botao-variante" onclick="FarmPlanner.selecionarFerramenta('espantalho')" title="Espantalho Clássico"></button>
+            <button class="botao-variante" onclick="FarmPlanner.selecionarFerramenta('espantalhoR1')" title="Raroespantalho 1"></button>
+            <button class="botao-variante" onclick="FarmPlanner.selecionarFerramenta('espantalhoR2')" title="Raroespantalho 2"></button>
+        </div>
+        </div>
     </div>
+
+            <div id="controles-container"></div>
+        </div>
+    
+        <div class="viewport-edicao">
+            <div id="grid-fazenda" class="container-fazenda"></div>
+        </div>
     </div>
 </dialog>
-
+<!--**************modal plantio******************************-->
 <dialog id="modalPlantio" class="modal-plantio">
   <div class="modal-conteudo-plantio">
     
