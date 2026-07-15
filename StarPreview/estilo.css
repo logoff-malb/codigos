@@ -1126,28 +1126,24 @@ dialog#modalPlantio {
 
 /* ============================== CAMADA ISOLADA DE ALCANCES NO GRID ============================== */
 
-/* 1. O container do grid cria o escudo de isolamento */
+/* O container do grid cria o contexto de isolamento para empilhamento */
 #grid-fazenda, .container-fazenda {
     isolation: isolate !important;
 }
 
+/* ============================== OUTLINES DE CATEGORIAS (MIRA TRACEJADA) ============================== */
 
-/* ============================== CORES DE CADA CATEGORIA ============================== */
-
-/* Categoria 'Irrigação' (Azul Royal Neon) */
+/* Categoria 'Irrigação' (Borda Tracejada Azul) */
 .celula-grade.Irrigação {
-    outline: 1px dashed rgba(0, 130, 255, 0.6) !important;
-    /* Sombras internas que se somam nativamente */
-    box-shadow: inset 0 0 0 24px rgba(0, 100, 255, 0.65) !important; 
+    outline: 1.5px dashed rgba(0, 130, 255, 0.7) !important;
 }
 
-/* Categoria 'Proteção' (Verde Elétrico Acesíssimo) */
+/* Categoria 'Proteção' (Borda Tracejada Verde) */
 .celula-grade.Proteção {
-    outline: 1px dashed rgba(0, 220, 0, 0.6) !important;
-    box-shadow: inset 0 0 0 24px rgba(0, 230, 50, 0.6) !important;
+    outline: 1.5px dashed rgba(0, 220, 0, 0.7) !important;
 }
 
-/* ============================== VIEWPORT E GRID ============================== */
+/* ============================== VIEWPORT E GRID ESTRUTURAL ============================== */
 .viewport-edicao {
     width: 600px;
     height: 600px;
@@ -1169,27 +1165,32 @@ dialog#modalPlantio {
     display: grid;
     grid-template-columns: repeat(60, 48px); 
     width: max-content; 
-    max-width: 600px; 
+     
+    position: relative; /* Essencial para alinhar o Canvas absoluto por baixo */
 }
 
+#canvas-alcances {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 1;
+}
 .celula-grade {
     width: 48px !important;
     height: 48px !important;
     border: 0.5px solid rgba(139, 69, 19, 0.2) !important; 
+    box-sizing: border-box !important;
     background-color: transparent !important; 
     position: relative !important; 
-    
-    /* Configurações para a mesclagem automática sem quebrar a estrutura */
-    mix-blend-mode: screen !important;
-    transition: box-shadow 1.0s ease-in-out !important; /* A transição gradual que você curtiu! */
 }
 
 .celula-grade.selecionada {
-    background-color: rgba(255, 255, 0, 0.4);
+    background-color: rgba(255, 255, 0, 0.4) !important;
 }
 
 .celula-grade:hover {
-    background-color: rgba(255, 255, 0, 0.3); 
+    background-color: rgba(255, 255, 0, 0.3) !important; 
 }
 
 /* ============================== RENDERIZADOR DE OBJETOS NO MAPA ============================== */
@@ -1217,9 +1218,10 @@ dialog#modalPlantio {
 
 /* Posicionamento do sprite do aspersor no mapa */
 .celula-grade .objeto-sprite.obj-aspersorC {
-    background-position: calc(-23 * 32px) calc(-24 * 32px) !important;}
+    background-position: calc(-23 * 32px) calc(-24 * 32px) !important;
+}
 
-/* Área de irrigação (mantendo os 48px do chão) */
+/* Área de irrigação legada (Mantida por retrocompatibilidade com códigos paralelos) */
 .celula-grade.range-aspersorC {
     background-color: rgba(65, 105, 225, 0.25) !important;
     outline: 1px dashed rgba(65, 105, 225, 0.5);
@@ -1244,4 +1246,3 @@ dialog#modalPlantio {
     color: var(--cor-madeira-escura);
     cursor: pointer;
 }
-
