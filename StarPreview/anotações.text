@@ -1,38 +1,143 @@
-return `
-    <div id="card-evento-${ev.id}" class="caixa-evento animated fadeIn ${classeMinimizadoInicial}">
-        
-        <div class="header-evento">
-            <div class="header-titulo">
-                <button class="btn-minimizar" onclick="alternarMinimizarCard(${ev.id})" title="Minimizar/Expandir">−</button>
-                
-                ${urlImgCard ? `<img src="${urlImgCard}" class="foto-header" alt="${ev.nome}" onerror="this.style.display='none'">` : ''}
-                
-                <strong>${ev.nome}</strong>
-            </div>
-            <span class="status ${statusClean}">${localPlantioTexto}</span>
-        </div>
-        
-        <div class="conteudo-card">
-            <div class="corpo-card">
-                <div class="detalhes-plantio">
-                    <div class="info-plantio">📅 Plantio: ${ev.dataPlantio}</div>
-                    <ul class="lista-colheitas">${colheitasHTML}</ul>
-                </div>
+/* ============================== ESPANTALHOS (SPRITE SHEET: OBJETOS2.PNG) ============================== */
 
-                ${urlImgCard ? `
-                <div class="container-foto">
-                    <img src="${urlImgCard}" alt="${ev.nome}" onerror="this.style.display='none'">
-                </div>
-                ` : ''}
-            </div>
+/* Grupo Seletor Universal para os 10 Espantalhos */
+.botao-ferramenta[onclick*="'espantalho'"]::before,
+.botao-variante[onclick*="'espantalho'"]::before,
+.botao-variante[onclick*="'espantalhoR1'"]::before,
+.botao-variante[onclick*="'espantalhoR2'"]::before,
+.botao-variante[onclick*="'espantalhoR3'"]::before,
+.botao-variante[onclick*="'espantalhoR4'"]::before,
+.botao-variante[onclick*="'espantalhoR5'"]::before,
+.botao-variante[onclick*="'espantalhoR6'"]::before,
+.botao-variante[onclick*="'espantalhoR7'"]::before,
+.botao-variante[onclick*="'espantalhoR8'"]::before,
+.botao-variante[onclick*="'espantalhoLuxo'"]::before,
+.celula-grade .objeto-sprite.tile-espantalho,
+.celula-grade .objeto-sprite.tile-espantalhoR1,
+.celula-grade .objeto-sprite.tile-espantalhoR2,
+.celula-grade .objeto-sprite.tile-espantalhoR3,
+.celula-grade .objeto-sprite.tile-espantalhoR4,
+.celula-grade .objeto-sprite.tile-espantalhoR5,
+.celula-grade .objeto-sprite.tile-espantalhoR6,
+.celula-grade .objeto-sprite.tile-espantalhoR7,
+.celula-grade .objeto-sprite.tile-espantalhoR8,
+.celula-grade .objeto-sprite.tile-espantalhoLuxo {
+    background-image: url('recursos/objetos2.png') !important;
+    background-size: 256px auto !important; /* Proporção exata de 8 colunas de 32px */
+    width: 32px !important;
+    height: 64px !important; 
+}
 
-            <div class="acoes">
-                <div class="acoes-esquerda">${botaoColheitaHTML}</div>
-                <div class="acoes-direita">
-                    <button class="btn-delete" data-estacao="${estacaoEvento}" onclick="excluirEventoPess(${ev.id})"></button>
-                </div>
-            </div>
-        </div>
-    </div>
-`;
+/* Ajuste de enquadramento nos botões redondos/quadrados do menu lateral */
+.botao-ferramenta[onclick*="'espantalho'"]::before,
+.botao-variante[onclick*="'espantalho'"]::before,
+.botao-variante[onclick*="'espantalhoR1'"]::before,
+.botao-variante[onclick*="'espantalhoR2'"]::before,
+.botao-variante[onclick*="'espantalhoR3'"]::before,
+.botao-variante[onclick*="'espantalhoR4'"]::before,
+.botao-variante[onclick*="'espantalhoR5'"]::before,
+.botao-variante[onclick*="'espantalhoR6'"]::before,
+.botao-variante[onclick*="'espantalhoR7'"]::before,
+.botao-variante[onclick*="'espantalhoR8'"]::before,
+.botao-variante[onclick*="'espantalhoLuxo'"]::before {
+    transform: translateY(-8px);
+}
+
+.botao-ferramenta[onclick*="'espantalho'"]:hover::before,
+.botao-variante[onclick*="'espantalho'"]:hover::before,
+.botao-variante[onclick*="'espantalhoR1'"]:hover::before,
+.botao-variante[onclick*="'espantalhoR2'"]:hover::before,
+.botao-variante[onclick*="'espantalhoR3'"]:hover::before,
+.botao-variante[onclick*="'espantalhoR4'"]:hover::before,
+.botao-variante[onclick*="'espantalhoR5'"]:hover::before,
+.botao-variante[onclick*="'espantalhoR6'"]:hover::before,
+.botao-variante[onclick*="'espantalhoR7'"]:hover::before,
+.botao-variante[onclick*="'espantalhoR8'"]:hover::before,
+.botao-variante[onclick*="'espantalhoLuxo'"]:hover::before {
+    transform: translateY(-8px) scale(1.1) !important;
+}
+
+/* Posicionamento no grid física/render com ancoragem perfeita pela base */
+.celula-grade .objeto-sprite.tile-espantalho,
+.celula-grade .objeto-sprite.tile-espantalhoR1,
+.celula-grade .objeto-sprite.tile-espantalhoR2,
+.celula-grade .objeto-sprite.tile-espantalhoR3,
+.celula-grade .objeto-sprite.tile-espantalhoR4,
+.celula-grade .objeto-sprite.tile-espantalhoR5,
+.celula-grade .objeto-sprite.tile-espantalhoR6,
+.celula-grade .objeto-sprite.tile-espantalhoR7,
+.celula-grade .objeto-sprite.tile-espantalhoR8,
+.celula-grade .objeto-sprite.tile-espantalhoLuxo {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -75%) !important;
+    pointer-events: none;
+    z-index: 5;
+}
+
+
+/* ============================== COORDENADAS INDIVIDUAIS DOS ESPANTALHOS ============================== */
+
+/* --- Espantalho Clássico (Coluna 0, Linha 2) --- */
+.botao-ferramenta[onclick*="'espantalho'"]::before,
+.botao-variante[onclick*="'espantalho'"]::before,
+.celula-grade .objeto-sprite.tile-espantalho {
+    background-position: calc(-0 * 32px) calc(-2 * 32px) !important;
+}
+
+/* --- Raroespantalho 1 - Boneco de Neve (Coluna 0, Linha 33) --- */
+/* (Linha 24 dos tanques + 9 linhas abaixo) */
+.botao-variante[onclick*="'espantalhoR1'"]::before,
+.celula-grade .objeto-sprite.tile-espantalhoR1 {
+    background-position: calc(-0 * 32px) calc(-33 * 32px) !important;
+}
+
+/* --- Raroespantalho 2 - Menina Agricultora (Coluna 1, Linha 34) --- */
+/* (Linha 24 dos tanques + 10 linhas abaixo) */
+.botao-variante[onclick*="'espantalhoR2'"]::before,
+.celula-grade .objeto-sprite.tile-espantalhoR2 {
+    background-position: calc(-1 * 32px) calc(-34 * 32px) !important;
+}
+
+/* --- Raroespantalho 3 - Bruxa (Coluna 1, Linha 6) --- */
+.botao-variante[onclick*="'espantalhoR3'"]::before,
+.celula-grade .objeto-sprite.tile-espantalhoR3 {
+    background-position: calc(-1 * 32px) calc(-6 * 32px) !important;
+}
+
+/* --- Raroespantalho 4 (Coluna 2, Linha 34) --- */
+.botao-variante[onclick*="'espantalhoR4'"]::before,
+.celula-grade .objeto-sprite.tile-espantalhoR4 {
+    background-position: calc(-2 * 32px) calc(-34 * 32px) !important;
+}
+
+/* --- Raroespantalho 5 (Coluna 3, Linha 34) --- */
+.botao-variante[onclick*="'espantalhoR5'"]::before,
+.celula-grade .objeto-sprite.tile-espantalhoR5 {
+    background-position: calc(-3 * 32px) calc(-34 * 34px) !important;
+}
+
+/* --- Raroespantalho 6 (Coluna 4, Linha 34) --- */
+.botao-variante[onclick*="'espantalhoR6'"]::before,
+.celula-grade .objeto-sprite.tile-espantalhoR6 {
+    background-position: calc(-4 * 32px) calc(-34 * 32px) !important;
+}
+
+/* --- Raroespantalho 7 (Coluna 5, Linha 34) --- */
+.botao-variante[onclick*="'espantalhoR7'"]::before,
+.celula-grade .objeto-sprite.tile-espantalhoR7 {
+    background-position: calc(-5 * 32px) calc(-34 * 32px) !important;
+}
+
+/* --- Raroespantalho 8 (Coluna 6, Linha 34) --- */
+.botao-variante[onclick*="'espantalhoR8'"]::before,
+.celula-grade .objeto-sprite.tile-espantalhoR8 {
+    background-position: calc(-6 * 32px) calc(-34 * 32px) !important;
+}
+
+/* --- Espantalho de Luxo (Coluna 3, Linha 2) --- */
+.botao-variante[onclick*="'espantalhoLuxo'"]::before,
+.celula-grade .objeto-sprite.tile-espantalhoLuxo {
+    background-position: calc(-3 * 32px) calc(-2 * 32px) !important;
 }

@@ -18,42 +18,74 @@ const FarmPlanner = {
     },
 
     // --- Configurações dos Objetos e Seus Alcances Matemáticos ---
-    objetosConfig: {
-        // Irrigação (Comportamentos Diferentes)
-        aspersorC: { 
-            categoria: 'Irrigação', 
-            alcance: [[0, 0], [0, -1], [0, 1], [-1, 0], [1, 0]] 
-        },
-        aspersorQ: { 
-            categoria: 'Irrigação', 
-            alcance: [
-                [0,0], [-1,-1], [0,-1], [1,-1], [-1,0], [1,0], [-1,1], [0,1], [1,1] // Área quadrada 3x3
-            ] 
-        },
-        aspersorI: { 
-            categoria: 'Irrigação', 
-            alcance: [
-                [-2,-2], [-1,-2], [0,-2], [1,-2], [2,-2],
-                [-2,-1], [-1,-1], [0,-1], [1,-1], [2,-1],
-                [-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0],
-                [-2, 1], [-1, 1], [0, 1], [1, 1], [2, 1],
-                [-2, 2], [-1, 2], [0, 2], [1, 2], [2, 2]  // Área quadrada 5x5
-            ] 
-        },
+    objetosConfig: (() => {
+        // 1. Declaramos apenas os itens base
+        const config = {
+            // Irrigação (Comportamentos Diferentes)
+            aspersorC: { 
+                categoria: 'Irrigação', 
+                alcance: [[0, 0], [0, -1], [0, 1], [-1, 0], [1, 0]] 
+            },
+            aspersorQ: { 
+                categoria: 'Irrigação', 
+                alcance: [
+                    [0,0], [-1,-1], [0,-1], [1,-1], [-1,0], [1,0], [-1,1], [0,1], [1,1] // Área quadrada 3x3
+                ] 
+            },
+            aspersorI: { 
+                categoria: 'Irrigação', 
+                alcance: [
+                    [-2,-2], [-1,-2], [0,-2], [1,-2], [2,-2],
+                    [-2,-1], [-1,-1], [0,-1], [1,-1], [2,-1],
+                    [-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0],
+                    [-2, 1], [-1, 1], [0, 1], [1, 1], [2, 1],
+                    [-2, 2], [-1, 2], [0, 2], [1, 2], [2, 2]  // Área quadrada 5x5
+                ] 
+            },
+            // Espantalho Comum (Alcance circular real - Raio de 8 células)
+            espantalho: { 
+                categoria: 'Proteção', 
+                alcance: (() => {
+                    const coords = [];
+                    for (let dy = -8; dy <= 8; dy++) {
+                        let limiteX = 8; // Da linha 1 a 4 do eixo, são 8 para cada lado
+                        const absY = Math.abs(dy);
+                        
+                        if (absY === 5) limiteX = 7;      // Na 5ª célula do eixo são 7 de cada lado
+                        else if (absY === 6) limiteX = 6; // Na 6ª célula do eixo são 6 de cada lado
+                        else if (absY === 7) limiteX = 5; // Na 7ª célula do eixo são 5 de cada lado
+                        else if (absY === 8) limiteX = 4; // Na 8ª célula do eixo são 4 de cada lado
+                        
+                        for (let dx = -limiteX; dx <= limiteX; dx++) {
+                            coords.push([dx, dy]);
+                        }
+                    }
+                    return coords;
+                })()
+            }
+        };
 
-        // Proteção (Alcance circular real Stardew Valley - Diâmetro de 17)
-        espantalho: { 
-            categoria: 'Proteção', 
+        // 2. Injetamos de forma limpa e automática os Raroespantalhos (R1 a R8) copiando o alcance do comum
+        for (let i = 1; i <= 8; i++) {
+            config[`espantalhoR${i}`] = {
+                categoria: 'Proteção',
+                alcance: config.espantalho.alcance
+            };
+        }
+
+        // 3. Injetamos o Espantalho de Luxo calculando o alcance dobrado real (Raio de 16 sem lacunas de pixels)
+        config.espantalhoLuxo = {
+            categoria: 'Proteção',
             alcance: (() => {
                 const coords = [];
-                for (let dy = -8; dy <= 8; dy++) {
-                    let limiteX = 8; // Da linha 1 a 4 do eixo, são 8 para cada lado
+                for (let dy = -16; dy <= 16; dy++) {
+                    let limiteX = 16; // Da linha 1 a 8 do eixo, são 16 para cada lado
                     const absY = Math.abs(dy);
                     
-                    if (absY === 5) limiteX = 7;      // Na 5ª célula do eixo são 7 de cada lado
-                    else if (absY === 6) limiteX = 6; // Na 6ª célula do eixo são 6 de cada lado
-                    else if (absY === 7) limiteX = 5; // Na 7ª célula do eixo são 5 de cada lado
-                    else if (absY === 8) limiteX = 4; // Na 8ª célula do eixo são 4 de cada lado
+                    if (absY === 9 || absY === 10) limiteX = 14;     // Escala proporcional ao dobro
+                    else if (absY === 11 || absY === 12) limiteX = 12;
+                    else if (absY === 13 || absY === 14) limiteX = 10;
+                    else if (absY === 15 || absY === 16) limiteX = 8;
                     
                     for (let dx = -limiteX; dx <= limiteX; dx++) {
                         coords.push([dx, dy]);
@@ -61,10 +93,10 @@ const FarmPlanner = {
                 }
                 return coords;
             })()
-        },
-        espantalhoR1: { categoria: 'Proteção', alcance: [] }, 
-        espantalhoR2: { categoria: 'Proteção', alcance: [] }
-    },
+        };
+
+        return config;
+    })(),
 
     // --- Estado da Aplicação ---
     estado: {
@@ -187,7 +219,7 @@ const FarmPlanner = {
 
             // Regra especial: Se for um espantalho raro, ele usa a matriz de alcance do espantalho comum
             let matrizAlcance = config.alcance;
-            if (obj.tipo.startsWith('espantalho') && matrizAlcance.length === 0) {
+            if (obj.tipo.startsWith('espantalho') && (!matrizAlcance || matrizAlcance.length === 0)) {
                 matrizAlcance = this.objetosConfig['espantalho'].alcance;
             }
 
