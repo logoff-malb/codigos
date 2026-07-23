@@ -11,7 +11,7 @@ const FarmPlanner = {
     
     matriz: [],
 
-    // --- Configurações de Cores do Canvas (Fácil de adicionar novas categorias aqui) ---
+    // --- Configurações de Cores do Canvas ---
     coresAlcance: {
         'Irrigação': 'rgba(0, 100, 255, 0.6)',  // Azul Royal Neon suave
         'Proteção':  'rgba(0, 230, 50, 0.55)'   // Verde Elétrico suave
@@ -19,9 +19,8 @@ const FarmPlanner = {
 
     // --- Configurações dos Objetos e Seus Alcances Matemáticos ---
     objetosConfig: (() => {
-        // 1. Declaramos apenas os itens base
         const config = {
-            // Irrigação (Comportamentos Diferentes)
+            // Irrigação
             aspersorC: { 
                 categoria: 'Irrigação', 
                 alcance: [[0, 0], [0, -1], [0, 1], [-1, 0], [1, 0]] 
@@ -29,7 +28,7 @@ const FarmPlanner = {
             aspersorQ: { 
                 categoria: 'Irrigação', 
                 alcance: [
-                    [0,0], [-1,-1], [0,-1], [1,-1], [-1,0], [1,0], [-1,1], [0,1], [1,1] // Área quadrada 3x3
+                    [0,0], [-1,-1], [0,-1], [1,-1], [-1,0], [1,0], [-1,1], [0,1], [1,1]
                 ] 
             },
             aspersorI: { 
@@ -39,22 +38,23 @@ const FarmPlanner = {
                     [-2,-1], [-1,-1], [0,-1], [1,-1], [2,-1],
                     [-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0],
                     [-2, 1], [-1, 1], [0, 1], [1, 1], [2, 1],
-                    [-2, 2], [-1, 2], [0, 2], [1, 2], [2, 2]  // Área quadrada 5x5
+                    [-2, 2], [-1, 2], [0, 2], [1, 2], [2, 2]
                 ] 
             },
-            // Espantalho Comum (Alcance circular real - Raio de 8 células)
+            
+            // Espantalho Clássico (Alcance real de 8 células de raio)
             espantalho: { 
                 categoria: 'Proteção', 
                 alcance: (() => {
                     const coords = [];
                     for (let dy = -8; dy <= 8; dy++) {
-                        let limiteX = 8; // Da linha 1 a 4 do eixo, são 8 para cada lado
+                        let limiteX = 8;
                         const absY = Math.abs(dy);
                         
-                        if (absY === 5) limiteX = 7;      // Na 5ª célula do eixo são 7 de cada lado
-                        else if (absY === 6) limiteX = 6; // Na 6ª célula do eixo são 6 de cada lado
-                        else if (absY === 7) limiteX = 5; // Na 7ª célula do eixo são 5 de cada lado
-                        else if (absY === 8) limiteX = 4; // Na 8ª célula do eixo são 4 de cada lado
+                        if (absY === 5) limiteX = 7;
+                        else if (absY === 6) limiteX = 6;
+                        else if (absY === 7) limiteX = 5;
+                        else if (absY === 8) limiteX = 4;
                         
                         for (let dx = -limiteX; dx <= limiteX; dx++) {
                             coords.push([dx, dy]);
@@ -65,7 +65,7 @@ const FarmPlanner = {
             }
         };
 
-        // 2. Injetamos de forma limpa e automática os Raroespantalhos (R1 a R8) copiando o alcance do comum
+        // Raroespantalhos (1 a 8) herdam o alcance padrão
         for (let i = 1; i <= 8; i++) {
             config[`espantalhoR${i}`] = {
                 categoria: 'Proteção',
@@ -73,16 +73,16 @@ const FarmPlanner = {
             };
         }
 
-        // 3. Injetamos o Espantalho de Luxo calculando o alcance dobrado real (Raio de 16 sem lacunas de pixels)
+        // Espantalho de Luxo (Dobro do alcance clássico)
         config.espantalhoLuxo = {
             categoria: 'Proteção',
             alcance: (() => {
                 const coords = [];
                 for (let dy = -16; dy <= 16; dy++) {
-                    let limiteX = 16; // Da linha 1 a 8 do eixo, são 16 para cada lado
+                    let limiteX = 16;
                     const absY = Math.abs(dy);
                     
-                    if (absY === 9 || absY === 10) limiteX = 14;     // Escala proporcional ao dobro
+                    if (absY === 9 || absY === 10) limiteX = 14;
                     else if (absY === 11 || absY === 12) limiteX = 12;
                     else if (absY === 13 || absY === 14) limiteX = 10;
                     else if (absY === 15 || absY === 16) limiteX = 8;
@@ -100,14 +100,14 @@ const FarmPlanner = {
 
     // --- Estado da Aplicação ---
     estado: {
-        objetos: [], // Guarda: {x, y, tipo}
+        objetos: [], // [{x, y, tipo}]
         visibilidade: { 
             'Irrigação': true,
             'Proteção': true 
         } 
     },
 
-    ferramentaAtual: 'aspersorC', // Ferramenta que o usuário está usando
+    ferramentaAtual: 'aspersorC',
 
     abrir: function() {
         const modal = document.getElementById('modalLayout');
@@ -121,51 +121,45 @@ const FarmPlanner = {
         const container = document.getElementById('grid-fazenda');
         if (!container) return;
 
-        // Limpa o grid
         container.innerHTML = '';
         container.style.gridTemplateColumns = `repeat(${this.config.largura}, 1fr)`;
         
-        // 1. Cria e adiciona o Canvas de forma dinâmica antes das células
+        // Canvas de alcances
         const canvas = document.createElement('canvas');
         canvas.id = 'canvas-alcances';
         canvas.style.position = 'absolute';
         canvas.style.top = '0';
         canvas.style.left = '0';
-        canvas.style.pointerEvents = 'none'; // Cliques passam direto pelo canvas para as células
+        canvas.style.pointerEvents = 'none';
         canvas.style.zIndex = '1';
         
-       // Define o tamanho de resolução interna do Canvas
         canvas.width = this.config.largura * this.config.tamanhoCelula;
         canvas.height = this.config.altura * this.config.tamanhoCelula;
-
-        // NOVO: Define o tamanho físico real no layout para travar o alinhamento 1:1
         canvas.style.width = (this.config.largura * this.config.tamanhoCelula) + 'px';
         canvas.style.height = (this.config.altura * this.config.tamanhoCelula) + 'px';
         
         container.appendChild(canvas);
 
-        // 2. Cria as células do Grid HTML
+        // Grid HTML
         for (let i = 0; i < (this.config.largura * this.config.altura); i++) {
             const celula = document.createElement('div');
             celula.classList.add('celula-grade');
             celula.dataset.index = i;
-            celula.style.zIndex = '2'; // Células ficam acima do Canvas para receber os cliques
+            celula.style.zIndex = '2';
             
             celula.onclick = (e) => this.gerenciarClique(e.target);
-            
-            // Clique do botão direito
             celula.oncontextmenu = (e) => { 
-                e.preventDefault(); // Impede o menu padrão
+                e.preventDefault();
                 this.gerenciarClique(e.target, 'direito');
             };
             container.appendChild(celula);
         }
         
-        // --- Configuração dos Controles e Renderização Inicial ---
         this.construirControles();
+        this.gerarMenusFerramentas();
         this.renderizarObjetos();
 
-        // Lógica de arrastar (Drag-to-Scroll)
+        // Arrastar câmera (Drag-to-Scroll)
         const viewport = document.querySelector('.viewport-edicao');
         let isDown = false;
         let startX, startY, scrollLeft, scrollTop;
@@ -192,38 +186,29 @@ const FarmPlanner = {
         });
     },
 
-    // --- Funções de Lógica e Renderização ---
-
     renderizarObjetos: function() {
-        // 1. Limpa todas as marcações de alcance antigas nas células HTML e remove os sprites
+        // Limpa as classes do grid de forma limpa, mantendo a padrão
         document.querySelectorAll('.celula-grade').forEach(c => {
             c.className = 'celula-grade'; 
             const spriteAntigo = c.querySelector('.objeto-sprite');
             if (spriteAntigo) spriteAntigo.remove();
         });
 
-        // 2. Limpa o Canvas de alcances para o redesenho completo
         const canvas = document.getElementById('canvas-alcances');
         let ctx = null;
         if (canvas) {
             ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // O SEGREDO: 'screen' faz o Canvas misturar as cores somando luz nativamente!
             ctx.globalCompositeOperation = 'screen';
         }
 
-        // 3. Desenha objetos, seus alcances e preenche o Canvas
         this.estado.objetos.forEach(obj => {
             let config = this.objetosConfig[obj.tipo];
             if (!config) return;
 
-            // Regra especial: Se for um espantalho raro, ele usa a matriz de alcance do espantalho comum
             let matrizAlcance = config.alcance;
-            if (obj.tipo.startsWith('espantalho') && (!matrizAlcance || matrizAlcance.length === 0)) {
-                matrizAlcance = this.objetosConfig['espantalho'].alcance;
-            }
 
-            // --- DESENHA O SPRITE DO OBJETO NO HTML ---
+            // Inserção do Sprite na Célula (Buscando o tile- exato do seu CSS!)
             const indiceCentro = (obj.y * this.config.largura) + obj.x;
             const celulaCentro = document.querySelector(`[data-index="${indiceCentro}"]`);
             if (celulaCentro) {
@@ -232,8 +217,8 @@ const FarmPlanner = {
                 celulaCentro.appendChild(divSprite);
             }
 
-            // --- PROCESSA O ALCANCE SE A CATEGORIA ESTIVER VISÍVEL ---
-            if (this.estado.visibilidade[config.categoria]) {
+            // Exibição dos alcances se a categoria estiver ativa
+            if (this.estado.visibilidade[config.categoria] && matrizAlcance) {
                 matrizAlcance.forEach(([dx, dy]) => {
                     const alvoX = obj.x + dx;
                     const alvoY = obj.y + dy;
@@ -242,12 +227,10 @@ const FarmPlanner = {
                         const indice = (alvoY * this.config.largura) + alvoX;
                         const celula = document.querySelector(`[data-index="${indice}"]`);
                         
-                        // 3a. Injeta a classe na célula HTML (Apenas para o OUTLINE pontilhado funcionar)
                         if (celula) {
                             celula.classList.add(config.categoria);
                         }
 
-                        // 3b. Desenha a cor no Canvas (Preenchimento misturado nativamente)
                         if (ctx) {
                             const corOriginal = this.coresAlcance[config.categoria];
                             if (corOriginal) {
@@ -267,9 +250,7 @@ const FarmPlanner = {
     },
 
     colocarObjeto: function(x, y, tipo) {
-        // Limpa o objeto anterior da mesma coordenada antes de colocar o novo
         this.estado.objetos = this.estado.objetos.filter(obj => !(obj.x === x && obj.y === y));
-        
         this.estado.objetos.push({ x, y, tipo });
         this.renderizarObjetos();
     },
@@ -292,8 +273,73 @@ const FarmPlanner = {
         });
     },
 
+    gerarMenusFerramentas: function() {
+        const subAspersores = document.getElementById('submenu-aspersores');
+        const subEspantalhos = document.getElementById('submenu-espantalhos');
+        
+        if (!subAspersores || !subEspantalhos) return;
+
+        subAspersores.innerHTML = '';
+        subEspantalhos.innerHTML = '';
+
+        const aspersores = [
+            { id: 'aspersorC', nome: 'Aspersor Comum' },
+            { id: 'aspersorQ', nome: 'Aspersor de Qualidade' },
+            { id: 'aspersorI', nome: 'Aspersor de Irídio' }
+        ];
+
+        const espantalhos = [
+            { id: 'espantalho', nome: 'Espantalho Clássico' },
+            ...Array.from({ length: 8 }, (_, i) => ({ id: `espantalhoR${i + 1}`, nome: `Raroespantalho ${i + 1}` })),
+            { id: 'espantalhoLuxo', nome: 'Espantalho de Luxo' }
+        ];
+
+        const criarBotao = (tipo, container, isMaster = false) => {
+            const btn = document.createElement('button');   
+            
+            // Define a classe correta de acordo com as regras de estilo
+            btn.className = isMaster ? 'botao-ferramenta' : 'botao-variante';
+            
+            // O TRUQUE DE MESTRE: Injeta fisicamente a string onclick no HTML para o CSS capturar o seletor de atributo!
+            btn.setAttribute('onclick', `FarmPlanner.selecionarFerramenta('${tipo.id}')`);
+            
+            btn.title = tipo.nome;
+            btn.dataset.tipo = tipo.id; 
+            
+            // Mantém a escuta JS ativa para gerenciar o clique e evitar problemas de escopo
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.selecionarFerramenta(tipo.id);
+            });
+
+            container.appendChild(btn);
+            return btn;
+        };
+
+        // Cria as variantes de dentro do submenu flutuante
+        aspersores.forEach(asp => criarBotao(asp, subAspersores));
+        espantalhos.forEach(esp => criarBotao(esp, subEspantalhos));
+
+        // Substitui os botões mestres estáticos do seu container principal
+        const areaMasterAsp = document.getElementById('btn-master-aspersores-container');
+        if (areaMasterAsp) {
+            areaMasterAsp.innerHTML = '';
+            const masterAsp = criarBotao({ id: 'aspersorC', nome: 'Aspersor Comum' }, areaMasterAsp, true);
+            masterAsp.id = 'btn-master-aspersores';
+        }
+
+        const areaMasterEsp = document.getElementById('btn-master-espantalhos-container');
+        if (areaMasterEsp) {
+            areaMasterEsp.innerHTML = '';
+            const masterEsp = criarBotao({ id: 'espantalho', nome: 'Espantalho Clássico' }, areaMasterEsp, true);
+            masterEsp.id = 'btn-master-espantalhos';
+        }
+
+        // Inicia com o primeiro selecionado
+        this.selecionarFerramenta('aspersorC');
+    },
+
     gerenciarClique: function(celula, botao) {
-        // Se clicou no sprite filho, redireciona o alvo para a célula pai
         if (celula.classList.contains('objeto-sprite')) {
             celula = celula.parentElement;
         }
@@ -303,30 +349,43 @@ const FarmPlanner = {
         const y = Math.floor(indice / this.config.largura);
         
         if (botao === 'direito') {
-            // Remove qualquer objeto que esteja nesta exata coordenada
             this.estado.objetos = this.estado.objetos.filter(obj => !(obj.x === x && obj.y === y));
             this.renderizarObjetos();
         } else {
-            // Comportamento padrão: coloca o item selecionado
             this.colocarObjeto(x, y, this.ferramentaAtual);
         }
     },
 
     selecionarFerramenta: function(tipo) {
-        this.ferramentaAtual = tipo;
-        
-        document.querySelectorAll('.botao-ferramenta, .botao-variante').forEach(btn => {
-            btn.classList.remove('ativa');
-        });
+    this.ferramentaAtual = tipo;
+    
+    // 1. Remove estado ativo de todos os botões
+    document.querySelectorAll('.botao-ferramenta, .botao-variante').forEach(btn => {
+        btn.classList.remove('ativa');
+    });
 
-        const botaoAlvo = document.querySelector(`[onclick*="'${tipo}'"]`);
-        if (botaoAlvo) botaoAlvo.classList.add('ativa');
+    // 2. Destaca o item específico que foi clicado no submenu
+    const botaoAlvo = document.querySelector(`.botao-variante[data-tipo="${tipo}"]`);
+    if (botaoAlvo) {
+        botaoAlvo.classList.add('ativa');
+    }
 
-        const containerPai = botaoAlvo?.closest('.botao-container-expansivel');
-        if (containerPai) {
-            const botaoPrincipal = containerPai.querySelector('.botao-ferramenta');
-            if (botaoPrincipal) botaoPrincipal.classList.add('ativa');
+    // 3. Atualiza o Botão Mestre correspondente com o Sprite e Ação do item selecionado
+    if (tipo.startsWith('aspersor')) {
+        const master = document.getElementById('btn-master-aspersores');
+        if (master) {
+            master.classList.add('ativa');
+            // Formata exatamente com aspas simples internas -> onclick="FarmPlanner.selecionarFerramenta('tipo')"
+            master.setAttribute('onclick', `FarmPlanner.selecionarFerramenta('${tipo}')`);
         }
+    } else if (tipo.startsWith('espantalho')) {
+        const master = document.getElementById('btn-master-espantalhos');
+        if (master) {
+            master.classList.add('ativa');
+            // Formata exatamente com aspas simples internas para o CSS reconhecer espantalhoR1, espantalhoR2, etc.
+            master.setAttribute('onclick', `FarmPlanner.selecionarFerramenta('${tipo}')`);
+        }
+    }
     },
 
     sincronizarScroll: function() {

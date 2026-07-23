@@ -1109,75 +1109,31 @@ dialog#modalPlantio {
 
 /* ============================== ESPANTALHOS (SPRITE SHEET: OBJETOS2.PNG) ============================== */
 
-/* Grupo Seletor Universal para os 10 Espantalhos (Garante que TODOS usem objetos2.png com 64px de altura) */
-.botao-ferramenta[onclick*="'espantalho'"]::before,
-.botao-variante[onclick*="'espantalho'"]::before,
-.botao-variante[onclick*="'espantalhoR1'"]::before,
-.botao-variante[onclick*="'espantalhoR2'"]::before,
-.botao-variante[onclick*="'espantalhoR3'"]::before,
-.botao-variante[onclick*="'espantalhoR4'"]::before,
-.botao-variante[onclick*="'espantalhoR5'"]::before,
-.botao-variante[onclick*="'espantalhoR6'"]::before,
-.botao-variante[onclick*="'espantalhoR7'"]::before,
-.botao-variante[onclick*="'espantalhoR8'"]::before,
-.botao-variante[onclick*="'espantalhoLuxo'"]::before,
-.celula-grade .objeto-sprite.tile-espantalho,
-.celula-grade .objeto-sprite.tile-espantalhoR1,
-.celula-grade .objeto-sprite.tile-espantalhoR2,
-.celula-grade .objeto-sprite.tile-espantalhoR3,
-.celula-grade .objeto-sprite.tile-espantalhoR4,
-.celula-grade .objeto-sprite.tile-espantalhoR5,
-.celula-grade .objeto-sprite.tile-espantalhoR6,
-.celula-grade .objeto-sprite.tile-espantalhoR7,
-.celula-grade .objeto-sprite.tile-espantalhoR8,
-.celula-grade .objeto-sprite.tile-espantalhoLuxo {
+/* 1. Aplica o arquivo objetos2.png para QUALQUER botão (mestre ou submenu) que contenha a palavra "espantalho" */
+.botao-ferramenta[onclick*="espantalho"]::before,
+.botao-variante[onclick*="espantalho"]::before,
+.celula-grade .objeto-sprite[class*="tile-espantalho"] {
     background-image: url('recursos/objetos2.png') !important;
-    background-size: 256px auto !important; /* Mantém a proporção estrita de 8 colunas de 32px */
+    background-size: 256px auto !important; /* Proporção de 8 colunas de 32px */
     width: 32px !important;
     height: 64px !important; 
     display: block !important;
 }
 
-/* Ajuste de enquadramento nos botões do menu lateral (Subindo o sprite para caber no quadrado de exibição) */
-.botao-ferramenta[onclick*="'espantalho'"]::before,
-.botao-variante[onclick*="'espantalho'"]::before,
-.botao-variante[onclick*="'espantalhoR1'"]::before,
-.botao-variante[onclick*="'espantalhoR2'"]::before,
-.botao-variante[onclick*="'espantalhoR3'"]::before,
-.botao-variante[onclick*="'espantalhoR4'"]::before,
-.botao-variante[onclick*="'espantalhoR5'"]::before,
-.botao-variante[onclick*="'espantalhoR6'"]::before,
-.botao-variante[onclick*="'espantalhoR7'"]::before,
-.botao-variante[onclick*="'espantalhoR8'"]::before,
-.botao-variante[onclick*="'espantalhoLuxo'"]::before {
+/* 2. Ajuste de elevação vertical para encaixar o sprite de 64px no botão quadrado */
+.botao-ferramenta[onclick*="espantalho"]::before,
+.botao-variante[onclick*="espantalho"]::before {
     transform: translateY(-8px);
 }
 
-.botao-ferramenta[onclick*="'espantalho'"]:hover::before,
-.botao-variante[onclick*="'espantalho'"]:hover::before,
-.botao-variante[onclick*="'espantalhoR1'"]:hover::before,
-.botao-variante[onclick*="'espantalhoR2'"]:hover::before,
-.botao-variante[onclick*="'espantalhoR3'"]:hover::before,
-.botao-variante[onclick*="'espantalhoR4'"]:hover::before,
-.botao-variante[onclick*="'espantalhoR5'"]:hover::before,
-.botao-variante[onclick*="'espantalhoR6'"]:hover::before,
-.botao-variante[onclick*="'espantalhoR7'"]:hover::before,
-.botao-variante[onclick*="'espantalhoR8'"]:hover::before,
-.botao-variante[onclick*="'espantalhoLuxo'"]:hover::before {
+/* 3. Efeito de Zoom/Hover ao passar o mouse */
+.botao-ferramenta[onclick*="espantalho"]:hover::before,
+.botao-variante[onclick*="espantalho"]:hover::before {
     transform: translateY(-8px) scale(1.1) !important;
 }
 
-/* Posicionamento físico dos elementos no mapa */
-.celula-grade .objeto-sprite.tile-espantalho,
-.celula-grade .objeto-sprite.tile-espantalhoR1,
-.celula-grade .objeto-sprite.tile-espantalhoR2,
-.celula-grade .objeto-sprite.tile-espantalhoR3,
-.celula-grade .objeto-sprite.tile-espantalhoR4,
-.celula-grade .objeto-sprite.tile-espantalhoR5,
-.celula-grade .objeto-sprite.tile-espantalhoR6,
-.celula-grade .objeto-sprite.tile-espantalhoR7,
-.celula-grade .objeto-sprite.tile-espantalhoR8,
-.celula-grade .objeto-sprite.tile-espantalhoLuxo {
+/* 4. Posicionamento físico das peças colocadas na grade do mapa */
+.celula-grade .objeto-sprite[class*="tile-espantalho"] {
     position: absolute !important;
     top: 50% !important;
     left: 50% !important;
@@ -1190,61 +1146,70 @@ dialog#modalPlantio {
 /* ============================== COORDENADAS INDIVIDUAIS DOS ESPANTALHOS ============================== */
 
 /* --- Espantalho Clássico (Coluna 0, Linha 2) --- */
-.botao-ferramenta[onclick*="'espantalho'"]::before,
-.botao-variante[onclick*="'espantalho'"]::before,
+.botao-ferramenta[onclick*="'espantalho'"]:not([onclick*="R"]):not([onclick*="Luxo"])::before,
+.botao-variante[onclick*="'espantalho'"]:not([onclick*="R"]):not([onclick*="Luxo"])::before,
 .celula-grade .objeto-sprite.tile-espantalho {
     background-position: calc(-0 * 32px) calc(-2 * 32px) !important;
 }
 
 /* --- Raroespantalho 1 - Boneco de Neve (Coluna 0, Linha 34) --- */
+.botao-ferramenta[onclick*="'espantalhoR1'"]::before,
 .botao-variante[onclick*="'espantalhoR1'"]::before,
 .celula-grade .objeto-sprite.tile-espantalhoR1 {
     background-position: calc(-0 * 32px) calc(-34 * 32px) !important;
 }
 
 /* --- Raroespantalho 2 - Menina Agricultora (Coluna 1, Linha 34) --- */
+.botao-ferramenta[onclick*="'espantalhoR2'"]::before,
 .botao-variante[onclick*="'espantalhoR2'"]::before,
 .celula-grade .objeto-sprite.tile-espantalhoR2 {
     background-position: calc(-1 * 32px) calc(-34 * 32px) !important;
 }
 
 /* --- Raroespantalho 3 - Bruxa (Coluna 1, Linha 18) --- */
+.botao-ferramenta[onclick*="'espantalhoR3'"]::before,
 .botao-variante[onclick*="'espantalhoR3'"]::before,
 .celula-grade .objeto-sprite.tile-espantalhoR3 {
     background-position: calc(-1 * 32px) calc(-18 * 32px) !important;
 }
 
 /* --- Raroespantalho 4 (Coluna 2, Linha 34) --- */
+.botao-ferramenta[onclick*="'espantalhoR4'"]::before,
 .botao-variante[onclick*="'espantalhoR4'"]::before,
 .celula-grade .objeto-sprite.tile-espantalhoR4 {
     background-position: calc(-2 * 32px) calc(-34 * 32px) !important;
 }
 
 /* --- Raroespantalho 5 (Coluna 3, Linha 34) --- */
+.botao-ferramenta[onclick*="'espantalhoR5'"]::before,
 .botao-variante[onclick*="'espantalhoR5'"]::before,
 .celula-grade .objeto-sprite.tile-espantalhoR5 {
     background-position: calc(-3 * 32px) calc(-34 * 32px) !important;
 }
 
 /* --- Raroespantalho 6 (Coluna 4, Linha 34) --- */
+.botao-ferramenta[onclick*="'espantalhoR6'"]::before,
 .botao-variante[onclick*="'espantalhoR6'"]::before,
 .celula-grade .objeto-sprite.tile-espantalhoR6 {
     background-position: calc(-4 * 32px) calc(-34 * 32px) !important;
 }
 
 /* --- Raroespantalho 7 (Coluna 5, Linha 34) --- */
+.botao-ferramenta[onclick*="'espantalhoR7'"]::before,
 .botao-variante[onclick*="'espantalhoR7'"]::before,
 .celula-grade .objeto-sprite.tile-espantalhoR7 {
     background-position: calc(-5 * 32px) calc(-34 * 32px) !important;
 }
 
 /* --- Raroespantalho 8 (Coluna 6, Linha 34) --- */
+.botao-ferramenta[onclick*="'espantalhoR8'"]::before,
 .botao-variante[onclick*="'espantalhoR8'"]::before,
 .celula-grade .objeto-sprite.tile-espantalhoR8 {
     background-position: calc(-6 * 32px) calc(-34 * 32px) !important;
 }
 
 /* --- Espantalho de Luxo (Coluna 3, Linha 2) --- */
+.botao-ferramenta[onclick*="'espantalhoLuxo'"]::before,
 .botao-variante[onclick*="'espantalhoLuxo'"]::before,
 .celula-grade .objeto-sprite.tile-espantalhoLuxo {
     background-position: calc(-3 * 32px) calc(-2 * 32px) !important;
