@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Extrator de Coordenadas de Sprites</title>
+    <style>
+        body { font-family: sans-serif; background: #222; color: #fff; padding: 20px; }
+        .controles { display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap; }
+        label { display: flex; flex-direction: column; font-size: 12px; gap: 4px; }
+        input, select { padding: 6px; background: #333; color: #fff; border: 1px solid #555; border-radius: 4px; }
+        .container-canvas { position: relative; overflow: auto; max-height: 70vh; border: 1px solid #444; background: #111; }
+        canvas { display: block; cursor: crosshair; }
+        .painel-resultado { margin-top: 15px; background: #111; padding: 15px; border-radius: 6px; border: 1px solid #333; }
+        .saida-coord { font-family: monospace; font-size: 18px; color: #00ffcc; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h2>Extrator de Coordenadas de Sprites</h2>
+
+    <div class="controles">
+        <label>
+            Carregar Spritesheet:
+            <input type="file" id="uploadImage" accept="image/*">
+        </label>
+        
+        <label>
+            Tamanho Base do Tile:
+            <select id="tileSize">
+                <option value="16">16 x 16 px</option>
+                <option value="32" selected>32 x 32 px</option>
+                <option value="64">64 x 64 px</option>
+            </select>
+        </label>
+
+        <label>
+            Escala Projetada (CSS):
+            <select id="cssScale">
+                <option value="256">256px (8 colunas de 32px - Objetos2)</option>
+                <option value="768">768px (24 colunas de 32px - Objetos1)</option>
+                <option value="original">Original (Sem escala/100%)</option>
+            </select>
+        </label>
+    </div>
+
+    <div class="container-canvas">
+        <canvas id="spriteCanvas"></canvas>
+    </div>
+
+    <div class="painel-resultado">
+        <div><strong>Seleção Atual:</strong> <span id="infoSelecao">Clique em um tile no mapa de sprites</span></div>
+        <hr style="border-color: #333; margin: 10px 0;">
+        <div>Coordenadas Calculadas:</div>
+        <div class="saida-coord" id="resultadoCoordenadas">-</div>
+    </div>
+
+    <script>
+        const uploadImage = document.getElementById('uploadImage');
+        const tileSizeInput = document.getElementById('tileSize');
+        const cssScaleInput = document.getElementById('cssScale');
+        const canvas = document.getElementById('spriteCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const infoSelecao = document.getElementById('infoSelecao');
+        const resultadoCoordenadas = document.getElementById('resultadoCoordenadas');
+
+        let img = new Image();
+        let tileInicial = null;
+        let tileFinal = null;
+
+        uploadImage.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                img.onload = () => {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    desenhar();
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function desenhar() {
+            if (!img.src) return;
+
+            const tileSize = parseInt(tileSizeInput.value);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+
+            // Grade visual
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1;
+
+            for (let x = 0; x < canvas.width; x += tileSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += tileSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Destaque da Seleção
+            if (tileInicial) {
+                const minCol = Math.min(tileInicial.col, tileFinal ? tileFinal.col : tileInicial.col);
+                const maxCol = Math.max(tileInicial.col, tileFinal ? tileFinal.col : tileInicial.col);
+                const minRow = Math.min(tileInicial.row, tileFinal ? tileFinal.row : tileInicial.row);
+                const maxRow = Math.max(tileInicial.row, tileFinal ? tileFinal.row : tileInicial.row);
+
+                const x = minCol * tileSize;
+                const y = minRow * tileSize;
+                const w = (maxCol - minCol + 1) * tileSize;
+                const h = (maxRow - minRow + 1) * tileSize;
+
+                ctx.fillStyle = 'rgba(0, 255, 204, 0.4)';
+                ctx.fillRect(x, y, w, h);
+                ctx.strokeStyle = '#00ffcc';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x, y, w, h);
+
+                atualizarResultados(minCol, minRow, maxCol, maxRow, tileSize);
+            }
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            if (!img.src) return;
+            const rect = canvas.getBoundingClientRect();
+            const tileSize = parseInt(tileSizeInput.value);
+
+            const col = Math.floor((e.clientX - rect.left) / tileSize);
+            const row = Math.floor((e.clientY - rect.top) / tileSize);
+
+            tileInicial = { col, row };
+            tileFinal = { col, row };
+            desenhar();
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!img.src || !e.buttons || !tileInicial) return;
+            const rect = canvas.getBoundingClientRect();
+            const tileSize = parseInt(tileSizeInput.value);
+
+            const col = Math.floor((e.clientX - rect.left) / tileSize);
+            const row = Math.floor((e.clientY - rect.top) / tileSize);
+
+            tileFinal = { col, row };
+            desenhar();
+        });
+
+        function atualizarResultados(minCol, minRow, maxCol, maxRow, tileSize) {
+            const colsSelecionadas = maxCol - minCol + 1;
+            const rowsSelecionadas = maxRow - minRow + 1;
+
+            infoSelecao.textContent = `Coluna ${minCol + 1}, Linha ${minRow + 1} | Seleção: ${colsSelecionadas}x${rowsSelecionadas} tiles (${colsSelecionadas * tileSize}x${rowsSelecionadas * tileSize}px)`;
+
+            // Cálculo da coordenada em pixels
+            let posX = minCol * tileSize;
+            let posY = minRow * tileSize;
+
+            // Se houver escala aplicada no CSS (ex: background-size: 256px auto)
+            const cssScale = cssScaleInput.value;
+            if (cssScale !== 'original') {
+                const faturEscala = parseInt(cssScale) / img.width;
+                posX = Math.round(posX * faturEscala);
+                posY = Math.round(posY * faturEscala);
+            }
+
+            resultadoCoordenadas.textContent = `background-position: -${posX}px -${posY}px;`;
+        }
+
+        tileSizeInput.addEventListener('change', desenhar);
+        cssScaleInput.addEventListener('change', desenhar);
+    </script>
+</body>
+</html>

@@ -1030,9 +1030,9 @@ dialog#modalPlantio {
     cursor: pointer !important;
     width: 42px !important;
     height: 42px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 4px;
     transition: all 0.1s ease;
 }
@@ -1042,14 +1042,14 @@ dialog#modalPlantio {
 .botao-ferramenta::before,
 .botao-variante::before,
 .celula-grade .objeto-sprite {
-    content: "" !important;
-    display: block !important;
-    background-image: url('recursos/objetos1.png') !important;
-    background-repeat: no-repeat !important;
-    background-size: 768px auto !important; /* Mantém proporção estrita de 32px */
-    image-rendering: pixelated !important;
-    width: 32px !important;
-    height: 32px !important;
+    content: "";
+    display: block;
+    background-image: url('recursos/objetos1.png');
+    background-repeat: no-repeat;
+    background-size: 768px auto; /* Mantém proporção estrita de 32px */
+    image-rendering: pixelated;
+    width: 32px;
+    height: 32px;
 }
 
 /* Opacidade de item guardado no inventário para quem não está ativo */
@@ -1198,21 +1198,21 @@ dialog#modalPlantio {
 .botao-ferramenta[onclick*="'espantalhoR7'"]::before,
 .botao-variante[onclick*="'espantalhoR7'"]::before,
 .celula-grade .objeto-sprite.tile-espantalhoR7 {
-    background-position: calc(-5 * 32px) calc(-34 * 32px) !important;
+    background-position: -192px -960px;
 }
 
 /* --- Raroespantalho 8 (Coluna 6, Linha 34) --- */
 .botao-ferramenta[onclick*="'espantalhoR8'"]::before,
 .botao-variante[onclick*="'espantalhoR8'"]::before,
 .celula-grade .objeto-sprite.tile-espantalhoR8 {
-    background-position: calc(-6 * 32px) calc(-34 * 32px) !important;
+    background-position: -32px -896px;
 }
 
 /* --- Espantalho de Luxo (Coluna 3, Linha 2) --- */
 .botao-ferramenta[onclick*="'espantalhoLuxo'"]::before,
 .botao-variante[onclick*="'espantalhoLuxo'"]::before,
 .celula-grade .objeto-sprite.tile-espantalhoLuxo {
-    background-position: calc(-3 * 32px) calc(-2 * 32px) !important;
+    background-position: -224px -1280px !important;
 }
 
 /* ============================== CAMADA ISOLADA DE ALCANCES NO GRID ============================== */
@@ -1220,18 +1220,6 @@ dialog#modalPlantio {
 /* O container do grid cria o contexto de isolamento para empilhamento */
 #grid-fazenda, .container-fazenda {
     isolation: isolate !important;
-}
-
-/* ============================== OUTLINES DE CATEGORIAS (MIRA TRACEJADA) ============================== */
-
-/* Categoria 'Irrigação' (Borda Tracejada Azul) */
-.celula-grade.Irrigação {
-    outline: 1.5px dashed rgba(0, 130, 255, 0.7) !important;
-}
-
-/* Categoria 'Proteção' (Borda Tracejada Verde) */
-.celula-grade.Proteção {
-    outline: 1.5px dashed rgba(0, 220, 0, 0.7) !important;
 }
 
 /* ============================== VIEWPORT E GRID ESTRUTURAL ============================== */
@@ -1288,8 +1276,8 @@ dialog#modalPlantio {
 
 /* Mira cirurgicamente na sub-div (.objeto-sprite) criada pelo JS */
 .celula-grade .objeto-sprite {
-    display: block !important;
-    background-image: url('recursos/objetos1.png') !important;
+    display: block;
+    background-image: url('recursos/objetos1.png');
     background-repeat: no-repeat !important;
     background-size: 768px auto !important; /* Proporção de 32px */
     image-rendering: pixelated !important;
@@ -1336,4 +1324,99 @@ dialog#modalPlantio {
     font-weight: bold;
     color: var(--cor-madeira-escura);
     cursor: pointer;
+}
+/* ============================== COLMÉIA (BEE HOUSE) ============================== */
+.botao-ferramenta[onclick*="colmeia"]::before,
+.celula-grade .objeto-sprite.tile-colmeia {
+    background-image: url('recursos/objetos2.png') !important;
+    background-size: 256px auto !important;
+    width: 32px !important;
+    height: 64px !important; 
+    display: block !important;
+    background-position: calc(-3 * 32px) calc(-2 * 32px) !important;
+}
+
+.botao-ferramenta[onclick*="colmeia"]::before {
+    transform: translateY(-8px);
+}
+
+.botao-ferramenta[onclick*="colmeia"]:hover::before {
+    transform: translateY(-8px) scale(1.1) !important;
+}
+
+/* ============================== FLORES (SUBMENU: OBJETOS1.PNG) ============================== */
+
+/* Regra base: Direciona para objetos1.png na escala de 768px (1 tile de 16px vira 32px) */
+.botao-ferramenta[onclick*="flor"]::before,
+.botao-variante[onclick*="flor"]::before,
+.celula-grade .objeto-sprite[class*="tile-flor"] {
+    background-image: url('recursos/objetos1.png') !important;
+    background-size: 768px auto !important; /* Mantém a proporção padrão do objetos1 (384px * 2) */
+    width: 32px !important;
+    height: 32px !important;
+    display: block !important;
+}
+
+/* ============================== COORDENADAS INDIVIDUAIS DAS FLORES ============================== */
+
+/* 1. Tulipa */
+.botao-ferramenta[onclick*="florTulipa"]::before,
+.botao-variante[onclick*="florTulipa"]::before,
+.celula-grade .objeto-sprite.tile-florTulipa {
+    background-position: -480px -768px; /* Exemplo: insira a coordenada lida no Extrator */
+}
+
+/* 2. Jasmim */
+.botao-ferramenta[onclick*="florJasmim"]::before,
+.botao-variante[onclick*="florJasmim"]::before,
+.celula-grade .objeto-sprite.tile-florJasmim {
+    background-position: -64px 0px !important;
+}
+
+/* 3. Miçanga */
+.botao-ferramenta[onclick*="florMicanga"]::before,
+.botao-variante[onclick*="florMicanga"]::before,
+.celula-grade .objeto-sprite.tile-florMicanga {
+    background-position: -128px 0px !important;
+}
+
+/* 4. Papoula */
+.botao-ferramenta[onclick*="florPapoula"]::before,
+.botao-variante[onclick*="florPapoula"]::before,
+.celula-grade .objeto-sprite.tile-florPapoula {
+    background-position: -192px 0px !important;
+}
+
+/* 5. Girassol */
+.botao-ferramenta[onclick*="florGirassol"]::before,
+.botao-variante[onclick*="florGirassol"]::before,
+.celula-grade .objeto-sprite.tile-florGirassol {
+    background-position: -256px 0px !important;
+}
+
+/* 6. Rosa Fada */
+.botao-ferramenta[onclick*="florRosaFada"]::before,
+.botao-variante[onclick*="florRosaFada"]::before,
+.celula-grade .objeto-sprite.tile-florRosaFada {
+    background-position: -320px 0px !important;
+}
+/* ============================== MINI-OBELISCO (OBJETOS2.PNG) ============================== */
+
+.botao-ferramenta[onclick*="miniObelisco"]::before,
+.celula-grade .objeto-sprite[class*="tile-miniObelisco"] {
+    background-image: url('recursos/objetos2.png') !important;
+    background-size: 256px auto !important; /* Mantém 8 colunas de 32px */
+    background-position: -192px -1856px !important; /* Coluna 7 (Mini-Obelisco) */
+    width: 32px !important;
+    height: 64px !important;
+}
+
+/* Centralização no botão lateral */
+.botao-ferramenta[onclick*="miniObelisco"]::before {
+    transform: translateY(-8px);
+}
+
+/* Ancoragem física no tile da grade */
+.celula-grade .objeto-sprite[class*="tile-miniObelisco"] {
+    transform: translate(-50%, -75%) !important;
 }

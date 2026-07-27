@@ -434,6 +434,25 @@ window.addEventListener("DOMContentLoaded", () => {
                     <!-- Gerado dinamicamente pelo JS -->
                 </div>
             </div>
+
+            <!-- Botão Mestre Único: Colméia -->
+            <button class="botao-ferramenta" id="btn-colmeia" title="Colméia (Alcance de Mel)" onclick="FarmPlanner.selecionarFerramenta('colmeia')"></button>
+
+            <!-- Container Expansível de Flores -->
+            <div class="botao-container-expansivel">
+               <button class="botao-ferramenta" id="btn-master-flores" title="Flores (Passe o mouse)" onclick="FarmPlanner.selecionarFerramenta('florTulipa')"></button>
+            <div class="submenu-variacoes" id="submenu-flores">
+            <!-- O JS preencherá as 6 opções de flores aqui -->
+            </div>
+            </div>
+
+             <!-- botões de Construções  -->
+            <!-- Botão de Construções: Mini-Obelisco -->
+            <button class="botao-ferramenta" 
+                    id="botao-miniObelisco" 
+                    title="Mini-Obelisco (Máx: 2)" 
+                    onclick="FarmPlanner.selecionarFerramenta('miniObelisco')">
+            </button>
         </div>
 
         <div id="controles-container"></div>
