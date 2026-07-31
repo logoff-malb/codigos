@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Starpreview</title>
-  <link rel="stylesheet" type="text/css" href="estilo.css">
+  <link rel="stylesheet" href="assets.css">
+  <link rel="stylesheet" href="estilo.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="farmPlanner.js" defer></script>
   <!--calendario e variaveis globais-->>
@@ -435,9 +436,11 @@ window.addEventListener("DOMContentLoaded", () => {
                 </div>
             </div>
 
-            <!-- Botão Mestre Único: Colméia -->
-            <button class="botao-ferramenta" id="btn-colmeia" title="Colméia (Alcance de Mel)" onclick="FarmPlanner.selecionarFerramenta('colmeia')"></button>
-
+            <!-- Container Expansível de Colméias -->
+            <div class="botao-container-expansivel">
+                <div id="btn-master-colmeias-container"></div>
+                <div class="submenu-variacoes" id="submenu-colmeias"></div>
+            </div>
             <!-- Container Expansível de Flores -->
             <div class="botao-container-expansivel">
                <button class="botao-ferramenta" id="btn-master-flores" title="Flores (Passe o mouse)" onclick="FarmPlanner.selecionarFerramenta('florTulipa')"></button>
@@ -453,6 +456,8 @@ window.addEventListener("DOMContentLoaded", () => {
                     title="Mini-Obelisco (Máx: 2)" 
                     onclick="FarmPlanner.selecionarFerramenta('miniObelisco')">
             </button>
+            <!-- meteoro -->
+            <div id="btn-meteoro-container"></div>
         </div>
 
         <div id="controles-container"></div>

@@ -1,0 +1,217 @@
+/* ==========================================================================
+   BANCO DE SPRITES CENTRAL (assets.css)
+   ========================================================================== */
+
+:root {
+    --tamanho-tile: 32px;
+}
+
+/* --------------------------------------------------------------------------
+   1. REGRA BASE DE INJEÇÃO E RENDERIZAÇÃO PIXEL ART (UNIVERSAL)
+   -------------------------------------------------------------------------- */
+[class*="sprite-"],
+.celula-grade .objeto-sprite,
+.botao-ferramenta::before,
+.botao-variante::before {
+    content: "";
+    display: block;
+    background-image: url('recursos/objetos1.png');
+    background-repeat: no-repeat !important;
+    background-size: 768px auto !important;
+    image-rendering: pixelated !important;
+    image-rendering: -moz-crisp-edges !important;
+    image-rendering: crisp-edges !important;
+    width: 32px;
+    height: 32px;
+}
+
+/* Centralização universal de peças simples (1x1) no mapa */
+.celula-grade .objeto-sprite {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* --------------------------------------------------------------------------
+   2. REGRAS DE ALTERNÂNCIA DE SPRITESHEET (OBJETOS2.PNG)
+   -------------------------------------------------------------------------- */
+.sprite-objetos2,
+.botao-ferramenta[onclick*="espantalho"]::before,
+.botao-variante[onclick*="espantalho"]::before,
+.celula-grade .objeto-sprite[class*="tile-espantalho"],
+.botao-ferramenta[onclick*="colmeia"]::before,
+.botao-variante[onclick*="colmeia"]::before,
+.celula-grade .objeto-sprite.tile-colmeia,
+.botao-variante[onclick*="colmeiaVazia"]::before,
+.celula-grade .objeto-sprite.tile-colmeiaVazia,
+.botao-ferramenta[onclick*="miniObelisco"]::before,
+.botao-variante[onclick*="miniObelisco"]::before,
+.celula-grade .objeto-sprite.tile-miniObelisco {
+    background-image: url('recursos/objetos2.png') !important;
+    background-size: 256px auto !important;
+}
+
+/* --------------------------------------------------------------------------
+   3. DIMENSÕES ESPECIAIS E POSICIONAMENTO
+   -------------------------------------------------------------------------- */
+
+/* --- Construções Altas (32x64px - Objetos2) --- */
+.botao-ferramenta[onclick*="espantalho"]::before,
+.botao-variante[onclick*="espantalho"]::before,
+.celula-grade .objeto-sprite[class*="tile-espantalho"],
+.botao-ferramenta[onclick*="colmeia"]::before,
+.botao-variante[onclick*="colmeia"]::before,
+.celula-grade .objeto-sprite.tile-colmeia,
+.botao-variante[onclick*="colmeiaVazia"]::before,
+.celula-grade .objeto-sprite.tile-colmeiaVazia,
+.botao-ferramenta[onclick*="miniObelisco"]::before,
+.botao-variante[onclick*="miniObelisco"]::before,
+.celula-grade .objeto-sprite.tile-miniObelisco {
+    width: 32px !important;
+    height: 64px !important;
+}
+
+/* Ajuste do Espantalho nos botões e no grid */
+.botao-ferramenta[onclick*="espantalho"]::before,
+.botao-variante[onclick*="espantalho"]::before {
+    transform: translateY(-8px);
+}
+.botao-ferramenta[onclick*="espantalho"]:hover::before,
+.botao-variante[onclick*="espantalho"]:hover::before {
+    transform: translateY(-8px) scale(1.1) !important;
+}
+.celula-grade .objeto-sprite[class*="tile-espantalho"] {
+    transform: translate(-50%, -75%) !important;
+}
+
+/* Posicionamento no Grid para Colméias (32x64) */
+.celula-grade .objeto-sprite.tile-colmeia,
+.celula-grade .objeto-sprite.tile-colmeiaVazia {
+    transform: translate(-50%, -75%) !important;
+    z-index: 5;
+}
+
+
+/* --- Meteoro (2x2 Tiles - Estratégia do ZOOM) --- */
+.celula-grade .objeto-sprite.tile-meteoro-0-0 {
+    position: absolute !important;
+    
+    /* Posição ancorada no canto superior esquerdo */
+    top: 0 !important;
+    left: 0 !important;
+    
+    /* Tamanho base do corte (64x64px do meteoro original) */
+    width: 64px !important;
+    height: 64px !important;
+    max-width: none !important;
+    max-height: none !important;
+    
+    background-image: url('recursos/objetos1.png') !important;
+    background-size: 768px auto !important;
+    background-position: -704px -800px !important;
+    
+    /* AQUI ESTÁ O ZOOM: amplia todo o corte e a imagem em 2x a partir do canto superior esquerdo */
+    transform: scale(1.5) !important;
+    transform-origin: 0 0 !important;
+    
+    z-index: 10 !important;
+}
+
+/* Oculta as sub-células auxiliares do meteoro */
+.celula-grade .objeto-sprite.tile-meteoro-1-0,
+.celula-grade .objeto-sprite.tile-meteoro-0-1,
+.celula-grade .objeto-sprite.tile-meteoro-1-1 {
+    display: none !important;
+}
+
+.botao-ferramenta[onclick*="meteoro"] {
+    width: 68px !important;
+    height: 68px !important;
+    overflow: hidden;
+}
+
+.botao-ferramenta[onclick*="meteoro"]::before {
+    background-image: url('recursos/objetos1.png') !important;
+    background-size: 768px auto !important;
+    background-position: -704px -800px !important;
+    width: 64px !important;
+    height: 64px !important;
+    transform: scale(0.5);
+    transform-origin: center;
+    margin: -8px;
+}
+
+/* --------------------------------------------------------------------------
+   4. MAPEAMENTO COMPLETO DE COORDENADAS (OFFSETS)
+   -------------------------------------------------------------------------- */
+
+/* --- ASPERSORES (Objetos1) --- */
+.botao-ferramenta[onclick*="'aspersorC'"]::before, .botao-variante[onclick*="'aspersorC'"]::before, .celula-grade .objeto-sprite.tile-aspersorC { background-position: calc(-23 * 32px) calc(-24 * 32px) !important; }
+.botao-ferramenta[onclick*="'aspersorQ'"]::before, .botao-variante[onclick*="'aspersorQ'"]::before, .celula-grade .objeto-sprite.tile-aspersorQ { background-position: calc(-24 * 32px) calc(-24 * 32px) !important; }
+.botao-ferramenta[onclick*="'aspersorI'"]::before, .botao-variante[onclick*="'aspersorI'"]::before, .celula-grade .objeto-sprite.tile-aspersorI { background-position: calc(-25 * 32px) calc(-24 * 32px) !important; }
+
+/* --- FLORES (Objetos1) --- */
+.botao-ferramenta[onclick*="florTulipa"]::before,  .botao-variante[onclick*="florTulipa"]::before,  .celula-grade .objeto-sprite.tile-florTulipa  { background-position: -480px -768px !important; }
+.botao-ferramenta[onclick*="florJasmim"]::before,  .botao-variante[onclick*="florJasmim"]::before,  .celula-grade .objeto-sprite.tile-florJasmim  { background-position: -64px 0px !important; }
+.botao-ferramenta[onclick*="florMicanga"]::before, .botao-variante[onclick*="florMicanga"]::before, .celula-grade .objeto-sprite.tile-florMicanga { background-position: -128px 0px !important; }
+.botao-ferramenta[onclick*="florPapoula"]::before, .botao-variante[onclick*="florPapoula"]::before, .celula-grade .objeto-sprite.tile-florPapoula { background-position: -192px 0px !important; }
+.botao-ferramenta[onclick*="florGirassol"]::before,.botao-variante[onclick*="florGirassol"]::before,.celula-grade .objeto-sprite.tile-florGirassol { background-position: -256px 0px !important; }
+.botao-ferramenta[onclick*="florRosaFada"]::before,.botao-variante[onclick*="florRosaFada"]::before,.celula-grade .objeto-sprite.tile-florRosaFada { background-position: -320px 0px !important; }
+
+/* --- ESPANTALHOS (Objetos2) --- */
+.botao-ferramenta[onclick*="'espantalho'"]:not([onclick*="R"]):not([onclick*="Luxo"])::before,
+.botao-variante[onclick*="'espantalho'"]:not([onclick*="R"]):not([onclick*="Luxo"])::before,
+.celula-grade .objeto-sprite.tile-espantalho { background-position: calc(-0 * 32px) calc(-2 * 32px) !important; }
+
+.botao-ferramenta[onclick*="'espantalhoR1'"]::before, .botao-variante[onclick*="'espantalhoR1'"]::before, .celula-grade .objeto-sprite.tile-espantalhoR1 { background-position: calc(-0 * 32px) calc(-34 * 32px) !important; }
+.botao-ferramenta[onclick*="'espantalhoR2'"]::before, .botao-variante[onclick*="'espantalhoR2'"]::before, .celula-grade .objeto-sprite.tile-espantalhoR2 { background-position: calc(-1 * 32px) calc(-34 * 32px) !important; }
+.botao-ferramenta[onclick*="'espantalhoR3'"]::before, .botao-variante[onclick*="'espantalhoR3'"]::before, .celula-grade .objeto-sprite.tile-espantalhoR3 { background-position: calc(-1 * 32px) calc(-18 * 32px) !important; }
+.botao-ferramenta[onclick*="'espantalhoR4'"]::before, .botao-variante[onclick*="'espantalhoR4'"]::before, .celula-grade .objeto-sprite.tile-espantalhoR4 { background-position: calc(-2 * 32px) calc(-34 * 32px) !important; }
+.botao-ferramenta[onclick*="'espantalhoR5'"]::before, .botao-variante[onclick*="'espantalhoR5'"]::before, .celula-grade .objeto-sprite.tile-espantalhoR5 { background-position: calc(-3 * 32px) calc(-34 * 32px) !important; }
+.botao-ferramenta[onclick*="'espantalhoR6'"]::before, .botao-variante[onclick*="'espantalhoR6'"]::before, .celula-grade .objeto-sprite.tile-espantalhoR6 { background-position: calc(-4 * 32px) calc(-34 * 32px) !important; }
+.botao-ferramenta[onclick*="'espantalhoR7'"]::before, .botao-variante[onclick*="'espantalhoR7'"]::before, .celula-grade .objeto-sprite.tile-espantalhoR7 { background-position: -192px -960px !important; }
+.botao-ferramenta[onclick*="'espantalhoR8'"]::before, .botao-variante[onclick*="'espantalhoR8'"]::before, .celula-grade .objeto-sprite.tile-espantalhoR8 { background-position: -32px -896px !important; }
+.botao-ferramenta[onclick*="'espantalhoLuxo'"]::before, .botao-variante[onclick*="'espantalhoLuxo'"]::before, .celula-grade .objeto-sprite.tile-espantalhoLuxo { background-position: -224px -1280px !important; }
+
+/* --- COLMÉIA (Objetos2) --- */
+.botao-ferramenta[onclick*="colmeia"]:not([onclick*="colmeiaVazia"])::before,
+.botao-variante[onclick*="colmeia"]:not([onclick*="colmeiaVazia"])::before,
+.celula-grade .objeto-sprite.tile-colmeia {
+    background-position: -96px -64px !important;
+}
+
+/* --- COLMÉIA VAZIA (Objetos2) --- */
+.botao-variante[onclick*="colmeiaVazia"]::before,
+.celula-grade .objeto-sprite.tile-colmeiaVazia {
+    background-position: -64px -64px !important; /* Temporário: altere aqui no futuro */
+}
+
+/* --- MINI-OBELISCO (Objetos2) --- */
+.botao-ferramenta[onclick*="miniObelisco"]::before,
+.botao-variante[onclick*="miniObelisco"]::before,
+.celula-grade .objeto-sprite.tile-miniObelisco {
+    background-position: -192px -1856px !important;
+}
+
+/* --------------------------------------------------------------------------
+   5. COMPONENTES ESPECIAIS (BADGES)
+   -------------------------------------------------------------------------- */
+.badge-flor-colmeia {
+    position: absolute;
+    top: -8px;
+    right: -4px;
+    width: 18px;
+    height: 18px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1.5px solid #d89d20;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    z-index: 15;
+    pointer-events: none;
+}

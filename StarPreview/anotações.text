@@ -1,143 +1,217 @@
-/* ============================== ESPANTALHOS (SPRITE SHEET: OBJETOS2.PNG) ============================== */
+/* ==========================================================================
+   BANCO DE SPRITES CENTRAL (assets.css)
+   ========================================================================== */
 
-/* Grupo Seletor Universal para os 10 Espantalhos */
-.botao-ferramenta[onclick*="'espantalho'"]::before,
-.botao-variante[onclick*="'espantalho'"]::before,
-.botao-variante[onclick*="'espantalhoR1'"]::before,
-.botao-variante[onclick*="'espantalhoR2'"]::before,
-.botao-variante[onclick*="'espantalhoR3'"]::before,
-.botao-variante[onclick*="'espantalhoR4'"]::before,
-.botao-variante[onclick*="'espantalhoR5'"]::before,
-.botao-variante[onclick*="'espantalhoR6'"]::before,
-.botao-variante[onclick*="'espantalhoR7'"]::before,
-.botao-variante[onclick*="'espantalhoR8'"]::before,
-.botao-variante[onclick*="'espantalhoLuxo'"]::before,
-.celula-grade .objeto-sprite.tile-espantalho,
-.celula-grade .objeto-sprite.tile-espantalhoR1,
-.celula-grade .objeto-sprite.tile-espantalhoR2,
-.celula-grade .objeto-sprite.tile-espantalhoR3,
-.celula-grade .objeto-sprite.tile-espantalhoR4,
-.celula-grade .objeto-sprite.tile-espantalhoR5,
-.celula-grade .objeto-sprite.tile-espantalhoR6,
-.celula-grade .objeto-sprite.tile-espantalhoR7,
-.celula-grade .objeto-sprite.tile-espantalhoR8,
-.celula-grade .objeto-sprite.tile-espantalhoLuxo {
-    background-image: url('recursos/objetos2.png') !important;
-    background-size: 256px auto !important; /* Proporção exata de 8 colunas de 32px */
-    width: 32px !important;
-    height: 64px !important; 
+:root {
+    --tamanho-tile: 32px;
 }
 
-/* Ajuste de enquadramento nos botões redondos/quadrados do menu lateral */
-.botao-ferramenta[onclick*="'espantalho'"]::before,
-.botao-variante[onclick*="'espantalho'"]::before,
-.botao-variante[onclick*="'espantalhoR1'"]::before,
-.botao-variante[onclick*="'espantalhoR2'"]::before,
-.botao-variante[onclick*="'espantalhoR3'"]::before,
-.botao-variante[onclick*="'espantalhoR4'"]::before,
-.botao-variante[onclick*="'espantalhoR5'"]::before,
-.botao-variante[onclick*="'espantalhoR6'"]::before,
-.botao-variante[onclick*="'espantalhoR7'"]::before,
-.botao-variante[onclick*="'espantalhoR8'"]::before,
-.botao-variante[onclick*="'espantalhoLuxo'"]::before {
-    transform: translateY(-8px);
+/* --------------------------------------------------------------------------
+   1. REGRA BASE DE INJEÇÃO E RENDERIZAÇÃO PIXEL ART (UNIVERSAL)
+   -------------------------------------------------------------------------- */
+[class*="sprite-"],
+.celula-grade .objeto-sprite,
+.botao-ferramenta::before,
+.botao-variante::before {
+    content: "";
+    display: block;
+    background-image: url('recursos/objetos1.png');
+    background-repeat: no-repeat !important;
+    background-size: 768px auto !important;
+    image-rendering: pixelated !important;
+    image-rendering: -moz-crisp-edges !important;
+    image-rendering: crisp-edges !important;
+    width: 32px;
+    height: 32px;
 }
 
-.botao-ferramenta[onclick*="'espantalho'"]:hover::before,
-.botao-variante[onclick*="'espantalho'"]:hover::before,
-.botao-variante[onclick*="'espantalhoR1'"]:hover::before,
-.botao-variante[onclick*="'espantalhoR2'"]:hover::before,
-.botao-variante[onclick*="'espantalhoR3'"]:hover::before,
-.botao-variante[onclick*="'espantalhoR4'"]:hover::before,
-.botao-variante[onclick*="'espantalhoR5'"]:hover::before,
-.botao-variante[onclick*="'espantalhoR6'"]:hover::before,
-.botao-variante[onclick*="'espantalhoR7'"]:hover::before,
-.botao-variante[onclick*="'espantalhoR8'"]:hover::before,
-.botao-variante[onclick*="'espantalhoLuxo'"]:hover::before {
-    transform: translateY(-8px) scale(1.1) !important;
-}
-
-/* Posicionamento no grid física/render com ancoragem perfeita pela base */
-.celula-grade .objeto-sprite.tile-espantalho,
-.celula-grade .objeto-sprite.tile-espantalhoR1,
-.celula-grade .objeto-sprite.tile-espantalhoR2,
-.celula-grade .objeto-sprite.tile-espantalhoR3,
-.celula-grade .objeto-sprite.tile-espantalhoR4,
-.celula-grade .objeto-sprite.tile-espantalhoR5,
-.celula-grade .objeto-sprite.tile-espantalhoR6,
-.celula-grade .objeto-sprite.tile-espantalhoR7,
-.celula-grade .objeto-sprite.tile-espantalhoR8,
-.celula-grade .objeto-sprite.tile-espantalhoLuxo {
+/* Centralização universal de peças simples (1x1) no mapa */
+.celula-grade .objeto-sprite {
     position: absolute !important;
     top: 50% !important;
     left: 50% !important;
-    transform: translate(-50%, -75%) !important;
+    transform: translate(-50%, -50%) !important;
     pointer-events: none;
     z-index: 5;
 }
 
-
-/* ============================== COORDENADAS INDIVIDUAIS DOS ESPANTALHOS ============================== */
-
-/* --- Espantalho Clássico (Coluna 0, Linha 2) --- */
-.botao-ferramenta[onclick*="'espantalho'"]::before,
-.botao-variante[onclick*="'espantalho'"]::before,
-.celula-grade .objeto-sprite.tile-espantalho {
-    background-position: calc(-0 * 32px) calc(-2 * 32px) !important;
+/* --------------------------------------------------------------------------
+   2. REGRAS DE ALTERNÂNCIA DE SPRITESHEET (OBJETOS2.PNG)
+   -------------------------------------------------------------------------- */
+.sprite-objetos2,
+.botao-ferramenta[onclick*="espantalho"]::before,
+.botao-variante[onclick*="espantalho"]::before,
+.celula-grade .objeto-sprite[class*="tile-espantalho"],
+.botao-ferramenta[onclick*="colmeia"]::before,
+.botao-variante[onclick*="colmeia"]::before,
+.celula-grade .objeto-sprite.tile-colmeia,
+.botao-variante[onclick*="colmeiaVazia"]::before,
+.celula-grade .objeto-sprite.tile-colmeiaVazia,
+.botao-ferramenta[onclick*="miniObelisco"]::before,
+.botao-variante[onclick*="miniObelisco"]::before,
+.celula-grade .objeto-sprite.tile-miniObelisco {
+    background-image: url('recursos/objetos2.png') !important;
+    background-size: 256px auto !important;
 }
 
-/* --- Raroespantalho 1 - Boneco de Neve (Coluna 0, Linha 33) --- */
-/* (Linha 24 dos tanques + 9 linhas abaixo) */
-.botao-variante[onclick*="'espantalhoR1'"]::before,
-.celula-grade .objeto-sprite.tile-espantalhoR1 {
-    background-position: calc(-0 * 32px) calc(-33 * 32px) !important;
+/* --------------------------------------------------------------------------
+   3. DIMENSÕES ESPECIAIS E POSICIONAMENTO
+   -------------------------------------------------------------------------- */
+
+/* --- Construções Altas (32x64px - Objetos2) --- */
+.botao-ferramenta[onclick*="espantalho"]::before,
+.botao-variante[onclick*="espantalho"]::before,
+.celula-grade .objeto-sprite[class*="tile-espantalho"],
+.botao-ferramenta[onclick*="colmeia"]::before,
+.botao-variante[onclick*="colmeia"]::before,
+.celula-grade .objeto-sprite.tile-colmeia,
+.botao-variante[onclick*="colmeiaVazia"]::before,
+.celula-grade .objeto-sprite.tile-colmeiaVazia,
+.botao-ferramenta[onclick*="miniObelisco"]::before,
+.botao-variante[onclick*="miniObelisco"]::before,
+.celula-grade .objeto-sprite.tile-miniObelisco {
+    width: 32px !important;
+    height: 64px !important;
 }
 
-/* --- Raroespantalho 2 - Menina Agricultora (Coluna 1, Linha 34) --- */
-/* (Linha 24 dos tanques + 10 linhas abaixo) */
-.botao-variante[onclick*="'espantalhoR2'"]::before,
-.celula-grade .objeto-sprite.tile-espantalhoR2 {
-    background-position: calc(-1 * 32px) calc(-34 * 32px) !important;
+/* Ajuste do Espantalho nos botões e no grid */
+.botao-ferramenta[onclick*="espantalho"]::before,
+.botao-variante[onclick*="espantalho"]::before {
+    transform: translateY(-8px);
+}
+.botao-ferramenta[onclick*="espantalho"]:hover::before,
+.botao-variante[onclick*="espantalho"]:hover::before {
+    transform: translateY(-8px) scale(1.1) !important;
+}
+.celula-grade .objeto-sprite[class*="tile-espantalho"] {
+    transform: translate(-50%, -75%) !important;
 }
 
-/* --- Raroespantalho 3 - Bruxa (Coluna 1, Linha 6) --- */
-.botao-variante[onclick*="'espantalhoR3'"]::before,
-.celula-grade .objeto-sprite.tile-espantalhoR3 {
-    background-position: calc(-1 * 32px) calc(-6 * 32px) !important;
+/* Posicionamento no Grid para Colméias (32x64) */
+.celula-grade .objeto-sprite.tile-colmeia,
+.celula-grade .objeto-sprite.tile-colmeiaVazia {
+    transform: translate(-50%, -75%) !important;
+    z-index: 5;
 }
 
-/* --- Raroespantalho 4 (Coluna 2, Linha 34) --- */
-.botao-variante[onclick*="'espantalhoR4'"]::before,
-.celula-grade .objeto-sprite.tile-espantalhoR4 {
-    background-position: calc(-2 * 32px) calc(-34 * 32px) !important;
+/* --- Meteoro (2x2 Tiles - 64x64px - Objetos1) --- */
+.celula-grade .objeto-sprite.tile-meteoro {
+    background-image: url('recursos/objetos1.png') !important;
+    background-size: 768px auto !important;
+    background-position: -704px -800px !important;
+    width: 64px !important;
+    height: 64px !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 6;
 }
 
-/* --- Raroespantalho 5 (Coluna 3, Linha 34) --- */
-.botao-variante[onclick*="'espantalhoR5'"]::before,
-.celula-grade .objeto-sprite.tile-espantalhoR5 {
-    background-position: calc(-3 * 32px) calc(-34 * 34px) !important;
+.botao-ferramenta[onclick*="meteoro"] {
+    width: 68px !important;
+    height: 68px !important;
+    overflow: hidden;
 }
 
-/* --- Raroespantalho 6 (Coluna 4, Linha 34) --- */
-.botao-variante[onclick*="'espantalhoR6'"]::before,
-.celula-grade .objeto-sprite.tile-espantalhoR6 {
-    background-position: calc(-4 * 32px) calc(-34 * 32px) !important;
+.botao-ferramenta[onclick*="meteoro"]::before {
+    background-image: url('recursos/objetos1.png') !important;
+    background-size: 768px auto !important;
+    background-position: -704px -800px !important;
+    width: 64px !important;
+    height: 64px !important;
+    transform: scale(0.5);
+    transform-origin: center;
+    margin: -8px;
 }
 
-/* --- Raroespantalho 7 (Coluna 5, Linha 34) --- */
-.botao-variante[onclick*="'espantalhoR7'"]::before,
-.celula-grade .objeto-sprite.tile-espantalhoR7 {
-    background-position: calc(-5 * 32px) calc(-34 * 32px) !important;
+/* --------------------------------------------------------------------------
+   4. MAPEAMENTO COMPLETO DE COORDENADAS (OFFSETS)
+   -------------------------------------------------------------------------- */
+
+/* --- ASPERSORES (Objetos1) --- */
+.botao-ferramenta[onclick*="'aspersorC'"]::before, .botao-variante[onclick*="'aspersorC'"]::before, .celula-grade .objeto-sprite.tile-aspersorC { background-position: calc(-23 * 32px) calc(-24 * 32px) !important; }
+.botao-ferramenta[onclick*="'aspersorQ'"]::before, .botao-variante[onclick*="'aspersorQ'"]::before, .celula-grade .objeto-sprite.tile-aspersorQ { background-position: calc(-24 * 32px) calc(-24 * 32px) !important; }
+.botao-ferramenta[onclick*="'aspersorI'"]::before, .botao-variante[onclick*="'aspersorI'"]::before, .celula-grade .objeto-sprite.tile-aspersorI { background-position: calc(-25 * 32px) calc(-24 * 32px) !important; }
+
+/* --- FLORES (Objetos1) --- */
+.botao-ferramenta[onclick*="florTulipa"]::before,  .botao-variante[onclick*="florTulipa"]::before,  .celula-grade .objeto-sprite.tile-florTulipa  { background-position: -480px -768px !important; }
+.botao-ferramenta[onclick*="florJasmim"]::before,  .botao-variante[onclick*="florJasmim"]::before,  .celula-grade .objeto-sprite.tile-florJasmim  { background-position: -64px 0px !important; }
+.botao-ferramenta[onclick*="florMicanga"]::before, .botao-variante[onclick*="florMicanga"]::before, .celula-grade .objeto-sprite.tile-florMicanga { background-position: -128px 0px !important; }
+.botao-ferramenta[onclick*="florPapoula"]::before, .botao-variante[onclick*="florPapoula"]::before, .celula-grade .objeto-sprite.tile-florPapoula { background-position: -192px 0px !important; }
+.botao-ferramenta[onclick*="florGirassol"]::before,.botao-variante[onclick*="florGirassol"]::before,.celula-grade .objeto-sprite.tile-florGirassol { background-position: -256px 0px !important; }
+.botao-ferramenta[onclick*="florRosaFada"]::before,.botao-variante[onclick*="florRosaFada"]::before,.celula-grade .objeto-sprite.tile-florRosaFada { background-position: -320px 0px !important; }
+
+/* --- ESPANTALHOS (Objetos2) --- */
+.botao-ferramenta[onclick*="'espantalho'"]:not([onclick*="R"]):not([onclick*="Luxo"])::before,
+.botao-variante[onclick*="'espantalho'"]:not([onclick*="R"]):not([onclick*="Luxo"])::before,
+.celula-grade .objeto-sprite.tile-espantalho { background-position: calc(-0 * 32px) calc(-2 * 32px) !important; }
+
+.botao-ferramenta[onclick*="'espantalhoR1'"]::before, .botao-variante[onclick*="'espantalhoR1'"]::before, .celula-grade .objeto-sprite.tile-espantalhoR1 { background-position: calc(-0 * 32px) calc(-34 * 32px) !important; }
+.botao-ferramenta[onclick*="'espantalhoR2'"]::before, .botao-variante[onclick*="'espantalhoR2'"]::before, .celula-grade .objeto-sprite.tile-espantalhoR2 { background-position: calc(-1 * 32px) calc(-34 * 32px) !important; }
+.botao-ferramenta[onclick*="'espantalhoR3'"]::before, .botao-variante[onclick*="'espantalhoR3'"]::before, .celula-grade .objeto-sprite.tile-espantalhoR3 { background-position: calc(-1 * 32px) calc(-18 * 32px) !important; }
+.botao-ferramenta[onclick*="'espantalhoR4'"]::before, .botao-variante[onclick*="'espantalhoR4'"]::before, .celula-grade .objeto-sprite.tile-espantalhoR4 { background-position: calc(-2 * 32px) calc(-34 * 32px) !important; }
+.botao-ferramenta[onclick*="'espantalhoR5'"]::before, .botao-variante[onclick*="'espantalhoR5'"]::before, .celula-grade .objeto-sprite.tile-espantalhoR5 { background-position: calc(-3 * 32px) calc(-34 * 32px) !important; }
+.botao-ferramenta[onclick*="'espantalhoR6'"]::before, .botao-variante[onclick*="'espantalhoR6'"]::before, .celula-grade .objeto-sprite.tile-espantalhoR6 { background-position: calc(-4 * 32px) calc(-34 * 32px) !important; }
+.botao-ferramenta[onclick*="'espantalhoR7'"]::before, .botao-variante[onclick*="'espantalhoR7'"]::before, .celula-grade .objeto-sprite.tile-espantalhoR7 { background-position: -192px -960px !important; }
+.botao-ferramenta[onclick*="'espantalhoR8'"]::before, .botao-variante[onclick*="'espantalhoR8'"]::before, .celula-grade .objeto-sprite.tile-espantalhoR8 { background-position: -32px -896px !important; }
+.botao-ferramenta[onclick*="'espantalhoLuxo'"]::before, .botao-variante[onclick*="'espantalhoLuxo'"]::before, .celula-grade .objeto-sprite.tile-espantalhoLuxo { background-position: -224px -1280px !important; }
+
+/* --- COLMÉIA (Objetos2) --- */
+.botao-ferramenta[onclick*="colmeia"]:not([onclick*="colmeiaVazia"])::before,
+.botao-variante[onclick*="colmeia"]:not([onclick*="colmeiaVazia"])::before,
+.celula-grade .objeto-sprite.tile-colmeia {
+    background-position: -96px -64px !important;
 }
 
-/* --- Raroespantalho 8 (Coluna 6, Linha 34) --- */
-.botao-variante[onclick*="'espantalhoR8'"]::before,
-.celula-grade .objeto-sprite.tile-espantalhoR8 {
-    background-position: calc(-6 * 32px) calc(-34 * 32px) !important;
+/* --- COLMÉIA VAZIA (Objetos2) --- */
+.botao-variante[onclick*="colmeiaVazia"]::before,
+.celula-grade .objeto-sprite.tile-colmeiaVazia {
+    background-position: -64px -64px !important; /* Temporário: altere aqui no futuro */
 }
 
-/* --- Espantalho de Luxo (Coluna 3, Linha 2) --- */
-.botao-variante[onclick*="'espantalhoLuxo'"]::before,
-.celula-grade .objeto-sprite.tile-espantalhoLuxo {
-    background-position: calc(-3 * 32px) calc(-2 * 32px) !important;
+/* --- MINI-OBELISCO (Objetos2) --- */
+.botao-ferramenta[onclick*="miniObelisco"]::before,
+.botao-variante[onclick*="miniObelisco"]::before,
+.celula-grade .objeto-sprite.tile-miniObelisco {
+    background-position: -192px -1856px !important;
+}
+
+/* --------------------------------------------------------------------------
+   5. COMPONENTES ESPECIAIS (BADGES)
+   -------------------------------------------------------------------------- */
+.badge-flor-colmeia {
+    position: absolute;
+    top: -8px;
+    right: -4px;
+    width: 18px;
+    height: 18px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1.5px solid #d89d20;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    z-index: 15;
+    pointer-events: none;
+}
+/* =========================================================
+   RECOVERY DO METEORO (DENSIDADE 2x2)
+   ========================================================= */
+
+/* 1. Força a div no Grid a ter tamanho duplo (2x2 células de 48px = 96px) */
+.objeto-sprite.tile-meteoro {
+    width: 200% !important;
+    height: 200% !important;
+    min-width: 96px !important;
+    min-height: 96px !important;
+    background-size: auto !important; /* Mantém a proporção do sprite original */
+    z-index: 10 !important;
+}
+
+/* 2. Ajuste do ícone do Meteoro nos botões do Menu (para não estourar a interface) */
+.botao-ferramenta.tile-meteoro,
+.botao-variante.tile-meteoro {
+    width: 32px !important;
+    height: 32px !important;
+    background-size: cover !important;
+    background-position: center !important;
 }
