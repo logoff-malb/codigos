@@ -184,9 +184,10 @@
 }
 
 /* --- COLMÉIA VAZIA (Objetos2) --- */
+.botao-ferramenta[onclick*="colmeiaVazia"]::before,
 .botao-variante[onclick*="colmeiaVazia"]::before,
 .celula-grade .objeto-sprite.tile-colmeiaVazia {
-    background-position: -64px -64px !important; /* Temporário: altere aqui no futuro */
+    background-position: -64px -64px !important; 
 }
 
 /* --- MINI-OBELISCO (Objetos2) --- */

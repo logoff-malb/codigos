@@ -695,45 +695,46 @@ const FarmPlanner = {
     },
 
     selecionarFerramenta: function(tipo) {
-        this.ferramentaAtual = tipo;
-        
-        document.querySelectorAll('.botao-ferramenta, .botao-variante').forEach(btn => {
-            btn.classList.remove('ativa');
-        });
+    this.ferramentaAtual = tipo;
+    
+    document.querySelectorAll('.botao-ferramenta, .botao-variante').forEach(btn => {
+        btn.classList.remove('ativa');
+    });
 
-        const botaoAlvo = document.querySelector(`.botao-variante[data-tipo="${tipo}"]`);
-        if (botaoAlvo) {
-            botaoAlvo.classList.add('ativa');
-        }
+    const botaoAlvo = document.querySelector(`.botao-variante[data-tipo="${tipo}"]`);
+    if (botaoAlvo) {
+        botaoAlvo.classList.add('ativa');
+    }
 
-        const sincronizarMaster = (idMasterBtn) => {
-            const btnMaster = document.getElementById(idMasterBtn);
-            if (!btnMaster) return;
+    const sincronizarMaster = (idMasterBtn) => {
+        const btnMaster = document.getElementById(idMasterBtn);
+        if (!btnMaster) return;
 
-            btnMaster.classList.add('ativa');
-            btnMaster.setAttribute('onclick', `FarmPlanner.selecionarFerramenta('${tipo}')`);
-            btnMaster.dataset.tipo = tipo;
+        btnMaster.classList.add('ativa');
+        btnMaster.setAttribute('onclick', `FarmPlanner.selecionarFerramenta('${tipo}')`);
+        btnMaster.dataset.tipo = tipo;
 
-            const classesLimpas = btnMaster.className.split(' ').filter(c => !c.startsWith('tile-'));
-            btnMaster.className = classesLimpas.join(' ') + ` tile-${tipo}`;
-        };
+        const classesLimpas = btnMaster.className.split(' ').filter(c => !c.startsWith('tile-'));
+        btnMaster.className = classesLimpas.join(' ') + ` tile-${tipo}`;
+    };
 
-        if (tipo.startsWith('aspersor')) {
-            sincronizarMaster('btn-master-aspersores');
-        } else if (tipo.startsWith('espantalho')) {
-            sincronizarMaster('btn-master-espantalhos');
-        } else if (tipo.startsWith('flor')) {
-            sincronizarMaster('btn-master-flores');
-        } else if (tipo.startsWith('colmeia')) {
-            sincronizarMaster('btn-master-colmeias');
-        } else if (tipo === 'miniObelisco') {
-            const master = document.getElementById('btn-obelisco') || document.querySelector('[data-tipo="miniObelisco"]');
-            if (master) master.classList.add('ativa');
-        } else if (tipo === 'meteoro') {
-            const master = document.getElementById('btn-meteoro') || document.querySelector('[data-tipo="meteoro"]');
-            if (master) master.classList.add('ativa');
-        }
-    },
+    if (tipo.startsWith('aspersor')) {
+        sincronizarMaster('btn-master-aspersores');
+    } else if (tipo.startsWith('espantalho')) {
+        sincronizarMaster('btn-master-espantalhos');
+    } else if (tipo.startsWith('flor')) {
+        sincronizarMaster('btn-master-flores');
+    /* Adicionado a checagem para cobrir tanto 'colmeia' quanto 'colmeiaVazia' */
+    } else if (tipo.startsWith('colmeia') || tipo === 'colmeiaVazia') {
+        sincronizarMaster('btn-master-colmeias');
+    } else if (tipo === 'miniObelisco') {
+        const master = document.getElementById('btn-obelisco') || document.querySelector('[data-tipo="miniObelisco"]');
+        if (master) master.classList.add('ativa');
+    } else if (tipo === 'meteoro') {
+        const master = document.getElementById('btn-meteoro') || document.querySelector('[data-tipo="meteoro"]');
+        if (master) master.classList.add('ativa');
+    }
+},
 
     sincronizarScroll: function() {
         const viewport = document.querySelector('.viewport-edicao');
