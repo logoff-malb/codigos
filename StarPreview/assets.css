@@ -150,8 +150,8 @@
 
 /* --- ASPERSORES (Objetos1) --- */
 .botao-ferramenta[onclick*="'aspersorC'"]::before, .botao-variante[onclick*="'aspersorC'"]::before, .celula-grade .objeto-sprite.tile-aspersorC { background-position: calc(-23 * 32px) calc(-24 * 32px) !important; }
-.botao-ferramenta[onclick*="'aspersorQ'"]::before, .botao-variante[onclick*="'aspersorQ'"]::before, .celula-grade .objeto-sprite.tile-aspersorQ { background-position: calc(-24 * 32px) calc(-24 * 32px) !important; }
-.botao-ferramenta[onclick*="'aspersorI'"]::before, .botao-variante[onclick*="'aspersorI'"]::before, .celula-grade .objeto-sprite.tile-aspersorI { background-position: calc(-25 * 32px) calc(-24 * 32px) !important; }
+.botao-ferramenta[onclick*="'aspersorQ'"]::before, .botao-variante[onclick*="'aspersorQ'"]::before, .celula-grade .objeto-sprite.tile-aspersorQ { background-position: -672px -800px !important; }
+.botao-ferramenta[onclick*="'aspersorI'"]::before, .botao-variante[onclick*="'aspersorI'"]::before, .celula-grade .objeto-sprite.tile-aspersorI { background-position: -672px -832px !important; }
 
 /* --- FLORES (Objetos1) --- */
 .botao-ferramenta[onclick*="florTulipa"]::before,  .botao-variante[onclick*="florTulipa"]::before,  .celula-grade .objeto-sprite.tile-florTulipa  { background-position: -480px -768px !important; }
