@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FarmPlanner — Gerador Preciso de Sprites & HTML</title>
+    <style>
+        :root {
+            --bg: #181825;
+            --panel: #1e1e2e;
+            --panel-light: #2b2b3b;
+            --accent: #a6e3a1;
+            --accent-blue: #74c7ec;
+            --text: #cdd6f4;
+            --border: #45475a;
+            --danger: #f38ba8;
+            --warning: #f9e2af;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        h1 { margin: 0; color: var(--accent-blue); font-size: 1.4rem; }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: 460px 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .form-row { display: flex; flex-direction: column; gap: 4px; }
+        .form-inline { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        label {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #a6adc8;
+            text-transform: uppercase;
+        }
+
+        input, select {
+            background: var(--panel-light);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        input:focus, select:focus { border-color: var(--accent-blue); }
+
+        .submenu-builder {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            background: rgba(0,0,0,0.25);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .item-lista {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--panel-light);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            border-left: 3px solid var(--accent);
+        }
+
+        .btn-add {
+            background: var(--accent-blue);
+            color: #111;
+            font-weight: bold;
+            border: none;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-add-layer {
+            background: var(--warning);
+            color: #111;
+            font-weight: bold;
+            border: none;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-del {
+            background: var(--danger);
+            color: #111;
+            border: none;
+            border-radius: 3px;
+            padding: 2px 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .hitbox-grid {
+            display: grid;
+            gap: 2px;
+            background: #11111b;
+            padding: 4px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            width: fit-content;
+        }
+
+        .hitbox-cell {
+            width: 24px;
+            height: 24px;
+            background: var(--panel-light);
+            border: 1px solid var(--border);
+            cursor: pointer;
+        }
+        
+        .hitbox-cell.solid {
+            background: var(--accent);
+            border-color: #fff;
+        }
+
+        .spritesheet-viewport {
+            width: 100%;
+            height: 600px;
+            overflow: auto;
+            background: #11111b;
+            border: 1px solid var(--border);
+            position: relative;
+            border-radius: 6px;
+            user-select: none;
+        }
+
+        .spritesheet-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .spritesheet-img {
+            display: block;
+            image-rendering: pixelated;
+        }
+
+        .grid-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            display: grid;
+            cursor: crosshair;
+        }
+
+        .grid-cell { border: 1px dashed rgba(255, 255, 255, 0.1); }
+        .grid-cell:hover { background: rgba(116, 199, 236, 0.3); }
+        .grid-cell.selected {
+            background: rgba(166, 227, 161, 0.4) !important;
+            border: 1px solid var(--accent);
+        }
+
+        .code-outputs { display: flex; flex-direction: column; gap: 15px; }
+        .code-block { display: flex; flex-direction: column; gap: 6px; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; }
+
+        textarea {
+            width: 100%;
+            height: 140px;
+            background: #11111b;
+            border: 1px solid var(--border);
+            color: var(--accent);
+            font-family: 'Courier New', Courier, monospace;
+            padding: 10px;
+            border-radius: 4px;
+            resize: vertical;
+            font-size: 0.8rem;
+            white-space: pre;
+        }
+
+        .btn-copy {
+            background: var(--accent-blue);
+            color: #11111b;
+            border: none;
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>FarmPlanner — Gerador de Sprites (Composição, Hitbox & Submenus Dinâmicos)</h1>
+
+    <div class="app-grid">
+        <!-- Painel Lateral -->
+        <div class="panel">
+            <div class="form-row">
+                <label for="tipoEstrutura">Tipo de Ferramenta / Layout:</label>
+                <select id="tipoEstrutura" onchange="alternarModoLayout()">
+                    <option value="simples">Botão Simples (Objeto Único / Composto)</option>
+                    <option value="submenu">Container Expansível (Menu Dinâmico)</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <label for="spriteSource">Arquivo da Spritesheet:</label>
+                <select id="spriteSource" onchange="carregarSpriteSheet()">
+                    <option value="objetos1.png">objetos1.png (384x624 px / 24x39 tiles de 16px)</option>
+                    <option value="objetos2.png">objetos2.png (128x1472 px / 8x92 tiles de 16px)</option>
+                </select>
+            </div>
+
+            <!-- Campos: OBJETO ÚNICO -->
+            <div id="container-unico">
+                <div class="form-inline">
+                    <div class="form-row">
+                        <label for="objKey">Chave (Ex: miniObelisco):</label>
+                        <input type="text" id="objKey" value="miniObelisco" oninput="gerarCodigos()">
+                    </div>
+                    <div class="form-row">
+                        <label for="objNome">Título / Tooltip:</label>
+                        <input type="text" id="objNome" value="Mini-Obelisco" oninput="gerarCodigos()">
+                    </div>
+                </div>
+                
+                <hr style="border-color: var(--border); margin: 12px 0;">
+                
+                <div class="submenu-builder">
+                    <label style="color: var(--warning);">Composição Visual (Múltiplos Sprites):</label>
+                    <button class="btn-add-layer" onclick="adicionarCamada()">+ Adicionar Seleção Atual como Camada</button>
+                    <div id="listaCamadas" style="display:flex; flex-direction:column; gap:5px; margin-top:5px;"></div>
+                </div>
+            </div>
+
+            <!-- Campos: CONTAINER EXPANSÍVEL -->
+            <div id="container-submenu" style="display:none;" class="form-row">
+                <div class="form-inline">
+                    <div class="form-row">
+                        <label for="grupoKey">ID do Grupo:</label>
+                        <input type="text" id="grupoKey" value="obstaculos" oninput="gerarCodigos()">
+                    </div>
+                    <div class="form-row">
+                        <label for="grupoNome">Título do Grupo:</label>
+                        <input type="text" id="grupoNome" value="Obstáculos" oninput="gerarCodigos()">
+                    </div>
+                </div>
+
+                <hr style="border-color: var(--border); margin: 12px 0;">
+
+                <div class="submenu-builder">
+                    <label style="color: var(--accent-blue);">Cadastrar Variantes Dinâmicas:</label>
+                    <div class="form-inline">
+                        <input type="text" id="subItemKey" placeholder="Chave (tocoGrande)">
+                        <input type="text" id="subItemNome" placeholder="Nome (Toco Grande)">
+                    </div>
+                    <button class="btn-add" onclick="adicionarItemSubmenu()">+ Adicionar Variante Selecionada</button>
+                    <div id="listaSubItens" style="display:flex; flex-direction:column; gap:5px; margin-top:5px;"></div>
+                </div>
+            </div>
+
+            <hr style="border-color: var(--border); margin: 8px 0;">
+
+            <!-- Editor de Formato/Hitbox -->
+            <div class="form-row">
+                <label style="color: var(--accent);">Formato no Grid (Hitbox):</label>
+                <div class="form-inline" style="margin-bottom: 8px;">
+                    <label>Colunas: <input type="number" id="hitboxCols" value="2" min="1" max="10" onchange="desenharHitboxGrid()"></label>
+                    <label>Linhas: <input type="number" id="hitboxRows" value="2" min="1" max="10" onchange="desenharHitboxGrid()"></label>
+                </div>
+                <div id="hitboxContainer" class="hitbox-grid"></div>
+            </div>
+            
+            <div class="form-inline" style="margin-top: 10px;">
+                <div class="form-row">
+                    <label>Seleção Atual (Offset):</label>
+                    <input type="text" id="posPx" value="0px, 0px" readonly>
+                </div>
+                <div class="form-row">
+                    <label>Tamanho (Tiles):</label>
+                    <input type="text" id="posTamanho" value="1 x 1" readonly>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visualizador Interativo -->
+        <div class="panel">
+            <label>Clique e arraste sobre a imagem para selecionar a área do sprite:</label>
+            <div class="spritesheet-viewport">
+                <div class="spritesheet-container">
+                    <img id="imgSource" class="spritesheet-img" src="objetos1.png" alt="Spritesheet">
+                    <div id="gridOverlay" class="grid-overlay"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Saídas dos Códigos -->
+    <div class="panel code-outputs">
+        <div class="code-block">
+            <div class="code-header">
+                <label>1. HTML (Menu da Ferramenta):</label>
+                <button class="btn-copy" onclick="copiar('codeHTML')">Copiar HTML</button>
+            </div>
+            <textarea id="codeHTML" readonly></textarea>
+        </div>
+
+        <div class="code-block">
+            <div class="code-header">
+                <label>2. Código CSS:</label>
+                <button class="btn-copy" onclick="copiar('codeCSS')">Copiar CSS</button>
+            </div>
+            <textarea id="codeCSS" readonly></textarea>
+        </div>
+
+        <div class="code-block">
+            <div class="code-header">
+                <label>3. Configuração JS:</label>
+                <button class="btn-copy" onclick="copiar('codeJS')">Copiar JS</button>
+            </div>
+            <textarea id="codeJS" readonly></textarea>
+        </div>
+    </div>
+
+<script>
+    const specs = {
+        'objetos1.png': { cols: 24, rows: 39, width: 384, height: 624 },
+        'objetos2.png': { cols: 8, rows: 92, width: 128, height: 1472 }
+    };
+
+    let startCell = null, endCell = null, isMouseDown = false;
+    let selX = 0, selY = 0, selW = 1, selH = 1;
+    
+    let subItens = [];
+    let camadasComposicao = [];
+    let hitboxMatrix = [];
+
+    function alternarModoLayout() {
+        const modo = document.getElementById('tipoEstrutura').value;
+        document.getElementById('container-unico').style.display = modo === 'simples' ? 'block' : 'none';
+        document.getElementById('container-submenu').style.display = modo === 'submenu' ? 'block' : 'none';
+        gerarCodigos();
+    }
+
+    function carregarSpriteSheet() {
+        const file = document.getElementById('spriteSource').value;
+        const img = document.getElementById('imgSource');
+        img.src = file;
+
+        img.onload = () => { construirOverlay(); resetSelecao(); };
+        img.onerror = () => { construirOverlay(); resetSelecao(); };
+    }
+
+    function construirOverlay() {
+        const file = document.getElementById('spriteSource').value;
+        const spec = specs[file];
+        const overlay = document.getElementById('gridOverlay');
+        
+        overlay.innerHTML = '';
+        overlay.style.gridTemplateColumns = `repeat(${spec.cols}, 16px)`;
+        overlay.style.gridTemplateRows = `repeat(${spec.rows}, 16px)`;
+        overlay.style.width = `${spec.width}px`;
+        overlay.style.height = `${spec.height}px`;
+
+        for (let r = 0; r < spec.rows; r++) {
+            for (let c = 0; c < spec.cols; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.dataset.x = c;
+                cell.dataset.y = r;
+
+                cell.addEventListener('mousedown', () => {
+                    isMouseDown = true;
+                    startCell = { x: c, y: r };
+                    endCell = { x: c, y: r };
+                    atualizarSelecao();
+                });
+
+                cell.addEventListener('mouseenter', () => {
+                    if (isMouseDown) {
+                        endCell = { x: c, y: r };
+                        atualizarSelecao();
+                    }
+                });
+
+                overlay.appendChild(cell);
+            }
+        }
+        document.addEventListener('mouseup', () => { isMouseDown = false; });
+    }
+
+    function atualizarSelecao() {
+        if (!startCell || !endCell) return;
+        selX = Math.min(startCell.x, endCell.x);
+        selY = Math.min(startCell.y, endCell.y);
+        const maxX = Math.max(startCell.x, endCell.x);
+        const maxY = Math.max(startCell.y, endCell.y);
+
+        selW = (maxX - selX) + 1;
+        selH = (maxY - selY) + 1;
+
+        document.getElementById('posPx.value') || (document.getElementById('posPx').value = `-${selX * 32}px, -${selY * 32}px`);
+        document.getElementById('posPx').value = `-${selX * 32}px, -${selY * 32}px`;
+        document.getElementById('posTamanho').value = `${selW} x ${selH}`;
+
+        const cells = document.querySelectorAll('.grid-cell');
+        cells.forEach(c => {
+            const cx = parseInt(c.dataset.x);
+            const cy = parseInt(c.dataset.y);
+            if (cx >= selX && cx < selX + selW && cy >= selY && cy < selY + selH) {
+                c.classList.add('selected');
+            } else {
+                c.classList.remove('selected');
+            }
+        });
+        gerarCodigos();
+    }
+
+    function resetSelecao() {
+        startCell = { x: 0, y: 0 };
+        endCell = { x: 0, y: 0 };
+        atualizarSelecao();
+    }
+
+    function desenharHitboxGrid() {
+        const cols = parseInt(document.getElementById('hitboxCols').value) || 1;
+        const rows = parseInt(document.getElementById('hitboxRows').value) || 1;
+        const container = document.getElementById('hitboxContainer');
+        
+        container.innerHTML = '';
+        container.style.gridTemplateColumns = `repeat(${cols}, 24px)`;
+        hitboxMatrix = Array(rows).fill().map(() => Array(cols).fill(1));
+
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'hitbox-cell solid';
+                cell.onclick = () => {
+                    cell.classList.toggle('solid');
+                    hitboxMatrix[r][c] = cell.classList.contains('solid') ? 1 : 0;
+                    gerarCodigos();
+                };
+                container.appendChild(cell);
+            }
+        }
+        gerarCodigos();
+    }
+
+    function adicionarCamada() {
+        const file = document.getElementById('spriteSource').value;
+        camadasComposicao.push({
+            file: file,
+            x: selX * 32, y: selY * 32, w: selW, h: selH
+        });
+        renderizarListaCamadas();
+        gerarCodigos();
+    }
+
+    function removerCamada(idx) {
+        camadasComposicao.splice(idx, 1);
+        renderizarListaCamadas();
+        gerarCodigos();
+    }
+
+    function renderizarListaCamadas() {
+        const lista = document.getElementById('listaCamadas');
+        lista.innerHTML = '';
+        camadasComposicao.forEach((camada, idx) => {
+            const div = document.createElement('div');
+            div.className = 'item-lista';
+            div.innerHTML = `
+                <span><b>Camada ${idx + 1}</b> (${camada.w}x${camada.h} tiles | -${camada.x}px -${camada.y}px)</span>
+                <button class="btn-del" onclick="removerCamada(${idx})">X</button>
+            `;
+            lista.appendChild(div);
+        });
+    }
+
+    function adicionarItemSubmenu() {
+        const key = document.getElementById('subItemKey').value.trim();
+        const nome = document.getElementById('subItemNome').value.trim();
+        const file = document.getElementById('spriteSource').value;
+
+        if (!key) return alert('Informe a Chave da Variante!');
+        subItens.push({
+            key, nome: nome || key, file,
+            x: selX * 32, y: selY * 32, w: selW, h: selH,
+            hitbox: JSON.parse(JSON.stringify(hitboxMatrix))
+        });
+        document.getElementById('subItemKey').value = '';
+        document.getElementById('subItemNome').value = '';
+        renderizarListaSubitens();
+        gerarCodigos();
+    }
+
+    function removerSubItem(idx) {
+        subItens.splice(idx, 1);
+        renderizarListaSubitens();
+        gerarCodigos();
+    }
+
+    function renderizarListaSubitens() {
+        const lista = document.getElementById('listaSubItens');
+        lista.innerHTML = '';
+        subItens.forEach((item, idx) => {
+            const div = document.createElement('div');
+            div.className = 'item-lista';
+            div.innerHTML = `
+                <span><b>${item.key}</b> (-${item.x}px -${item.y}px)</span>
+                <button class="btn-del" onclick="removerSubItem(${idx})">X</button>
+            `;
+            lista.appendChild(div);
+        });
+    }
+
+    // Função restaurada e padronizada para gerar o endereço e posicionamento correto das imagens
+    function gerarRegraCSS(key, file, x, y) {
+        let regra = `.botao-ferramenta[onclick*="${key}"]::before, .botao-variante[onclick*="${key}"]::before, .celula-grade .objeto-sprite.tile-${key} {\n`;
+        
+        if (file === 'objetos2.png') {
+            regra += `    background-image: url('recursos/objetos2.png') !important;\n`;
+            regra += `    background-size: 256px auto !important;\n`;
+        } else {
+            regra += `    background-image: url('recursos/objetos1.png') !important;\n`;
+        }
+        
+        regra += `    background-position: -${x}px -${y}px !important;\n`;
+        regra += `}\n`;
+        return regra;
+    }
+
+    function gerarCodigos() {
+        const modo = document.getElementById('tipoEstrutura').value;
+        const file = document.getElementById('spriteSource').value;
+        let html = '', css = '', js = '';
+        const strHitbox = JSON.stringify(hitboxMatrix);
+
+        if (modo === 'simples') {
+            const key = document.getElementById('objKey').value.trim() || 'novoObjeto';
+            const nome = document.getElementById('objNome').value.trim() || 'Novo Objeto';
+            
+            html = `<div class="botao-ferramenta-wrapper" id="tool-${key}" title="${nome}" onclick="FarmPlanner.selecionarFerramenta('${key}')">\n    <div class="botao-ferramenta" onclick="FarmPlanner.selecionarFerramenta('${key}')"></div>\n</div>`;
+
+            if (camadasComposicao.length > 0) {
+                const c = camadasComposicao[0];
+                css += gerarRegraCSS(key, c.file, c.x, c.y);
+                let camadasJs = camadasComposicao.map(cam => `{ sprite: '${cam.file}', x: ${cam.x}, y: ${cam.y}, w: ${cam.w}, h: ${cam.h} }`).join(',\n        ');
+                js = `'${key}': {\n    nome: '${nome}',\n    tipo: 'composto',\n    hitbox: ${strHitbox},\n    camadas: [\n        ${camadasJs}\n    ]\n}`;
+            } else {
+                const posX = selX * 32;
+                const posY = selY * 32;
+                
+                css += gerarRegraCSS(key, file, posX, posY);
+                
+                js = `'${key}': {\n    categoria: 'construcao',\n    dimensao: [${selW}, ${selH}],\n    alcance: [],\n    nome: '${nome}'\n}`;
+            }
+        } else {
+            const grupoKey = document.getElementById('grupoKey').value.trim() || 'obstaculos';
+            const grupoNome = document.getElementById('grupoNome').value.trim() || 'Obstáculos';
+            
+            html = `<!-- Container do Submenu: ${grupoNome} -->\n<div class="botao-container-expansivel">\n    <div id="btn-master-${grupoKey}-container" title="${grupoNome}"></div>\n    <div class="submenu-variacoes" id="submenu-${grupoKey}"></div>\n</div>`;
+
+            subItens.forEach(item => {
+                css += gerarRegraCSS(item.key, item.file, item.x, item.y) + '\n';
+            });
+
+            const itensJS = subItens.map(item => {
+                return `    ${item.key}: {\n        categoria: 'construcao',\n        dimensao: [${item.w}, ${item.h}],\n        alcance: [],\n        nome: '${item.nome}'\n    }`;
+            }).join(',\n');
+
+            const arrayIds = subItens.map(item => `    { id: '${item.key}', nome: '${item.nome}' }`).join(',\n');
+
+            js = `// 1. Adicionar em FarmPlanner.objetosConfig:\n${itensJS}\n\n// 2. Adicionar na função gerarMenusFerramentas() do FarmPlanner:\nconst ${grupoKey} = [\n${arrayIds}\n];\n\nconst areaMaster_${grupoKey} = document.getElementById('btn-master-${grupoKey}-container');\nif (areaMaster_${grupoKey}) {\n    areaMaster_${grupoKey}.innerHTML = '';\n    const master = criarBotao({ id: '${subItens[0] ? subItens[0].key : 'item'}', nome: '${grupoNome}' }, areaMaster_${grupoKey}, true);\n    master.id = 'btn-master-${grupoKey}';\n}\n\nconst sub_${grupoKey} = document.getElementById('submenu-${grupoKey}');\nif (sub_${grupoKey}) {\n    sub_${grupoKey}.innerHTML = '';\n    ${grupoKey}.forEach(item => criarBotao(item, sub_${grupoKey}));\n}`;
+        }
+
+        document.getElementById('codeHTML').value = html;
+        document.getElementById('codeCSS').value = css;
+        document.getElementById('codeJS').value = js;
+    }
+
+    function copiar(id) {
+        const el = document.getElementById(id);
+        el.select();
+        document.execCommand('copy');
+    }
+
+    window.onload = () => { 
+        desenharHitboxGrid();
+        carregarSpriteSheet(); 
+    };
+</script>
+</body>
+</html>

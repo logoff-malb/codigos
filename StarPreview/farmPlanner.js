@@ -147,15 +147,55 @@ const FarmPlanner = {
                 alcance: [],
                 limiteMaximo: 2
             },
-            meteoro: {
+
+            // Obstáculos 2x2
+            tocoGrande: {
                 categoria: 'construcao',
                 dimensao: [2, 2],
                 alcance: [],
-                // Mapeamento visual de cada tile da matriz (linha x coluna)
-                matrizTiles: [
-                    ['tile-meteoro-0-0', 'tile-meteoro-1-0'],
-                    ['tile-meteoro-0-1', 'tile-meteoro-1-1']
-                ]
+                nome: 'Toco grande'
+            },
+            troncoGrande: {
+                categoria: 'construcao',
+                dimensao: [2, 2],
+                alcance: [],
+                nome: 'tronco Grande'
+            },
+            pedraCinza: {
+                categoria: 'construcao',
+                dimensao: [2, 2],
+                alcance: [],
+                nome: 'Pedra Cinza'
+            },
+            pedraVermelha: {
+                categoria: 'construcao',
+                dimensao: [2, 2],
+                alcance: [],
+                nome: 'Grande pedra vermelha'
+            },
+            pedraMarrom: {
+                categoria: 'construcao',
+                dimensao: [2, 2],
+                alcance: [],
+                nome: 'Grande pedra marrom'
+            },
+            pedraAzul: {
+                categoria: 'construcao',
+                dimensao: [2, 2],
+                alcance: [],
+                nome: 'Grande pedra azul'
+            },
+            pedraAzul2: {
+                categoria: 'construcao',
+                dimensao: [2, 2],
+                alcance: [],
+                nome: 'Grande pedra azul'
+            },
+            obMeteorito: {
+                categoria: 'construcao',
+                dimensao: [2, 2],
+                alcance: [],
+                nome: 'Meteorito'
             }
         };
 
@@ -345,206 +385,200 @@ const FarmPlanner = {
         this.renderizarObjetos();
     },
 
-  renderizarObjetos: function() {
-    // 1. Limpa os sprites do DOM
-    document.querySelectorAll('.objeto-sprite').forEach(el => el.remove());
+    renderizarObjetos: function() {
+        // 1. Limpa os sprites do DOM
+        document.querySelectorAll('.objeto-sprite').forEach(el => el.remove());
 
-    // 2. Prepara o Canvas
-    const canvas = document.getElementById('canvas-alcances');
-    let ctx = null;
-    if (canvas) {
-        ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
+        // 2. Prepara o Canvas
+        const canvas = document.getElementById('canvas-alcances');
+        let ctx = null;
+        if (canvas) {
+            ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
 
-    const listaFlores = this.estado.objetos.filter(o => o.tipo && o.tipo.startsWith('flor'));
+        const listaFlores = this.estado.objetos.filter(o => o.tipo && o.tipo.startsWith('flor'));
 
-    const obterFlorPrioritaria = (colmeiaX, colmeiaY) => {
-        let melhorFlor = null;
-        let menorDistancia = Infinity;
-        let menorAngulo = Infinity;
+        const obterFlorPrioritaria = (colmeiaX, colmeiaY) => {
+            let melhorFlor = null;
+            let menorDistancia = Infinity;
+            let menorAngulo = Infinity;
 
-        listaFlores.forEach(flor => {
-            const dx = flor.x - colmeiaX;
-            const dy = flor.y - colmeiaY;
-            const distManhattan = Math.abs(dx) + Math.abs(dy);
+            listaFlores.forEach(flor => {
+                const dx = flor.x - colmeiaX;
+                const dy = flor.y - colmeiaY;
+                const distManhattan = Math.abs(dx) + Math.abs(dy);
 
-            if (distManhattan > 0 && distManhattan <= 5) {
-                let angulo = Math.atan2(dy, dx) * (180 / Math.PI);
-                let anguloAjustado = (angulo - 180 + 360) % 360;
+                if (distManhattan > 0 && distManhattan <= 5) {
+                    let angulo = Math.atan2(dy, dx) * (180 / Math.PI);
+                    let anguloAjustado = (angulo - 180 + 360) % 360;
 
-                if (distManhattan < menorDistancia) {
-                    menorDistancia = distManhattan;
-                    menorAngulo = anguloAjustado;
-                    melhorFlor = flor;
-                } else if (distManhattan === menorDistancia && anguloAjustado < menorAngulo) {
-                    menorAngulo = anguloAjustado;
-                    melhorFlor = flor;
+                    if (distManhattan < menorDistancia) {
+                        menorDistancia = distManhattan;
+                        menorAngulo = anguloAjustado;
+                        melhorFlor = flor;
+                    } else if (distManhattan === menorDistancia && anguloAjustado < menorAngulo) {
+                        menorAngulo = anguloAjustado;
+                        melhorFlor = flor;
+                    }
+                }
+            });
+
+            return melhorFlor;
+        };
+
+        // 3. Renderização dos Objetos
+        this.estado.objetos.forEach(obj => {
+            const config = this.objetosConfig[obj.tipo];
+            if (!config) return;
+
+            const larg = config.dimensao ? config.dimensao[0] : 1;
+            const alt = config.dimensao ? config.dimensao[1] : 1;
+
+            const florVinculada = (config.categoria === 'cMel') 
+                ? obterFlorPrioritaria(obj.x, obj.y) 
+                : null;
+
+            // RENDERIZAÇÃO DOS SPRITES NO GRID (MATRIZ POR CÉLULA)
+            for (let dy = 0; dy < alt; dy++) {
+                for (let dx = 0; dx < larg; dx++) {
+                    const alvoX = obj.x + dx;
+                    const alvoY = obj.y + dy;
+
+                    const celulaDOM = document.querySelector(`.celula-grade[data-x="${alvoX}"][data-y="${alvoY}"]`);
+                    if (!celulaDOM) continue;
+
+                    celulaDOM.style.position = 'relative';
+
+                    const divSprite = document.createElement('div');
+                    
+                    // Se for multicélula, gera tile-[tipo]-[dx]-[dy] (ex: tile-obMeteorito-0-0). Se 1x1, tile-[tipo].
+                    if (larg > 1 || alt > 1) {
+                        divSprite.classList.add('objeto-sprite', `tile-${obj.tipo}-${dx}-${dy}`);
+                    } else {
+                        divSprite.classList.add('objeto-sprite', `tile-${obj.tipo}`);
+                    }
+
+                    // Estilos do Tile no Grid
+                    divSprite.style.position = 'absolute';
+                    divSprite.style.top = '0';
+                    divSprite.style.left = '0';
+                    divSprite.style.width = '100%';
+                    divSprite.style.height = '100%';
+                    divSprite.style.margin = '0';
+                    divSprite.style.transform = 'none';
+                    divSprite.style.pointerEvents = 'none';
+                    divSprite.style.zIndex = '5';
+
+                    // Se for a origem [0, 0] de uma colmeia vinculada a uma flor, injeta o badge
+                    if (dx === 0 && dy === 0 && florVinculada) {
+                        const badgeFlor = document.createElement('div');
+                        badgeFlor.classList.add('badge-flor-colmeia', `tile-${florVinculada.tipo}`);
+                        divSprite.appendChild(badgeFlor);
+                    }
+
+                    celulaDOM.appendChild(divSprite);
+                }
+            }
+
+            // 4. RENDERIZAÇÃO DE ALCANCES NO CANVAS
+            if (this.estado.visibilidade[config.categoria] && config.alcance && config.alcance.length > 0 && ctx) {
+                if (config.categoria === 'cMel') {
+                    const tamanho = this.config.tamanhoCelula;
+
+                    config.alcance.forEach(([dx, dy]) => {
+                        if (dx === 0 && dy === 0) return;
+
+                        const alvoX = obj.x + dx;
+                        const alvoY = obj.y + dy;
+
+                        if (alvoX >= 0 && alvoX < this.config.largura && alvoY >= 0 && alvoY < this.config.altura) {
+                            const px = alvoX * tamanho;
+                            const py = alvoY * tamanho;
+                            const ehFlorAtiva = florVinculada && (alvoX === florVinculada.x && alvoY === florVinculada.y);
+
+                            if (ehFlorAtiva) {
+                                ctx.fillStyle = 'rgba(255, 215, 0, 0.65)';
+                                ctx.fillRect(px, py, tamanho, tamanho);
+                                ctx.strokeStyle = '#FFFFFF';
+                                ctx.lineWidth = 2;
+                                ctx.strokeRect(px + 1, py + 1, tamanho - 2, tamanho - 2);
+                            } else {
+                                ctx.fillStyle = 'rgba(255, 180, 0, 0.22)';
+                                ctx.fillRect(px, py, tamanho, tamanho);
+
+                                ctx.strokeStyle = 'rgba(255, 200, 100, 0.15)';
+                                ctx.lineWidth = 1;
+                                ctx.strokeRect(px, py, tamanho, tamanho);
+                            }
+                        }
+                    });
+
+                    ctx.strokeStyle = '#FF2222';
+                    ctx.lineWidth = 2;
+
+                    config.alcance.forEach(([dx, dy]) => {
+                        if (dx === 0 && dy === 0) return;
+                        const alvoX = obj.x + dx;
+                        const alvoY = obj.y + dy;
+
+                        if (alvoX >= 0 && alvoX < this.config.largura && alvoY >= 0 && alvoY < this.config.altura) {
+                            const px = alvoX * tamanho;
+                            const py = alvoY * tamanho;
+
+                            if (!config.alcance.some(([nx, ny]) => nx === dx && ny === dy - 1)) {
+                                ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + tamanho, py); ctx.stroke();
+                            }
+                            if (!config.alcance.some(([nx, ny]) => nx === dx && ny === dy + 1)) {
+                                ctx.beginPath(); ctx.moveTo(px, py + tamanho); ctx.lineTo(px + tamanho, py + tamanho); ctx.stroke();
+                            }
+                            if (!config.alcance.some(([nx, ny]) => nx === dx - 1 && ny === dy)) {
+                                ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py + tamanho); ctx.stroke();
+                            }
+                            if (!config.alcance.some(([nx, ny]) => nx === dx + 1 && ny === dy)) {
+                                ctx.beginPath(); ctx.moveTo(px + tamanho, py); ctx.lineTo(px + tamanho, py + tamanho); ctx.stroke();
+                            }
+                        }
+                    });
+
+                    if (florVinculada) {
+                        const cX = (obj.x + 0.5) * tamanho;
+                        const cY = (obj.y + 0.5) * tamanho;
+                        const fX = (florVinculada.x + 0.5) * tamanho;
+                        const fY = (florVinculada.y + 0.5) * tamanho;
+
+                        ctx.beginPath();
+                        ctx.moveTo(cX, cY);
+                        ctx.lineTo(fX, fY);
+                        ctx.strokeStyle = 'rgba(255, 215, 0, 0.85)';
+                        ctx.lineWidth = 2;
+                        ctx.setLineDash([4, 4]);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                    }
+
+                } else {
+                    const corOriginal = this.coresAlcance[config.categoria];
+                    if (corOriginal) {
+                        ctx.fillStyle = corOriginal;
+                        config.alcance.forEach(([dx, dy]) => {
+                            const alvoX = obj.x + dx;
+                            const alvoY = obj.y + dy;
+                            
+                            if (alvoX >= 0 && alvoX < this.config.largura && alvoY >= 0 && alvoY < this.config.altura) {
+                                ctx.fillRect(
+                                    alvoX * this.config.tamanhoCelula, 
+                                    alvoY * this.config.tamanhoCelula, 
+                                    this.config.tamanhoCelula, 
+                                    this.config.tamanhoCelula
+                                );
+                            }
+                        });
+                    }
                 }
             }
         });
-
-        return melhorFlor;
-    };
-
-    // 3. Renderização dos Objetos
-    this.estado.objetos.forEach(obj => {
-        const config = this.objetosConfig[obj.tipo];
-        if (!config) return;
-
-        const larg = config.dimensao ? config.dimensao[0] : 1;
-        const alt = config.dimensao ? config.dimensao[1] : 1;
-
-        const florVinculada = (config.categoria === 'cMel') 
-            ? obterFlorPrioritaria(obj.x, obj.y) 
-            : null;
-
-        // RENDERIZAÇÃO DOS SPRITES NO GRID (MATRIZ POR CÉLULA)
-        // A célula clicada (obj.x, obj.y) é a referência [0, 0]
-        for (let dy = 0; dy < alt; dy++) {
-            for (let dx = 0; dx < larg; dx++) {
-                const alvoX = obj.x + dx;
-                const alvoY = obj.y + dy;
-
-                const celulaDOM = document.querySelector(`.celula-grade[data-x="${alvoX}"][data-y="${alvoY}"]`);
-                if (!celulaDOM) continue;
-
-                celulaDOM.style.position = 'relative';
-
-                const divSprite = document.createElement('div');
-                
-                // Mapeamento das classes dos tiles na matriz:
-                // Se o config define matrizTiles explicita (ex: matrizTiles[dy][dx]), usa essa classe.
-                // Se for objeto multicélula sem matriz explícita, gera tile-[tipo]-[dx]-[dy] (ex: tile-meteoro-0-0)
-                // Se for 1x1, usa tile-[tipo]
-                if (config.matrizTiles && config.matrizTiles[dy] && config.matrizTiles[dy][dx]) {
-                    divSprite.classList.add('objeto-sprite', config.matrizTiles[dy][dx]);
-                } else if (larg > 1 || alt > 1) {
-                    divSprite.classList.add('objeto-sprite', `tile-${obj.tipo}-${dx}-${dy}`);
-                } else {
-                    divSprite.classList.add('objeto-sprite', `tile-${obj.tipo}`);
-                }
-
-                // Estilos do Tile no Grid (Cada célula preenche 100% do seu próprio espaço de 1x1)
-                divSprite.style.position = 'absolute';
-                divSprite.style.top = '0';
-                divSprite.style.left = '0';
-                divSprite.style.width = '100%';
-                divSprite.style.height = '100%';
-                divSprite.style.margin = '0';
-                divSprite.style.transform = 'none';
-                divSprite.style.pointerEvents = 'none';
-                divSprite.style.zIndex = '5';
-
-                // Se for a origem [0, 0] de uma colmeia vinculada a uma flor, injeta o badge
-                if (dx === 0 && dy === 0 && florVinculada) {
-                    const badgeFlor = document.createElement('div');
-                    badgeFlor.classList.add('badge-flor-colmeia', `tile-${florVinculada.tipo}`);
-                    divSprite.appendChild(badgeFlor);
-                }
-
-                celulaDOM.appendChild(divSprite);
-            }
-        }
-
-        // 4. RENDERIZAÇÃO DE ALCANCES NO CANVAS
-        if (this.estado.visibilidade[config.categoria] && config.alcance && config.alcance.length > 0 && ctx) {
-            if (config.categoria === 'cMel') {
-                const tamanho = this.config.tamanhoCelula;
-
-                config.alcance.forEach(([dx, dy]) => {
-                    if (dx === 0 && dy === 0) return;
-
-                    const alvoX = obj.x + dx;
-                    const alvoY = obj.y + dy;
-
-                    if (alvoX >= 0 && alvoX < this.config.largura && alvoY >= 0 && alvoY < this.config.altura) {
-                        const px = alvoX * tamanho;
-                        const py = alvoY * tamanho;
-                        const ehFlorAtiva = florVinculada && (alvoX === florVinculada.x && alvoY === florVinculada.y);
-
-                        if (ehFlorAtiva) {
-                            ctx.fillStyle = 'rgba(255, 215, 0, 0.65)';
-                            ctx.fillRect(px, py, tamanho, tamanho);
-                            ctx.strokeStyle = '#FFFFFF';
-                            ctx.lineWidth = 2;
-                            ctx.strokeRect(px + 1, py + 1, tamanho - 2, tamanho - 2);
-                        } else {
-                            ctx.fillStyle = 'rgba(255, 180, 0, 0.22)';
-                            ctx.fillRect(px, py, tamanho, tamanho);
-
-                            ctx.strokeStyle = 'rgba(255, 200, 100, 0.15)';
-                            ctx.lineWidth = 1;
-                            ctx.strokeRect(px, py, tamanho, tamanho);
-                        }
-                    }
-                });
-
-                ctx.strokeStyle = '#FF2222';
-                ctx.lineWidth = 2;
-
-                config.alcance.forEach(([dx, dy]) => {
-                    if (dx === 0 && dy === 0) return;
-                    const alvoX = obj.x + dx;
-                    const alvoY = obj.y + dy;
-
-                    if (alvoX >= 0 && alvoX < this.config.largura && alvoY >= 0 && alvoY < this.config.altura) {
-                        const px = alvoX * tamanho;
-                        const py = alvoY * tamanho;
-
-                        if (!config.alcance.some(([nx, ny]) => nx === dx && ny === dy - 1)) {
-                            ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + tamanho, py); ctx.stroke();
-                        }
-                        if (!config.alcance.some(([nx, ny]) => nx === dx && ny === dy + 1)) {
-                            ctx.beginPath(); ctx.moveTo(px, py + tamanho); ctx.lineTo(px + tamanho, py + tamanho); ctx.stroke();
-                        }
-                        if (!config.alcance.some(([nx, ny]) => nx === dx - 1 && ny === dy)) {
-                            ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py + tamanho); ctx.stroke();
-                        }
-                        if (!config.alcance.some(([nx, ny]) => nx === dx + 1 && ny === dy)) {
-                            ctx.beginPath(); ctx.moveTo(px + tamanho, py); ctx.lineTo(px + tamanho, py + tamanho); ctx.stroke();
-                        }
-                    }
-                });
-
-                if (florVinculada) {
-                    const cX = (obj.x + 0.5) * tamanho;
-                    const cY = (obj.y + 0.5) * tamanho;
-                    const fX = (florVinculada.x + 0.5) * tamanho;
-                    const fY = (florVinculada.y + 0.5) * tamanho;
-
-                    ctx.beginPath();
-                    ctx.moveTo(cX, cY);
-                    ctx.lineTo(fX, fY);
-                    ctx.strokeStyle = 'rgba(255, 215, 0, 0.85)';
-                    ctx.lineWidth = 2;
-                    ctx.setLineDash([4, 4]);
-                    ctx.stroke();
-                    ctx.setLineDash([]);
-                }
-
-            } else {
-                const corOriginal = this.coresAlcance[config.categoria];
-                if (corOriginal) {
-                    ctx.fillStyle = corOriginal;
-                    config.alcance.forEach(([dx, dy]) => {
-                        const alvoX = obj.x + dx;
-                        const alvoY = obj.y + dy;
-                        
-                        if (alvoX >= 0 && alvoX < this.config.largura && alvoY >= 0 && alvoY < this.config.altura) {
-                            ctx.fillRect(
-                                alvoX * this.config.tamanhoCelula, 
-                                alvoY * this.config.tamanhoCelula, 
-                                this.config.tamanhoCelula, 
-                                this.config.tamanhoCelula
-                            );
-                        }
-                    });
-                }
-            }
-        }
-    });
-},
+    },
 
     construirControles: function() {
         const container = document.getElementById('controles-container');
@@ -617,6 +651,30 @@ const FarmPlanner = {
             return btn;
         };
 
+        const obstaculos = [
+            { id: 'tocoGrande', nome: 'Toco grande' },
+            { id: 'troncoGrande', nome: 'tronco Grande' },
+            { id: 'pedraCinza', nome: 'Pedra Cinza' },
+            { id: 'pedraVermelha', nome: 'Grande pedra vermelha' },
+            { id: 'pedraMarrom', nome: 'Grande pedra marrom' },
+            { id: 'pedraAzul', nome: 'Grande pedra azul' },
+            { id: 'pedraAzul2', nome: 'Grande pedra azul' },
+            { id: 'obMeteorito', nome: 'Meteorito' }
+        ];
+
+        const areaMaster_obstaculos = document.getElementById('btn-master-obstaculos-container');
+        if (areaMaster_obstaculos) {
+            areaMaster_obstaculos.innerHTML = '';
+            const master = criarBotao({ id: 'tocoGrande', nome: 'Obstáculos' }, areaMaster_obstaculos, true);
+            master.id = 'btn-master-obstaculos';
+        }
+
+        const sub_obstaculos = document.getElementById('submenu-obstaculos');
+        if (sub_obstaculos) {
+            sub_obstaculos.innerHTML = '';
+            obstaculos.forEach(item => criarBotao(item, sub_obstaculos));
+        }
+
         if (subAspersores) aspersores.forEach(asp => criarBotao(asp, subAspersores));
         if (subEspantalhos) espantalhos.forEach(esp => criarBotao(esp, subEspantalhos));
         if (subFlores) flores.forEach(flr => criarBotao(flr, subFlores));
@@ -657,13 +715,6 @@ const FarmPlanner = {
             btnObelisco.id = 'btn-obelisco';
         }
 
-        const areaMeteoro = document.getElementById('btn-meteoro-container');
-        if (areaMeteoro) {
-            areaMeteoro.innerHTML = '';
-            const btnMeteoro = criarBotao({ id: 'meteoro', nome: 'Meteoro' }, areaMeteoro, true);
-            btnMeteoro.id = 'btn-meteoro';
-        }
-
         this.selecionarFerramenta('aspersorC');
     },
 
@@ -695,46 +746,49 @@ const FarmPlanner = {
     },
 
     selecionarFerramenta: function(tipo) {
-    this.ferramentaAtual = tipo;
-    
-    document.querySelectorAll('.botao-ferramenta, .botao-variante').forEach(btn => {
-        btn.classList.remove('ativa');
-    });
+        this.ferramentaAtual = tipo;
+        
+        document.querySelectorAll('.botao-ferramenta, .botao-variante').forEach(btn => {
+            btn.classList.remove('ativa');
+        });
 
-    const botaoAlvo = document.querySelector(`.botao-variante[data-tipo="${tipo}"]`);
-    if (botaoAlvo) {
-        botaoAlvo.classList.add('ativa');
-    }
+        const botaoAlvo = document.querySelector(`.botao-variante[data-tipo="${tipo}"]`);
+        if (botaoAlvo) {
+            botaoAlvo.classList.add('ativa');
+        }
 
-    const sincronizarMaster = (idMasterBtn) => {
-        const btnMaster = document.getElementById(idMasterBtn);
-        if (!btnMaster) return;
+        const sincronizarMaster = (idMasterBtn) => {
+            const btnMaster = document.getElementById(idMasterBtn);
+            if (!btnMaster) return;
 
-        btnMaster.classList.add('ativa');
-        btnMaster.setAttribute('onclick', `FarmPlanner.selecionarFerramenta('${tipo}')`);
-        btnMaster.dataset.tipo = tipo;
+            btnMaster.classList.add('ativa');
+            btnMaster.setAttribute('onclick', `FarmPlanner.selecionarFerramenta('${tipo}')`);
+            btnMaster.dataset.tipo = tipo;
 
-        const classesLimpas = btnMaster.className.split(' ').filter(c => !c.startsWith('tile-'));
-        btnMaster.className = classesLimpas.join(' ') + ` tile-${tipo}`;
-    };
+            const classesLimpas = btnMaster.className.split(' ').filter(c => !c.startsWith('tile-'));
+            btnMaster.className = classesLimpas.join(' ') + ` tile-${tipo}`;
+        };
 
-    if (tipo.startsWith('aspersor')) {
-        sincronizarMaster('btn-master-aspersores');
-    } else if (tipo.startsWith('espantalho')) {
-        sincronizarMaster('btn-master-espantalhos');
-    } else if (tipo.startsWith('flor')) {
-        sincronizarMaster('btn-master-flores');
-    /* Adicionado a checagem para cobrir tanto 'colmeia' quanto 'colmeiaVazia' */
-    } else if (tipo.startsWith('colmeia') || tipo === 'colmeiaVazia') {
-        sincronizarMaster('btn-master-colmeias');
-    } else if (tipo === 'miniObelisco') {
-        const master = document.getElementById('btn-obelisco') || document.querySelector('[data-tipo="miniObelisco"]');
-        if (master) master.classList.add('ativa');
-    } else if (tipo === 'meteoro') {
-        const master = document.getElementById('btn-meteoro') || document.querySelector('[data-tipo="meteoro"]');
-        if (master) master.classList.add('ativa');
-    }
-},
+        if (tipo.startsWith('aspersor')) {
+            sincronizarMaster('btn-master-aspersores');
+        } else if (tipo.startsWith('espantalho')) {
+            sincronizarMaster('btn-master-espantalhos');
+        } else if (tipo.startsWith('flor')) {
+            sincronizarMaster('btn-master-flores');
+        } else if (tipo.startsWith('colmeia') || tipo === 'colmeiaVazia') {
+            sincronizarMaster('btn-master-colmeias');
+        } else {
+            const submenuPai = botaoAlvo ? botaoAlvo.closest('.submenu-variacoes') : document.querySelector(`.submenu-variacoes [data-tipo="${tipo}"]`)?.closest('.submenu-variacoes');
+            
+            if (submenuPai) {
+                const grupoId = submenuPai.id.replace('submenu-', '');
+                sincronizarMaster(`btn-master-${grupoId}`);
+            } else if (tipo === 'miniObelisco') {
+                const master = document.getElementById('btn-obelisco') || document.querySelector('[data-tipo="miniObelisco"]');
+                if (master) master.classList.add('ativa');
+            }
+        }
+    },
 
     sincronizarScroll: function() {
         const viewport = document.querySelector('.viewport-edicao');

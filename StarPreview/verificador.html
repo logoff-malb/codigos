@@ -1,53 +1,537 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Verificador de JSON - Stardew Valley</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
-    .item { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; background: #fff; display: flex; align-items: center; gap: 20px; }
-    .item img { width: 64px; height: 64px; object-fit: contain; border: 1px solid #ddd; }
-    .info { flex: 1; }
-    .info h2 { margin: 0 0 5px; font-size: 18px; }
-    .info p { margin: 0; font-size: 14px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FarmPlanner — Gerador Preciso de Sprites & CSS</title>
+    <style>
+        :root {
+            --bg: #181825;
+            --panel: #1e1e2e;
+            --panel-light: #2b2b3b;
+            --accent: #a6e3a1;
+            --accent-blue: #74c7ec;
+            --text: #cdd6f4;
+            --border: #45475a;
+            --danger: #f38ba8;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        h1 { margin: 0; color: var(--accent-blue); font-size: 1.4rem; }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .form-row { display: flex; flex-direction: column; gap: 4px; }
+        .form-inline { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        label {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #a6adc8;
+            text-transform: uppercase;
+        }
+
+        input, select {
+            background: var(--panel-light);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        input:focus, select:focus { border-color: var(--accent-blue); }
+
+        .submenu-builder {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            background: rgba(0,0,0,0.25);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .item-lista {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--panel-light);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .btn-add {
+            background: var(--accent-blue);
+            color: #111;
+            font-weight: bold;
+            border: none;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-del {
+            background: var(--danger);
+            color: #111;
+            border: none;
+            border-radius: 3px;
+            padding: 2px 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Área do visualizador da imagem */
+        .spritesheet-viewport {
+            width: 100%;
+            height: 540px;
+            overflow: auto;
+            background: #11111b;
+            border: 1px solid var(--border);
+            position: relative;
+            border-radius: 6px;
+            user-select: none;
+        }
+
+        .spritesheet-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .spritesheet-img {
+            display: block;
+            image-rendering: pixelated;
+        }
+
+        .grid-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            display: grid;
+            cursor: crosshair;
+        }
+
+        .grid-cell {
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        .grid-cell:hover { background: rgba(116, 199, 236, 0.3); }
+        .grid-cell.selected {
+            background: rgba(166, 227, 161, 0.4) !important;
+            border: 1px solid var(--accent);
+        }
+
+        /* Saídas de código */
+        .code-outputs { display: flex; flex-direction: column; gap: 15px; }
+        .code-block { display: flex; flex-direction: column; gap: 6px; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; }
+
+        textarea {
+            width: 100%;
+            height: 110px;
+            background: #11111b;
+            border: 1px solid var(--border);
+            color: var(--accent);
+            font-family: 'Courier New', Courier, monospace;
+            padding: 10px;
+            border-radius: 4px;
+            resize: vertical;
+            font-size: 0.8rem;
+        }
+
+        .btn-copy {
+            background: var(--accent-blue);
+            color: #11111b;
+            border: none;
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-  <h1>Itens do JSON</h1>
-  <div id="listaItens">Carregando...</div>
 
-  <script>
-    fetch('produtos_stardew.json')
-      .then(res => res.json())
-      .then(produtos => {
-        const lista = document.getElementById('listaItens');
-        lista.innerHTML = ''; // limpa "Carregando..."
+    <h1>FarmPlanner — Extrator de Sprites no Padrão `assets.css`</h1>
 
-        produtos.forEach((produto, index) => {
-          const div = document.createElement('div');
-          div.className = 'item';
+    <div class="app-grid">
+        <!-- Painel Lateral -->
+        <div class="panel">
+            <div class="form-row">
+                <label for="tipoEstrutura">Tipo de Botão / Elemento:</label>
+                <select id="tipoEstrutura" onchange="alternarModoLayout()">
+                    <option value="simples">Botão Único (Ex: Mini-Obelisco)</option>
+                    <option value="submenu">Container Expansível com Submenu (Ex: Flores)</option>
+                </select>
+            </div>
 
-          const img = document.createElement('img');
-          img.src = produto.imagem;
-          img.alt = produto.nome;
-          img.onerror = () => img.src = 'imagens/default.png'; // fallback
+            <div class="form-row">
+                <label for="spriteSource">Arquivo da Spritesheet:</label>
+                <select id="spriteSource" onchange="carregarSpriteSheet()">
+                    <option value="objetos1.png">objetos1.png (384x624 px / 24x39 tiles de 16px)</option>
+                    <option value="objetos2.png">objetos2.png (128x1472 px / 8x92 tiles de 16px)</option>
+                </select>
+            </div>
 
-          const info = document.createElement('div');
-          info.className = 'info';
-          info.innerHTML = `
-            <h2>${index + 1}. ${produto.nome}</h2>
-            <p>Valor base: ${produto.valorBase} ouros</p>
-          `;
+            <!-- Campos quando for OBJETO ÚNICO -->
+            <div id="container-unico">
+                <div class="form-row">
+                    <label for="objKey">Chave / ID da Ferramenta (Ex: miniObelisco):</label>
+                    <input type="text" id="objKey" value="novoObjeto" oninput="gerarCodigos()">
+                </div>
+                <div class="form-row">
+                    <label for="objNome">Título / Tooltip:</label>
+                    <input type="text" id="objNome" value="Novo Objeto" oninput="gerarCodigos()">
+                </div>
+            </div>
 
-          div.appendChild(img);
-          div.appendChild(info);
-          lista.appendChild(div);
+            <!-- Campos quando for GRUPO COM SUBMENU -->
+            <div id="container-submenu" style="display:none;" class="form-row">
+                <div class="form-row">
+                    <label for="grupoKey">Identificador do Grupo (Ex: flores):</label>
+                    <input type="text" id="grupoKey" value="flores" oninput="gerarCodigos()">
+                </div>
+                <div class="form-row">
+                    <label for="grupoNome">Título Principal:</label>
+                    <input type="text" id="grupoNome" value="Flores" oninput="gerarCodigos()">
+                </div>
+
+                <hr style="border-color: var(--border); margin: 8px 0;">
+
+                <div class="submenu-builder">
+                    <label style="color: var(--accent-blue);">Adicionar Itens ao Submenu:</label>
+                    <div class="form-row">
+                        <label for="subItemKey">Chave do Item (Ex: florTulipa):</label>
+                        <input type="text" id="subItemKey" placeholder="florTulipa">
+                    </div>
+                    <div class="form-row">
+                        <label for="subItemNome">Nome do Item:</label>
+                        <input type="text" id="subItemNome" placeholder="Tulipa">
+                    </div>
+                    <button class="btn-add" onclick="adicionarItemSubmenu()">+ Cadastrar Seleção Atual</button>
+                    
+                    <div id="listaSubItens" style="display:flex; flex-direction:column; gap:5px; margin-top:5px;"></div>
+                </div>
+            </div>
+
+            <div class="form-inline">
+                <div class="form-row">
+                    <label>Offset X, Y (px):</label>
+                    <input type="text" id="posPx" value="0px, 0px" readonly>
+                </div>
+                <div class="form-row">
+                    <label>Dimensão (Tiles):</label>
+                    <input type="text" id="posTamanho" value="1 x 1" readonly>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visualizador Interativo -->
+        <div class="panel">
+            <label>Clique e arraste sobre os tiles para selecionar:</label>
+            <div class="spritesheet-viewport">
+                <div class="spritesheet-container">
+                    <img id="imgSource" class="spritesheet-img" src="objetos1.png" alt="Spritesheet">
+                    <div id="gridOverlay" class="grid-overlay"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Saídas dos Códigos -->
+    <div class="panel code-outputs">
+        <div class="code-block">
+            <div class="code-header">
+                <label>1. Código HTML (Copie e cole dentro da sua `<div class="painel-ferramentas">`):</label>
+                <button class="btn-copy" onclick="copiar('codeHTML')">Copiar HTML</button>
+            </div>
+            <textarea id="codeHTML" readonly></textarea>
+        </div>
+
+        <div class="code-block">
+            <div class="code-header">
+                <label>2. Código CSS (Copie e cole no final do seu `assets.css`):</label>
+                <button class="btn-copy" onclick="copiar('codeCSS')">Copiar CSS</button>
+            </div>
+            <textarea id="codeCSS" readonly></textarea>
+        </div>
+
+        <div class="code-block">
+            <div class="code-header">
+                <label>3. Configuração JS (Cole dentro de `FarmPlanner.objetosConfig`):</label>
+                <button class="btn-copy" onclick="copiar('codeJS')">Copiar JS</button>
+            </div>
+            <textarea id="codeJS" readonly></textarea>
+        </div>
+    </div>
+
+<script>
+    const specs = {
+        'objetos1.png': { cols: 24, rows: 39, width: 384, height: 624 },
+        'objetos2.png': { cols: 8, rows: 92, width: 128, height: 1472 }
+    };
+
+    let startCell = null;
+    let endCell = null;
+    let isMouseDown = false;
+
+    let selX = 0, selY = 0, selW = 1, selH = 1;
+    let subItens = [];
+
+    function alternarModoLayout() {
+        const modo = document.getElementById('tipoEstrutura').value;
+        document.getElementById('container-unico').style.display = modo === 'simples' ? 'block' : 'none';
+        document.getElementById('container-submenu').style.display = modo === 'submenu' ? 'block' : 'none';
+        gerarCodigos();
+    }
+
+    function carregarSpriteSheet() {
+        const file = document.getElementById('spriteSource').value;
+        const img = document.getElementById('imgSource');
+        img.src = file;
+
+        img.onload = () => {
+            construirOverlay();
+            resetSelecao();
+        };
+    }
+
+    function construirOverlay() {
+        const file = document.getElementById('spriteSource').value;
+        const spec = specs[file];
+        const overlay = document.getElementById('gridOverlay');
+        
+        overlay.innerHTML = '';
+        overlay.style.gridTemplateColumns = `repeat(${spec.cols}, 16px)`;
+        overlay.style.gridTemplateRows = `repeat(${spec.rows}, 16px)`;
+        overlay.style.width = `${spec.width}px`;
+        overlay.style.height = `${spec.height}px`;
+
+        for (let r = 0; r < spec.rows; r++) {
+            for (let c = 0; c < spec.cols; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.dataset.x = c;
+                cell.dataset.y = r;
+
+                cell.addEventListener('mousedown', (e) => {
+                    isMouseDown = true;
+                    startCell = { x: c, y: r };
+                    endCell = { x: c, y: r };
+                    atualizarSelecao();
+                });
+
+                cell.addEventListener('mouseenter', () => {
+                    if (isMouseDown) {
+                        endCell = { x: c, y: r };
+                        atualizarSelecao();
+                    }
+                });
+
+                overlay.appendChild(cell);
+            }
+        }
+
+        document.addEventListener('mouseup', () => { isMouseDown = false; });
+    }
+
+    function atualizarSelecao() {
+        if (!startCell || !endCell) return;
+
+        selX = Math.min(startCell.x, endCell.x);
+        selY = Math.min(startCell.y, endCell.y);
+        const maxX = Math.max(startCell.x, endCell.x);
+        const maxY = Math.max(startCell.y, endCell.y);
+
+        selW = (maxX - selX) + 1;
+        selH = (maxY - selY) + 1;
+
+        // O seu CSS usa escala x2 (32px por tile de 16px)
+        document.getElementById('posPx').value = `-${selX * 32}px, -${selY * 32}px`;
+        document.getElementById('posTamanho').value = `${selW} x ${selH}`;
+
+        const cells = document.querySelectorAll('.grid-cell');
+        cells.forEach(c => {
+            const cx = parseInt(c.dataset.x);
+            const cy = parseInt(c.dataset.y);
+
+            if (cx >= selX && cx < selX + selW && cy >= selY && cy < selY + selH) {
+                c.classList.add('selected');
+            } else {
+                c.classList.remove('selected');
+            }
         });
-      })
-      .catch(err => {
-        document.getElementById('listaItens').textContent = 'Erro ao carregar o JSON.';
-        console.error(err);
-      });
-  </script>
+
+        gerarCodigos();
+    }
+
+    function resetSelecao() {
+        startCell = { x: 0, y: 0 };
+        endCell = { x: 0, y: 0 };
+        atualizarSelecao();
+    }
+
+    function adicionarItemSubmenu() {
+        const key = document.getElementById('subItemKey').value.trim();
+        const nome = document.getElementById('subItemNome').value.trim();
+        const file = document.getElementById('spriteSource').value;
+
+        if (!key) {
+            alert('Informe a Chave do Item!');
+            return;
+        }
+
+        subItens.push({
+            key,
+            nome: nome || key,
+            file,
+            x: selX * 32,
+            y: selY * 32,
+            w: selW,
+            h: selH
+        });
+
+        document.getElementById('subItemKey').value = '';
+        document.getElementById('subItemNome').value = '';
+        renderizarListaSubitens();
+        gerarCodigos();
+    }
+
+    function removerSubItem(idx) {
+        subItens.splice(idx, 1);
+        renderizarListaSubitens();
+        gerarCodigos();
+    }
+
+    function renderizarListaSubitens() {
+        const lista = document.getElementById('listaSubItens');
+        lista.innerHTML = '';
+
+        subItens.forEach((item, idx) => {
+            const div = document.createElement('div');
+            div.className = 'item-lista';
+            div.innerHTML = `
+                <span><b>${item.key}</b> (${item.file} -> -${item.x}px -${item.y}px)</span>
+                <button class="btn-del" onclick="removerSubItem(${idx})">X</button>
+            `;
+            lista.appendChild(div);
+        });
+    }
+
+    function gerarCodigos() {
+        const modo = document.getElementById('tipoEstrutura').value;
+        const file = document.getElementById('spriteSource').value;
+        const posX = selX * 32;
+        const posY = selY * 32;
+
+        let html = '';
+        let css = '';
+        let js = '';
+
+        if (modo === 'simples') {
+            const key = document.getElementById('objKey').value.trim() || 'novoObjeto';
+            const nome = document.getElementById('objNome').value.trim() || 'Novo Objeto';
+
+            // HTML no seu padrão exato
+            html = `<button class="botao-ferramenta" \n        id="botao-${key}" \n        title="${nome}" \n        onclick="FarmPlanner.selecionarFerramenta('${key}')">\n</button>`;
+
+            // CSS no seu padrão exato de ::before e .objeto-sprite
+            css = gerarRegraCSS(key, file, posX, posY);
+
+            // JS
+            js = `'${key}': {\n    nome: '${nome}',\n    largura: ${selW},\n    altura: ${selH}\n}`;
+
+        } else {
+            const grupoKey = document.getElementById('grupoKey').value.trim() || 'grupo';
+            const grupoNome = document.getElementById('grupoNome').value.trim() || 'Grupo';
+            const primeiroItem = subItens.length > 0 ? subItens[0] : { key: 'itemExemplo', nome: 'Exemplo' };
+
+            // HTML DO CONTAINER EXPANSÍVEL
+            html = `<div class="botao-container-expansivel">\n`;
+            html += `    <button class="botao-ferramenta" id="btn-master-${grupoKey}" title="${grupoNome}" onclick="FarmPlanner.selecionarFerramenta('${primeiroItem.key}')"></button>\n`;
+            html += `    <div class="submenu-variacoes" id="submenu-${grupoKey}">\n`;
+
+            subItens.forEach(item => {
+                html += `        <button class="botao-variante" title="${item.nome}" onclick="FarmPlanner.selecionarFerramenta('${item.key}')"></button>\n`;
+            });
+
+            html += `    </div>\n</div>`;
+
+            // CSS DE TODOS OS SUBITENS
+            subItens.forEach(item => {
+                css += gerarRegraCSS(item.key, item.file, item.x, item.y) + '\n\n';
+            });
+
+            // JS
+            let jsEntries = subItens.map(item => `'${item.key}': {\n    nome: '${item.nome}',\n    largura: ${item.w},\n    altura: ${item.h}\n}`);
+            js = jsEntries.join(',\n');
+        }
+
+        document.getElementById('codeHTML').value = html;
+        document.getElementById('codeCSS').value = css;
+        document.getElementById('codeJS').value = js;
+    }
+
+    function gerarRegraCSS(key, file, x, y) {
+        let regra = '';
+
+        // Se for de objetos2.png, registra a troca do arquivo
+        if (file === 'objetos2.png') {
+            regra += `/* Alternância de arquivo para ${key} */\n`;
+            regra += `.botao-ferramenta[onclick*="${key}"]::before,\n`;
+            regra += `.botao-variante[onclick*="${key}"]::before,\n`;
+            regra += `.celula-grade .objeto-sprite.tile-${key} {\n`;
+            regra += `    background-image: url('recursos/objetos2.png') !important;\n`;
+            regra += `    background-size: 256px auto !important;\n`;
+            regra += `}\n\n`;
+        }
+
+        // Posição exata do Pixel
+        regra += `/* Coordenadas de ${key} */\n`;
+        regra += `.botao-ferramenta[onclick*="${key}"]::before,\n`;
+        regra += `.botao-variante[onclick*="${key}"]::before,\n`;
+        regra += `.celula-grade .objeto-sprite.tile-${key} {\n`;
+        regra += `    background-position: -${x}px -${y}px !important;\n`;
+        regra += `}`;
+
+        return regra;
+    }
+
+    function copiar(id) {
+        const el = document.getElementById(id);
+        el.select();
+        document.execCommand('copy');
+    }
+
+    window.onload = () => { carregarSpriteSheet(); };
+</script>
 </body>
 </html>

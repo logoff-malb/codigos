@@ -36,6 +36,47 @@
 }
 
 /* --------------------------------------------------------------------------
+   PADRÃO UNIVERSAL PARA DIMENSÕES (1x1, 2x2, E MINIATURAS DE SUBMENU)
+   -------------------------------------------------------------------------- */
+/* Tamanhos no Grid */
+.celula-grade .objeto-sprite.tamanho-2x2,
+.celula-grade .objeto-sprite[class*="tile-tamanho-2x2"] {
+    width: 64px !important;
+    height: 64px !important;
+    transform: translate(-50%, -75%) !important;
+}
+
+/* Tamanhos dos Containers de Botões 2x2 */
+.botao-container-expansivel .submenu-variacoes .botao-variante[onclick*="tocoGrande"],
+.botao-container-expansivel .submenu-variacoes .botao-variante[onclick*="troncoGrande"],
+.botao-container-expansivel .submenu-variacoes .botao-variante[onclick*="pedra"],
+.botao-container-expansivel .submenu-variacoes .botao-variante[onclick*="obMeteorito"],
+.botao-ferramenta[onclick*="tocoGrande"],
+.botao-ferramenta[onclick*="troncoGrande"],
+.botao-ferramenta[onclick*="pedra"],
+.botao-ferramenta[onclick*="obMeteorito"] {
+    width: 68px !important;
+    height: 68px !important;
+    overflow: hidden;
+}
+
+/* Tamanho interno dos ícones miniaturizados nos botões 2x2 */
+.botao-container-expansivel .submenu-variacoes .botao-variante[onclick*="tocoGrande"]::before,
+.botao-container-expansivel .submenu-variacoes .botao-variante[onclick*="troncoGrande"]::before,
+.botao-container-expansivel .submenu-variacoes .botao-variante[onclick*="pedra"]::before,
+.botao-container-expansivel .submenu-variacoes .botao-variante[onclick*="obMeteorito"]::before,
+.botao-ferramenta[onclick*="tocoGrande"]::before,
+.botao-ferramenta[onclick*="troncoGrande"]::before,
+.botao-ferramenta[onclick*="pedra"]::before,
+.botao-ferramenta[onclick*="obMeteorito"]::before {
+    width: 64px !important;
+    height: 64px !important;
+    transform: scale(0.5);
+    transform-origin: center;
+    margin: -8px;
+}
+
+/* --------------------------------------------------------------------------
    2. REGRAS DE ALTERNÂNCIA DE SPRITESHEET (OBJETOS2.PNG)
    -------------------------------------------------------------------------- */
 .sprite-objetos2,
@@ -94,58 +135,41 @@
     z-index: 5;
 }
 
+/* --- OBJETOS 2x2 NO GRID (Estratégia do Zoom / Ocultar secundários) --- */
+.celula-grade .objeto-sprite[class*="-1-0"],
+.celula-grade .objeto-sprite[class*="-0-1"],
+.celula-grade .objeto-sprite[class*="-1-1"] {
+    display: none !important;
+}
 
-/* --- Meteoro (2x2 Tiles - Estratégia do ZOOM) --- */
-.celula-grade .objeto-sprite.tile-meteoro-0-0 {
+.celula-grade .objeto-sprite[class*="-0-0"] {
     position: absolute !important;
-    
-    /* Posição ancorada no canto superior esquerdo */
     top: 0 !important;
     left: 0 !important;
-    
-    /* Tamanho base do corte (64x64px do meteoro original) */
     width: 64px !important;
     height: 64px !important;
     max-width: none !important;
     max-height: none !important;
-    
     background-image: url('recursos/objetos1.png') !important;
     background-size: 768px auto !important;
-    background-position: -704px -800px !important;
-    
-    /* AQUI ESTÁ O ZOOM: amplia todo o corte e a imagem em 2x a partir do canto superior esquerdo */
     transform: scale(1.5) !important;
     transform-origin: 0 0 !important;
-    
     z-index: 10 !important;
 }
 
-/* Oculta as sub-células auxiliares do meteoro */
-.celula-grade .objeto-sprite.tile-meteoro-1-0,
-.celula-grade .objeto-sprite.tile-meteoro-0-1,
-.celula-grade .objeto-sprite.tile-meteoro-1-1 {
-    display: none !important;
-}
+/* Posições específicas do -0-0 para cada 2x2 no grid */
+.celula-grade .objeto-sprite.tile-tocoGrande-0-0    { background-position: -0px -800px !important; }
+.celula-grade .objeto-sprite.tile-troncoGrande-0-0  { background-position: -64px -800px !important; }
+.celula-grade .objeto-sprite.tile-pedraCinza-0-0    { background-position: -0px -896px !important; }
+.celula-grade .objeto-sprite.tile-pedraVermelha-0-0 { background-position: -256px -992px !important; }
+.celula-grade .objeto-sprite.tile-pedraMarrom-0-0   { background-position: -320px -992px !important; }
+.celula-grade .objeto-sprite.tile-pedraAzul-0-0     { background-position: -384px -992px !important; }
+.celula-grade .objeto-sprite.tile-pedraAzul2-0-0    { background-position: -448px -992px !important; }
+.celula-grade .objeto-sprite.tile-obMeteorito-0-0   { background-position: -704px -800px !important; }
 
-.botao-ferramenta[onclick*="meteoro"] {
-    width: 68px !important;
-    height: 68px !important;
-    overflow: hidden;
-}
-
-.botao-ferramenta[onclick*="meteoro"]::before {
-    background-image: url('recursos/objetos1.png') !important;
-    background-size: 768px auto !important;
-    background-position: -704px -800px !important;
-    width: 64px !important;
-    height: 64px !important;
-    transform: scale(0.5);
-    transform-origin: center;
-    margin: -8px;
-}
 
 /* --------------------------------------------------------------------------
-   4. MAPEAMENTO COMPLETO DE COORDENADAS (OFFSETS)
+   4. MAPEAMENTO COMPLETO DE COORDENADAS PARA BOTÕES (OFFSETS)
    -------------------------------------------------------------------------- */
 
 /* --- ASPERSORES (Objetos1) --- */
@@ -216,3 +240,47 @@
     z-index: 15;
     pointer-events: none;
 }
+
+/* --------------------------------------------------------------------------
+   6. OBSTÁCULOS (MAPEAMENTO UNIFICADO DE POSIÇÃO NOS BOTÕES E GRID)
+   -------------------------------------------------------------------------- */
+
+/* Mapeamento unificado exclusivo do obMeteorito (botão principal, submenu e grid) */
+.botao-ferramenta[onclick*="obMeteorito"]::before, 
+.botao-variante[onclick*="obMeteorito"]::before,
+.botao-container-expansivel .submenu-variacoes .botao-variante[onclick*="obMeteorito"]::before,
+.celula-grade .objeto-sprite.tile-obMeteorito-0-0 {  
+    background-position: -704px -800px !important;  
+}
+
+/* Demais Obstáculos */
+.botao-ferramenta[onclick*="tocoGrande"]::before, .botao-variante[onclick*="tocoGrande"]::before {  
+    background-position: -0px -800px !important;  
+}
+.botao-ferramenta[onclick*="troncoGrande"]::before, .botao-variante[onclick*="troncoGrande"]::before {  
+    background-position: -64px -800px !important;  
+}
+.botao-ferramenta[onclick*="pedraCinza"]::before, .botao-variante[onclick*="pedraCinza"]::before {  
+    background-position: -0px -896px !important;  
+}
+.botao-ferramenta[onclick*="pedraVermelha"]::before, .botao-variante[onclick*="pedraVermelha"]::before {  
+    background-position: -256px -992px !important;  
+}
+.botao-ferramenta[onclick*="pedraMarrom"]::before, .botao-variante[onclick*="pedraMarrom"]::before {  
+    background-position: -320px -992px !important;  
+}
+.botao-ferramenta[onclick*="pedraAzul"]::before, .botao-variante[onclick*="pedraAzul"]::before {  
+    background-position: -384px -992px !important;  
+}
+.botao-ferramenta[onclick*="pedraAzul2"]::before, .botao-variante[onclick*="pedraAzul2"]::before {  
+    background-position: -448px -992px !important;  
+}
+
+/* Mapeamento dos demais Obstáculos no Grid (-0-0) */
+.celula-grade .objeto-sprite.tile-tocoGrande-0-0    { background-position: -0px -800px !important; }
+.celula-grade .objeto-sprite.tile-troncoGrande-0-0  { background-position: -64px -800px !important; }
+.celula-grade .objeto-sprite.tile-pedraCinza-0-0    { background-position: -0px -896px !important; }
+.celula-grade .objeto-sprite.tile-pedraVermelha-0-0 { background-position: -256px -992px !important; }
+.celula-grade .objeto-sprite.tile-pedraMarrom-0-0   { background-position: -320px -992px !important; }
+.celula-grade .objeto-sprite.tile-pedraAzul-0-0     { background-position: -384px -992px !important; }
+.celula-grade .objeto-sprite.tile-pedraAzul2-0-0    { background-position: -448px -992px !important; }
