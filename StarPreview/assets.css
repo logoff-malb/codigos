@@ -167,7 +167,6 @@
 .celula-grade .objeto-sprite.tile-pedraAzul2-0-0    { background-position: -448px -992px !important; }
 .celula-grade .objeto-sprite.tile-obMeteorito-0-0   { background-position: -704px -800px !important; }
 
-
 /* --------------------------------------------------------------------------
    4. MAPEAMENTO COMPLETO DE COORDENADAS PARA BOTÕES (OFFSETS)
    -------------------------------------------------------------------------- */
@@ -276,11 +275,74 @@
     background-position: -448px -992px !important;  
 }
 
-/* Mapeamento dos demais Obstáculos no Grid (-0-0) */
-.celula-grade .objeto-sprite.tile-tocoGrande-0-0    { background-position: -0px -800px !important; }
-.celula-grade .objeto-sprite.tile-troncoGrande-0-0  { background-position: -64px -800px !important; }
-.celula-grade .objeto-sprite.tile-pedraCinza-0-0    { background-position: -0px -896px !important; }
-.celula-grade .objeto-sprite.tile-pedraVermelha-0-0 { background-position: -256px -992px !important; }
-.celula-grade .objeto-sprite.tile-pedraMarrom-0-0   { background-position: -320px -992px !important; }
-.celula-grade .objeto-sprite.tile-pedraAzul-0-0     { background-position: -384px -992px !important; }
-.celula-grade .objeto-sprite.tile-pedraAzul2-0-0    { background-position: -448px -992px !important; }
+/* --------------------------------------------------------------------------
+   7. NOVO SISTEMA DE PISOS (RECURSOS/PISOS.PNG)
+   -------------------------------------------------------------------------- */
+/* SISTEMA DE PISOS NO GRID */
+.celula-grade .objeto-sprite[class*="tile-piso"] {
+    background-image: url('recursos/pisos.png') !important;
+    background-size: 512px auto !important; /* 16 colunas de 32px */
+    width: 32px !important;
+    height: 32px !important;
+    top: 0 !important;
+    left: 0 !important;
+    /* Escala 1.5x para converter 32px do sprite em 48px da célula */
+    transform: scale(1.5) !important;
+    transform-origin: top left !important;
+    z-index: 2 !important; /* Pisos ficam abaixo de tudo */
+}
+
+/* MAPEAMENTO BITMASK (Posições relativas dentro de cada bloco 4x4 do Flooring.png) */
+/* Row 0 (Y=0): Isolado e Horizontal */
+.mask-0  { background-position: calc(var(--off-x) - 0px)   calc(var(--off-y) - 0px); }   /* Isolado */
+.mask-1  { background-position: calc(var(--off-x) - 32px)  calc(var(--off-y) - 0px); }   /* H-Esq */
+.mask-2  { background-position: calc(var(--off-x) - 64px)  calc(var(--off-y) - 0px); }   /* H-Meio */
+.mask-3  { background-position: calc(var(--off-x) - 96px)  calc(var(--off-y) - 0px); }   /* H-Dir */
+
+/* Row 1 (Y=32): Topo Vertical e Topo do Quadrado */
+.mask-4  { background-position: calc(var(--off-x) - 0px)   calc(var(--off-y) - 32px); }  /* V-Topo */
+.mask-5  { background-position: calc(var(--off-x) - 32px)  calc(var(--off-y) - 32px); }  /* Q-TL */
+.mask-6  { background-position: calc(var(--off-x) - 64px)  calc(var(--off-y) - 32px); }  /* Q-TM */
+.mask-7  { background-position: calc(var(--off-x) - 96px)  calc(var(--off-y) - 32px); }  /* Q-TR */
+
+/* Row 2 (Y=64): Meio Vertical e Meio do Quadrado */
+.mask-8  { background-position: calc(var(--off-x) - 0px)   calc(var(--off-y) - 64px); }  /* V-Meio */
+.mask-9  { background-position: calc(var(--off-x) - 32px)  calc(var(--off-y) - 64px); }  /* Q-ML */
+.mask-10 { background-position: calc(var(--off-x) - 64px)  calc(var(--off-y) - 64px); }  /* Q-MC */
+.mask-11 { background-position: calc(var(--off-x) - 96px)  calc(var(--off-y) - 64px); }  /* Q-MR */
+
+/* Row 3 (Y=96): Base Vertical e Base do Quadrado */
+.mask-12 { background-position: calc(var(--off-x) - 0px)   calc(var(--off-y) - 96px); }  /* V-Base */
+.mask-13 { background-position: calc(var(--off-x) - 32px)  calc(var(--off-y) - 96px); }  /* Q-BL */
+.mask-14 { background-position: calc(var(--off-x) - 64px)  calc(var(--off-y) - 96px); }  /* Q-BM */
+.mask-15 { background-position: calc(var(--off-x) - 96px)  calc(var(--off-y) - 96px); }  /* Q-BR */
+
+/* ORIGEM DOS BLOCOS (13 TIPOS DE PISO) */
+.tile-piso1  { --off-x: 0px;    --off-y: 0px; }
+.tile-piso2  { --off-x: -128px; --off-y: 0px; }
+.tile-piso3  { --off-x: -256px; --off-y: 0px; }
+.tile-piso4  { --off-x: -384px; --off-y: 0px; }
+.tile-piso5  { --off-x: 0px;    --off-y: -128px; }
+.tile-piso6  { --off-x: -128px; --off-y: -128px; }
+.tile-piso7  { --off-x: -256px; --off-y: -128px; }
+.tile-piso8  { --off-x: -384px; --off-y: -128px; }
+.tile-piso9  { --off-x: 0px;    --off-y: -256px; }
+.tile-piso10 { --off-x: -128px; --off-y: -256px; }
+.tile-piso11 { --off-x: -256px; --off-y: -256px; }
+.tile-piso12 { --off-x: -384px; --off-y: -256px; }
+.tile-piso13 { --off-x: 0px;    --off-y: -384px; }
+
+/* ÍCONES DOS PISOS NO MENU (Objetos1) */
+.botao-variante[onclick*="piso1"]::before { background-position: -512px -416px !important; }
+.botao-variante[onclick*="piso2"]::before { background-position: -544px -416px !important; }
+.botao-variante[onclick*="piso3"]::before { background-position: -576px -416px !important; }
+.botao-variante[onclick*="piso4"]::before { background-position: -608px -416px !important; }
+.botao-variante[onclick*="piso5"]::before { background-position: -640px -416px !important; }
+.botao-variante[onclick*="piso6"]::before { background-position: -672px -416px !important; }
+.botao-variante[onclick*="piso7"]::before { background-position: -704px -416px !important; }
+.botao-variante[onclick*="piso8"]::before { background-position: -736px -416px !important; }
+.botao-variante[onclick*="piso9"]::before { background-position: -768px -416px !important; }
+.botao-variante[onclick*="piso10"]::before { background-position: -800px -416px !important; }
+.botao-variante[onclick*="piso11"]::before { background-position: -832px -416px !important; }
+.botao-variante[onclick*="piso12"]::before { background-position: -864px -416px !important; }
+.botao-variante[onclick*="piso13"]::before { background-position: -896px -416px !important; }

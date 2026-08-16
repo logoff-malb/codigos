@@ -36,6 +36,7 @@
       10: { tipo: "aniversario", nome: "Vincent" }, 13: { tipo: "festival", nome: "Dança das Flores" },
       14: { tipo: "aniversario", nome: "Hailey" }, 15: { tipo: "festival", nome: "festival do deserto dia 1" },
       16: { tipo: "festival", nome: "festival do deserto dia 2" }, 17: { tipo: "festival", nome: "festival do deserto dia 3" },
+      17: { tipo: "especial", nome: "dia de São patricio" },
       18: { tipo: "aniversario", nome: "Pam" }, 20: { tipo: "aniversario", nome: "Shane" },
       24: { tipo: "festival", nome: "Festival da Primavera" }, 26: { tipo: "aniversario", nome: "Pierre" },
       27: { tipo: "aniversario", nome: "Emily" },
@@ -463,6 +464,14 @@ window.addEventListener("DOMContentLoaded", () => {
         <div class="botao-container-expansivel">
             <div id="btn-master-obstaculos-container" title="Obstáculos"></div>
             <div class="submenu-variacoes" id="submenu-obstaculos"></div>
+        </div>
+
+        <!-- Exemplo de como organizar o botão de pisos no menu lateral -->
+        <div class="botao-container-expansivel">
+            <button class="botao-ferramenta tile-piso1" id="btn-master-pisos" title="Pisos" onclick="FarmPlanner.selecionarFerramenta('piso1')"></button>
+            <div class="submenu-variacoes" id="submenu-pisos">
+                <!-- Os 13 botões serão gerados pelo FarmPlanner.gerarMenus() -->
+            </div>
         </div>
         
         <div id="controles-container"></div>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Stardew Sprite Composer PRO</title>
+    <style>
+        body { background: #222; color: #fff; font-family: sans-serif; display: flex; }
+        #canvas-container { position: relative; overflow: auto; max-height: 90vh; background: #333; cursor: crosshair; }
+        canvas { image-rendering: pixelated; }
+        #controles { width: 400px; padding: 20px; background: #111; }
+        .preview-box { border: 2px solid #ffd700; position: absolute; pointer-events: none; }
+        textarea { width: 100%; height: 200px; background: #000; color: #0f0; }
+    </style>
+</head>
+<body>
+    <div id="controles">
+        <h2>Composer Pro</h2>
+        <input type="file" id="upload" accept="image/*"><br><br>
+        <label>Nome do Objeto: <input type="text" id="objName" value="item_novo"></label><hr>
+        
+        <p>1. Selecione a área no sprite</p>
+        <p>2. Configure o Offset (em relação à âncora):</p>
+        X: <input type="number" id="offX" value="0"> 
+        Y: <input type="number" id="offY" value="0"><br>
+        
+        <button onclick="adicionarCamada()">+ Adicionar como Camada</button>
+        <button onclick="gerarCodigo()">GERAR CÓDIGO JS</button>
+        
+        <div id="camadasAtivas"></div>
+        <textarea id="output"></textarea>
+    </div>
+
+    <div id="canvas-container">
+        <canvas id="spriteCanvas"></canvas>
+        <div id="selection-box" class="preview-box"></div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('spriteCanvas');
+        const ctx = canvas.getContext('2d');
+        let img = new Image();
+        let startX, startY, isDragging = false;
+        let camadas = [];
+
+        document.getElementById('upload').onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                img.onload = () => {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        };
+
+        canvas.onmousedown = (e) => {
+            startX = Math.floor(e.offsetX / 16) * 16;
+            startY = Math.floor(e.offsetY / 16) * 16;
+            isDragging = true;
+        };
+
+        canvas.onmousemove = (e) => {
+            if(!isDragging) return;
+            const curX = Math.floor(e.offsetX / 16) * 16;
+            const curY = Math.floor(e.offsetY / 16) * 16;
+            const box = document.getElementById('selection-box');
+            box.style.left = startX + 'px';
+            box.style.top = startY + 'px';
+            box.style.width = (curX - startX + 16) + 'px';
+            box.style.height = (curY - startY + 16) + 'px';
+        };
+
+        canvas.onmouseup = (e) => { isDragging = false; };
+
+        function adicionarCamada() {
+            const box = document.getElementById('selection-box');
+            camadas.push({
+                offset: [parseInt(document.getElementById('offX').value), parseInt(document.getElementById('offY').value)],
+                tamanho: [parseInt(box.style.width)/32, parseInt(box.style.height)/32], // Convertendo px para tiles (assumindo escala 2x)
+                source: [startX, startY]
+            });
+            alert("Camada adicionada!");
+        }
+
+        function gerarCodigo() {
+            const nome = document.getElementById('objName').value;
+            const file = document.getElementById('upload').files[0].name;
+            let code = `"${nome}": {\n  categoria: "construcao",\n  visual: [\n`;
+            camadas.forEach(c => {
+                code += `    { sprite: "recursos/${file}", offset: [${c.offset}], tamanho: [${c.tamanho}], source: [${c.source}] },\n`;
+            });
+            code += `  ]\n},`;
+            document.getElementById('output').value = code;
+        }
+    </script>
+</body>
+</html>
