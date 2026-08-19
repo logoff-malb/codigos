@@ -240,17 +240,6 @@ const FarmPlanner = {
             };
         });
 
-        // Cadastro Dinâmico dos 13 Caminhos/Pisos
-        for (let i = 1; i <= 13; i++) {
-            config[`piso${i}`] = {
-                categoria: 'piso',
-                dimensao: [1, 1],
-                alcance: [],
-                isPiso: true,
-                indexPiso: i - 1 // Mapeamento vertical no pisos.png
-            };
-        }
-
         return config;
     })(),
 
@@ -260,11 +249,9 @@ const FarmPlanner = {
         visibilidade: { 
             'Irrigação': true,
             'Proteção': true,
-            'cMel': true,
-            'piso': true
+            'cMel': true
         },
-        zoom: 1,
-        botaoPressionado: null,
+        zoom: 1
     },
 
     ferramentaAtual: 'aspersorC',
@@ -313,32 +300,12 @@ const FarmPlanner = {
             celula.style.position = 'relative';
             celula.style.zIndex = '2';
             
-            // Previne o menu de contexto do Windows para o botão direito na grade
-            celula.oncontextmenu = (e) => e.preventDefault();
-
-            celula.onmousedown = (e) => {
-                // Define se estamos agindo com o botão esquerdo (0) ou direito (2)
-                this.estado.botaoPressionado = (e.button === 2) ? 'direito' : 'esquerdo';
-                this.gerenciarClique(celula, this.estado.botaoPressionado);
+            celula.onclick = (e) => this.gerenciarClique(e.target);
+            celula.oncontextmenu = (e) => { 
+                e.preventDefault();
+                this.gerenciarClique(e.target, 'direito');
             };
-
-            celula.onmouseenter = () => {
-                // Lógica de Pintura: Só pinta no arrasto se for Botão Direito (Borracha)
-                // OU se for Botão Esquerdo COM ferramenta de PISO selecionada.
-                if (this.estado.botaoPressionado) {
-                    if (this.estado.botaoPressionado === 'direito' || this.ferramentaAtual.startsWith('piso')) {
-                        this.gerenciarClique(celula, this.estado.botaoPressionado);
-                    }
-                }
-            };
-
             container.appendChild(celula);
-        }
-
-        // Listener global para parar de pintar ao soltar o mouse fora das células
-        if (!window.dragEventGuard) {
-            window.addEventListener('mouseup', () => { this.estado.botaoPressionado = null; });
-            window.dragEventGuard = true;
         }
         
         this.construirControles();
@@ -346,24 +313,19 @@ const FarmPlanner = {
         this.renderizarObjetos();
         this.configurarAtalhosZoom();
 
-        // --- ARRASTAR CÂMERA ---
+        // Arrastar câmera
         const viewport = document.querySelector('.viewport-edicao');
         let isDown = false;
         let startX, startY, scrollLeft, scrollTop;
 
         if (viewport) {
             viewport.addEventListener('mousedown', (e) => {
-                // DESATIVA ARRASTO DA CÂMERA SE FOR PISO (para permitir pintura)
-                if (this.ferramentaAtual.startsWith('piso')) return;
-
-                if (e.button === 0) { // Só arrasta com o botão esquerdo
-                    isDown = true;
-                    viewport.style.cursor = 'grabbing';
-                    startX = e.pageX - viewport.offsetLeft;
-                    startY = e.pageY - viewport.offsetTop;
-                    scrollLeft = viewport.scrollLeft;
-                    scrollTop = viewport.scrollTop;
-                }
+                isDown = true;
+                viewport.style.cursor = 'grabbing';
+                startX = e.pageX - viewport.offsetLeft;
+                startY = e.pageY - viewport.offsetTop;
+                scrollLeft = viewport.scrollLeft;
+                scrollTop = viewport.scrollTop;
             });
 
             viewport.addEventListener('mouseleave', () => { isDown = false; });
@@ -380,88 +342,46 @@ const FarmPlanner = {
         }
     },
 
-    // Lógica Matemática de Bitmasking para Caminhos
-    recalcularBitmasksVizinhos: function(x, y, tipoPiso) {
-    const direcoes = [
-        { dx: 0, dy: -1, bit: 1 }, // Norte
-        { dx: 1, dy: 0,  bit: 2 }, // Leste
-        { dx: 0, dy: 1,  bit: 4 }, // Sul
-        { dx: -1, dy: 0, bit: 8 }  // Oeste
-    ];
-
-     const mapaSV = {
-        0: 0,   // Isolado (Seção Vermelha)
-        2: 1,   // Início Horizontal (Só E)
-        10: 2,  // Meio Horizontal (E+W)
-        8: 3,   // Fim Horizontal (Só W)
-        4: 4,   // Topo Vertical (Só S)
-        6: 5,   // Canto SE
-        14: 6,  // T-Sul (E+S+W)
-        12: 7,  // Canto SW
-        5: 8,   // Meio Vertical (N+S)
-        7: 9,   // T-Leste (N+S+E)
-        15: 10, // Cruzamento Total
-        13: 11, // T-Oeste (N+S+W)
-        1: 12,  // Base Vertical (Só N)
-        3: 13,  // Canto NE
-        11: 14, // T-Norte (N+E+W)
-        9: 15   // Canto NW
-    };
-
-    const atualizarPonto = (cx, cy) => {
-            const alvo = this.estado.objetos.find(o => o.x === cx && o.y === cy && o.tipo === tipoPiso);
-            if (!alvo) return;
-
-            let somaBinaria = 0;
-            direcoes.forEach(dir => {
-                const possuiVizinho = this.estado.objetos.some(o => 
-                    o.x === cx + dir.dx && 
-                    o.y === cy + dir.dy && 
-                    o.tipo === tipoPiso
-                );
-                if (possuiVizinho) somaBinaria += dir.bit;
-            });
-
-            // Aplica o remapeamento para os índices 0-15 da spritesheet
-            alvo.mask = mapaSV[somaBinaria] ?? 0;
-        };
-
-        // Executa a atualização no ponto clicado e nos 4 vizinhos
-        atualizarPonto(x, y);
-        direcoes.forEach(dir => atualizarPonto(x + dir.dx, y + dir.dy));
-},
-colocarObjeto: function(x, y, tipo) {
+    colocarObjeto: function(x, y, tipo) {
         const config = this.objetosConfig[tipo];
         if (!config) return;
 
         const larg = config.dimensao ? config.dimensao[0] : 1;
         const alt = config.dimensao ? config.dimensao[1] : 1;
 
-        if (x + larg > this.config.largura || y + alt > this.config.altura) return;
+        // 1. Impedir estouro dos limites do mapa
+        if (x + larg > this.config.largura || y + alt > this.config.altura) {
+            return;
+        }
 
-        // Lógica de colisão (AABB) - Se for piso, remove apenas pisos. Se for objeto, remove tudo.
+        // 2. Validação de limite máximo
+        if (config.limiteMaximo) {
+            const quantidadeAtual = this.estado.objetos.filter(obj => obj.tipo === tipo).length;
+            const jaExisteAqui = this.estado.objetos.some(obj => obj.x === x && obj.y === y && obj.tipo === tipo);
+
+            if (quantidadeAtual >= config.limiteMaximo && !jaExisteAqui) {
+                return;
+            }
+        }
+
+        // 3. Colisão AABB: Remove qualquer objeto cujas células colidam com o novo objeto
         this.estado.objetos = this.estado.objetos.filter(obj => {
             const objConfig = this.objetosConfig[obj.tipo];
             const objLarg = (objConfig && objConfig.dimensao) ? objConfig.dimensao[0] : 1;
             const objAlt = (objConfig && objConfig.dimensao) ? objConfig.dimensao[1] : 1;
 
-            const colide = (x < obj.x + objLarg && x + larg > obj.x && y < obj.y + objAlt && y + alt > obj.y);
-            
-            // Se estou colocando um piso, ele só substitui outro piso na mesma célula exata
-            if (config.isPiso) {
-                return !(x === obj.x && y === obj.y);
-            }
+            const colide = (
+                x < obj.x + objLarg &&
+                x + larg > obj.x &&
+                y < obj.y + objAlt &&
+                y + alt > obj.y
+            );
+
             return !colide;
         });
 
-        const novoObjeto = { x, y, tipo };
-        this.estado.objetos.push(novoObjeto);
-
-        // ATENÇÃO: Chamar recálculo aqui para os pisos atualizarem ao desenhar!
-        if (config.isPiso) {
-            this.recalcularBitmasksVizinhos(x, y, tipo);
-        }
-
+        // 4. Salva o novo objeto ancorado em (x, y)
+        this.estado.objetos.push({ x, y, tipo });
         this.renderizarObjetos();
     },
 
@@ -507,26 +427,6 @@ colocarObjeto: function(x, y, tipo) {
             return melhorFlor;
         };
 
-        // Mapeamento matemático das 16 posições do bitmask dentro do bloco 4x4 do pisos.png
-        const coordenadasMask = {
-            0:  { col: 0, row: 0 },
-            1:  { col: 0, row: 1 },
-            2:  { col: 3, row: 0 },
-            3:  { col: 3, row: 1 },
-            4:  { col: 0, row: 3 },
-            5:  { col: 0, row: 2 },
-            6:  { col: 3, row: 3 },
-            7:  { col: 3, row: 2 },
-            8:  { col: 1, row: 0 },
-            9:  { col: 1, row: 1 },
-            10: { col: 2, row: 0 },
-            11: { col: 2, row: 1 },
-            12: { col: 1, row: 3 },
-            13: { col: 1, row: 2 },
-            14: { col: 2, row: 3 },
-            15: { col: 2, row: 2 }
-        };
-
         // 3. Renderização dos Objetos
         this.estado.objetos.forEach(obj => {
             const config = this.objetosConfig[obj.tipo];
@@ -552,22 +452,11 @@ colocarObjeto: function(x, y, tipo) {
 
                     const divSprite = document.createElement('div');
                     
-                    if (config.isPiso) {
-                        // Usa as classes mask-0 até mask-15 que batem com o seu mapaSV
-                        divSprite.className = `objeto-sprite tile-${obj.tipo} mask-${obj.mask || 0}`;
-                        
-                        // Mantém a proporção de 48px para o sprite de 32px
-                        divSprite.style.width = '32px';
-                        divSprite.style.height = '32px';
-                        divSprite.style.transform = 'scale(1.5)';
-                        divSprite.style.transformOrigin = 'top left';
+                    // Se for multicélula, gera tile-[tipo]-[dx]-[dy] (ex: tile-obMeteorito-0-0). Se 1x1, tile-[tipo].
+                    if (larg > 1 || alt > 1) {
+                        divSprite.classList.add('objeto-sprite', `tile-${obj.tipo}-${dx}-${dy}`);
                     } else {
-                        // Lógica original para objetos normais e 2x2
-                        if (larg > 1 || alt > 1) {
-                            divSprite.classList.add('objeto-sprite', `tile-${obj.tipo}-${dx}-${dy}`);
-                        } else {
-                            divSprite.classList.add('objeto-sprite', `tile-${obj.tipo}`);
-                        }
+                        divSprite.classList.add('objeto-sprite', `tile-${obj.tipo}`);
                     }
 
                     // Estilos do Tile no Grid
@@ -577,13 +466,9 @@ colocarObjeto: function(x, y, tipo) {
                     divSprite.style.width = '100%';
                     divSprite.style.height = '100%';
                     divSprite.style.margin = '0';
+                    divSprite.style.transform = 'none';
                     divSprite.style.pointerEvents = 'none';
-                    divSprite.style.zIndex = config.isPiso ? '3' : '5';
-
-                    // SÓ aplica 'none' se NÃO for piso e NÃO for 2x2 (pois o CSS cuida dos 2x2 e o JS dos pisos)
-                    if (!config.isPiso && larg === 1 && alt === 1) {
-                        divSprite.style.transform = 'none';
-                    }
+                    divSprite.style.zIndex = '5';
 
                     // Se for a origem [0, 0] de uma colmeia vinculada a uma flor, injeta o badge
                     if (dx === 0 && dy === 0 && florVinculada) {
@@ -722,13 +607,11 @@ colocarObjeto: function(x, y, tipo) {
         const subEspantalhos = document.getElementById('submenu-espantalhos');
         const subFlores = document.getElementById('submenu-flores');
         const subColmeias = document.getElementById('submenu-colmeias');
-        const subPisos = document.getElementById('submenu-pisos');
 
         if (subAspersores) subAspersores.innerHTML = '';
         if (subEspantalhos) subEspantalhos.innerHTML = '';
         if (subFlores) subFlores.innerHTML = '';
         if (subColmeias) subColmeias.innerHTML = '';
-        if (subPisos) subPisos.innerHTML = '';
 
         const aspersores = [
             { id: 'aspersorC', nome: 'Aspersor Comum' },
@@ -754,22 +637,6 @@ colocarObjeto: function(x, y, tipo) {
         const colmeias = [
             { id: 'colmeia', nome: 'Colméia' },
             { id: 'colmeiaVazia', nome: 'Colméia Vazia' }
-        ];
-
-        const caminhos = [
-            { id: 'piso1', nome: 'Caminho de Madeira' },
-            { id: 'piso2', nome: 'Caminho de Pedra' },
-            { id: 'piso3', nome: 'Caminho de Palha' },
-            { id: 'piso4', nome: 'Caminho de Cristal' },
-            { id: 'piso5', nome: 'Caminho de Grama' },
-            { id: 'piso6', nome: 'Caminho de Terra' },
-            { id: 'piso7', nome: 'Caminho Placa de Madeira' },
-            { id: 'piso8', nome: 'Caminho de Cascalho' },
-            { id: 'piso9', nome: 'Caminho de Pedregulho' },
-            { id: 'piso10', nome: 'Caminho de Lajota' },
-            { id: 'piso11', nome: 'Caminho de Tijolo Vermelho' },
-            { id: 'piso12', nome: 'Caminho de Tijolo Escuro' },
-            { id: 'piso13', nome: 'Caminho de Tronco' }
         ];
 
         const criarBotao = (tipo, container, isMaster = false) => {
@@ -812,7 +679,6 @@ colocarObjeto: function(x, y, tipo) {
         if (subEspantalhos) espantalhos.forEach(esp => criarBotao(esp, subEspantalhos));
         if (subFlores) flores.forEach(flr => criarBotao(flr, subFlores));
         if (subColmeias) colmeias.forEach(col => criarBotao(col, subColmeias));
-        if (subPisos) caminhos.forEach(piso => criarBotao(piso, subPisos));
 
         const areaMasterAsp = document.getElementById('btn-master-aspersores-container');
         if (areaMasterAsp) {
@@ -842,13 +708,6 @@ colocarObjeto: function(x, y, tipo) {
             masterCol.id = 'btn-master-colmeias';
         }
 
-        const areaMasterPisos = document.getElementById('btn-master-pisos-container');
-        if (areaMasterPisos) {
-            areaMasterPisos.innerHTML = '';
-            const masterPiso = criarBotao({ id: 'piso1', nome: 'Caminhos' }, areaMasterPisos, true);
-            masterPiso.id = 'btn-master-pisos';
-        }
-
         const areaObelisco = document.getElementById('btn-obelisco-container');
         if (areaObelisco) {
             areaObelisco.innerHTML = '';
@@ -859,8 +718,7 @@ colocarObjeto: function(x, y, tipo) {
         this.selecionarFerramenta('aspersorC');
     },
 
-  gerenciarClique: function(celula, botao) {
-        if (!celula) return;
+    gerenciarClique: function(celula, botao) {
         if (celula.classList.contains('objeto-sprite')) {
             celula = celula.parentElement;
         }
@@ -869,33 +727,20 @@ colocarObjeto: function(x, y, tipo) {
         const y = parseInt(celula.dataset.y);
         
         if (botao === 'direito') {
-            const objRemovido = this.estado.objetos.find(obj => {
+            this.estado.objetos = this.estado.objetos.filter(obj => {
                 const objConfig = this.objetosConfig[obj.tipo];
                 const objLarg = (objConfig && objConfig.dimensao) ? objConfig.dimensao[0] : 1;
                 const objAlt = (objConfig && objConfig.dimensao) ? objConfig.dimensao[1] : 1;
 
-                return (x >= obj.x && x < obj.x + objLarg && y >= obj.y && y < obj.y + objAlt);
+                const contemCelula = (
+                    x >= obj.x && x < obj.x + objLarg &&
+                    y >= obj.y && y < obj.y + objAlt
+                );
+
+                return !contemCelula;
             });
-
-            if (objRemovido) {
-                const tipoAntigo = objRemovido.tipo;
-                const xAntigo = objRemovido.x;
-                const yAntigo = objRemovido.y;
-
-                this.estado.objetos = this.estado.objetos.filter(obj => obj !== objRemovido);
-
-                // Recalcula vizinhos para fechar as bordas ao apagar um piso
-                if (this.objetosConfig[tipoAntigo] && this.objetosConfig[tipoAntigo].isPiso) {
-                    this.recalcularBitmasksVizinhos(xAntigo, yAntigo, tipoAntigo);
-                }
-                this.renderizarObjetos();
-            }
+            this.renderizarObjetos();
         } else {
-            // SEGURANÇA CONTRA SPAM NO ARRASTO:
-            // Só executa o "ColocarObjeto" se a célula não tiver esse objeto ou se for um piso diferente
-            const objExistente = this.estado.objetos.find(o => o.x === x && o.y === y);
-            if (objExistente && objExistente.tipo === this.ferramentaAtual) return;
-
             this.colocarObjeto(x, y, this.ferramentaAtual);
         }
     },
@@ -932,8 +777,6 @@ colocarObjeto: function(x, y, tipo) {
             sincronizarMaster('btn-master-flores');
         } else if (tipo.startsWith('colmeia') || tipo === 'colmeiaVazia') {
             sincronizarMaster('btn-master-colmeias');
-        } else if (tipo.startsWith('piso')) {
-            sincronizarMaster('btn-master-pisos');
         } else {
             const submenuPai = botaoAlvo ? botaoAlvo.closest('.submenu-variacoes') : document.querySelector(`.submenu-variacoes [data-tipo="${tipo}"]`)?.closest('.submenu-variacoes');
             

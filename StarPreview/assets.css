@@ -178,11 +178,11 @@
 
 /* --- FLORES (Objetos1) --- */
 .botao-ferramenta[onclick*="florTulipa"]::before,  .botao-variante[onclick*="florTulipa"]::before,  .celula-grade .objeto-sprite.tile-florTulipa  { background-position: -480px -768px !important; }
-.botao-ferramenta[onclick*="florJasmim"]::before,  .botao-variante[onclick*="florJasmim"]::before,  .celula-grade .objeto-sprite.tile-florJasmim  { background-position: -64px 0px !important; }
-.botao-ferramenta[onclick*="florMicanga"]::before, .botao-variante[onclick*="florMicanga"]::before, .celula-grade .objeto-sprite.tile-florMicanga { background-position: -128px 0px !important; }
-.botao-ferramenta[onclick*="florPapoula"]::before, .botao-variante[onclick*="florPapoula"]::before, .celula-grade .objeto-sprite.tile-florPapoula { background-position: -192px 0px !important; }
-.botao-ferramenta[onclick*="florGirassol"]::before,.botao-variante[onclick*="florGirassol"]::before,.celula-grade .objeto-sprite.tile-florGirassol { background-position: -256px 0px !important; }
-.botao-ferramenta[onclick*="florRosaFada"]::before,.botao-variante[onclick*="florRosaFada"]::before,.celula-grade .objeto-sprite.tile-florRosaFada { background-position: -320px 0px !important; }
+.botao-ferramenta[onclick*="florJasmim"]::before,  .botao-variante[onclick*="florJasmim"]::before,  .celula-grade .objeto-sprite.tile-florJasmim  { background-position: -672px -768px !important; }
+.botao-ferramenta[onclick*="florMicanga"]::before, .botao-variante[onclick*="florMicanga"]::before, .celula-grade .objeto-sprite.tile-florMicanga { background-position: -544px -768px !important; }
+.botao-ferramenta[onclick*="florPapoula"]::before, .botao-variante[onclick*="florPapoula"]::before, .celula-grade .objeto-sprite.tile-florPapoula { background-position: -512px -480px !important; }
+.botao-ferramenta[onclick*="florGirassol"]::before,.botao-variante[onclick*="florGirassol"]::before,.celula-grade .objeto-sprite.tile-florGirassol { background-position: -416px -544px !important; }
+.botao-ferramenta[onclick*="florRosaFada"]::before,.botao-variante[onclick*="florRosaFada"]::before,.celula-grade .objeto-sprite.tile-florRosaFada { background-position: -608px -768px !important; }
 
 /* --- ESPANTALHOS (Objetos2) --- */
 .botao-ferramenta[onclick*="'espantalho'"]:not([onclick*="R"]):not([onclick*="Luxo"])::before,
@@ -333,16 +333,16 @@
 .tile-piso13 { --off-x: 0px;    --off-y: -384px; }
 
 /* ÍCONES DOS PISOS NO MENU (Objetos1) */
-.botao-variante[onclick*="piso1"]::before { background-position: -512px -416px !important; }
-.botao-variante[onclick*="piso2"]::before { background-position: -544px -416px !important; }
-.botao-variante[onclick*="piso3"]::before { background-position: -576px -416px !important; }
-.botao-variante[onclick*="piso4"]::before { background-position: -608px -416px !important; }
-.botao-variante[onclick*="piso5"]::before { background-position: -640px -416px !important; }
-.botao-variante[onclick*="piso6"]::before { background-position: -672px -416px !important; }
-.botao-variante[onclick*="piso7"]::before { background-position: -704px -416px !important; }
-.botao-variante[onclick*="piso8"]::before { background-position: -736px -416px !important; }
-.botao-variante[onclick*="piso9"]::before { background-position: -768px -416px !important; }
-.botao-variante[onclick*="piso10"]::before { background-position: -800px -416px !important; }
-.botao-variante[onclick*="piso11"]::before { background-position: -832px -416px !important; }
-.botao-variante[onclick*="piso12"]::before { background-position: -864px -416px !important; }
-.botao-variante[onclick*="piso13"]::before { background-position: -896px -416px !important; }
+.tile-piso1::before  { background-position: -512px -416px !important; }
+.tile-piso2::before  { background-position: -544px -416px !important; }
+.tile-piso3::before  { background-position: -608px -416px !important; }
+.tile-piso4::before  { background-position: -672px -416px !important; }
+.tile-piso5::before  { background-position: -544px -512px !important; }
+.tile-piso6::before  { background-position: -736px -512px !important; }
+.tile-piso7::before  { background-position: -672px -512px !important; }
+.tile-piso8::before  { background-position: -32px -544px !important; }
+.tile-piso9::before  { background-position: -96px -544px !important; }
+.tile-piso10::before { background-position: -224px -544px !important; }
+.tile-piso11::before { background-position: -608px -416px !important; }
+.tile-piso12::before { background-position: 0px -1120px !important; }
+.tile-piso13::before { background-position: -32px -1120px !important; }

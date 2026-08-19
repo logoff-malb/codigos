@@ -285,20 +285,59 @@ const FarmPlanner = {
         container.style.gridTemplateColumns = `repeat(${this.config.largura}, 1fr)`;
         
         // Canvas de alcances
-        const canvas = document.createElement('canvas');
-        canvas.id = 'canvas-alcances';
-        canvas.style.position = 'absolute';
-        canvas.style.top = '0';
-        canvas.style.left = '0';
-        canvas.style.pointerEvents = 'none';
-        canvas.style.zIndex = '1';
+        // --- CANVAS DE FUNDO (Z-Index: 1) ---
+        // Este canvas desenha as cores sólidas (preenchimento) atrás dos pisos
+        const canvasFundo = document.createElement('canvas');
+        canvasFundo.id = 'canvas-alcances-fundo';
+        canvasFundo.style.position = 'absolute';
+        canvasFundo.style.top = '0';
+        canvasFundo.style.left = '0';
+        canvasFundo.style.pointerEvents = 'none';
+        canvasFundo.style.zIndex = '1'; // Atrás de tudo
         
-        canvas.width = this.config.largura * this.config.tamanhoCelula;
-        canvas.height = this.config.altura * this.config.tamanhoCelula;
-        canvas.style.width = (this.config.largura * this.config.tamanhoCelula) + 'px';
-        canvas.style.height = (this.config.altura * this.config.tamanhoCelula) + 'px';
+        const larguraPx = this.config.largura * this.config.tamanhoCelula;
+        const alturaPx = this.config.altura * this.config.tamanhoCelula;
         
-        container.appendChild(canvas);
+        [canvasFundo].forEach(canv => {
+            canv.width = larguraPx;
+            canv.height = alturaPx;
+            canv.style.width = larguraPx + 'px';
+            canv.style.height = alturaPx + 'px';
+        });
+        
+        // --- CANVAS DE TOPO (Z-Index: 6) ---
+        // Este canvas desenha as bordas e linhas pontilhadas na frente de tudo
+        const canvasTopo = canvasFundo.cloneNode();
+        canvasTopo.id = 'canvas-alcances-topo';
+        canvasTopo.style.zIndex = '6'; // Acima dos objetos e pisos
+        
+        container.appendChild(canvasFundo);
+        container.appendChild(canvasTopo);
+
+    // Grid HTML
+    for (let i = 0; i < (this.config.largura * this.config.altura); i++) {
+        const x = i % this.config.largura;
+        const y = Math.floor(i / this.config.largura);
+
+        const celula = document.createElement('div');
+        celula.classList.add('celula-grade');
+        celula.dataset.x = x;
+        celula.dataset.y = y;
+        celula.style.position = 'relative';
+        celula.style.zIndex = '2'; // Células ficam entre os dois canvases
+        
+        celula.oncontextmenu = (e) => e.preventDefault();
+        celula.onmousedown = (e) => {
+            this.estado.botaoPressionado = (e.button === 2) ? 'direito' : 'esquerdo';
+            this.gerenciarClique(celula, this.estado.botaoPressionado);
+        };
+        celula.onmouseenter = () => {
+            if (this.estado.botaoPressionado) {
+                this.gerenciarClique(celula, this.estado.botaoPressionado);
+            }
+        };
+        container.appendChild(celula);
+    }
 
         // Grid HTML
         for (let i = 0; i < (this.config.largura * this.config.altura); i++) {
@@ -311,7 +350,7 @@ const FarmPlanner = {
             celula.dataset.x = x;
             celula.dataset.y = y;
             celula.style.position = 'relative';
-            celula.style.zIndex = '2';
+            celula.style.zIndex = '4';
             
             // Previne o menu de contexto do Windows para o botão direito na grade
             celula.oncontextmenu = (e) => e.preventDefault();
@@ -438,270 +477,227 @@ const FarmPlanner = {
         atualizarPonto(x, y);
         direcoes.forEach(dir => atualizarPonto(x + dir.dx, y + dir.dy));
 },
-colocarObjeto: function(x, y, tipo) {
+    colocarObjeto: function(x, y, tipo) {
         const config = this.objetosConfig[tipo];
         if (!config) return;
 
-        const larg = config.dimensao ? config.dimensao[0] : 1;
-        const alt = config.dimensao ? config.dimensao[1] : 1;
+        // 1. ANTES DE APAGAR, verifica se havia um piso naquela célula
+        const objetoAntigo = this.estado.objetos.find(obj => obj.x === x && obj.y === y);
+        const tipoAntigoPiso = (objetoAntigo && this.objetosConfig[objetoAntigo.tipo]?.isPiso) 
+                            ? objetoAntigo.tipo 
+                            : null;
 
-        if (x + larg > this.config.largura || y + alt > this.config.altura) return;
+         // 2. Validação de limite máximo
+        if (config.limiteMaximo) {
+            const quantidadeAtual = this.estado.objetos.filter(obj => obj.tipo === tipo).length;
+            const jaExisteAqui = this.estado.objetos.some(obj => obj.x === x && obj.y === y && obj.tipo === tipo);
 
-        // Lógica de colisão (AABB) - Se for piso, remove apenas pisos. Se for objeto, remove tudo.
+            if (quantidadeAtual >= config.limiteMaximo && !jaExisteAqui) {
+                return;
+            }
+        }                    
+
+        // 2. Lógica de colisão (AABB) - Remove o que estiver no caminho
         this.estado.objetos = this.estado.objetos.filter(obj => {
             const objConfig = this.objetosConfig[obj.tipo];
-            const objLarg = (objConfig && objConfig.dimensao) ? objConfig.dimensao[0] : 1;
-            const objAlt = (objConfig && objConfig.dimensao) ? objConfig.dimensao[1] : 1;
-
-            const colide = (x < obj.x + objLarg && x + larg > obj.x && y < obj.y + objAlt && y + alt > obj.y);
+            const objLarg = objConfig?.dimensao?.[0] || 1;
+            const objAlt = objConfig?.dimensao?.[1] || 1;
             
-            // Se estou colocando um piso, ele só substitui outro piso na mesma célula exata
-            if (config.isPiso) {
-                return !(x === obj.x && y === obj.y);
-            }
+            const colide = (x < obj.x + objLarg && x + 1 > obj.x && 
+                            y < obj.y + objAlt && y + 1 > obj.y);
             return !colide;
         });
 
-        const novoObjeto = { x, y, tipo };
-        this.estado.objetos.push(novoObjeto);
+        // 3. Adiciona o novo objeto
+        this.estado.objetos.push({ x, y, tipo });
 
-        // ATENÇÃO: Chamar recálculo aqui para os pisos atualizarem ao desenhar!
+        // 4. SE o que você colocou é um PISO, recalcula vizinhos para o novo tipo
         if (config.isPiso) {
             this.recalcularBitmasksVizinhos(x, y, tipo);
         }
 
-        this.renderizarObjetos();
-    },
-
-    renderizarObjetos: function() {
-        // 1. Limpa os sprites do DOM
-        document.querySelectorAll('.objeto-sprite').forEach(el => el.remove());
-
-        // 2. Prepara o Canvas
-        const canvas = document.getElementById('canvas-alcances');
-        let ctx = null;
-        if (canvas) {
-            ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // 5. O SEGREDO: Se você apagou um piso antigo para colocar esse novo objeto,
+        // os vizinhos daquele piso antigo precisam saber que ele sumiu!
+        if (tipoAntigoPiso && tipoAntigoPiso !== tipo) {
+            this.recalcularBitmasksVizinhos(x, y, tipoAntigoPiso);
         }
 
-        const listaFlores = this.estado.objetos.filter(o => o.tipo && o.tipo.startsWith('flor'));
+        this.renderizarObjetos();
+},
 
-        const obterFlorPrioritaria = (colmeiaX, colmeiaY) => {
-            let melhorFlor = null;
-            let menorDistancia = Infinity;
-            let menorAngulo = Infinity;
+    renderizarObjetos: function() {
+    // 1. Limpa os sprites do DOM
+    document.querySelectorAll('.objeto-sprite').forEach(el => el.remove());
 
-            listaFlores.forEach(flor => {
-                const dx = flor.x - colmeiaX;
-                const dy = flor.y - colmeiaY;
-                const distManhattan = Math.abs(dx) + Math.abs(dy);
+    // 2. Prepara os Canvases (Fundo e Topo)
+    const canvasF = document.getElementById('canvas-alcances-fundo');
+    const canvasT = document.getElementById('canvas-alcances-topo');
+    if (!canvasF || !canvasT) return;
 
-                if (distManhattan > 0 && distManhattan <= 5) {
-                    let angulo = Math.atan2(dy, dx) * (180 / Math.PI);
-                    let anguloAjustado = (angulo - 180 + 360) % 360;
+    const ctxF = canvasF.getContext('2d');
+    const ctxT = canvasT.getContext('2d');
+    ctxF.clearRect(0, 0, canvasF.width, canvasF.height);
+    ctxT.clearRect(0, 0, canvasT.width, canvasT.height);
 
-                    if (distManhattan < menorDistancia) {
-                        menorDistancia = distManhattan;
-                        menorAngulo = anguloAjustado;
-                        melhorFlor = flor;
-                    } else if (distManhattan === menorDistancia && anguloAjustado < menorAngulo) {
-                        menorAngulo = anguloAjustado;
-                        melhorFlor = flor;
-                    }
-                }
-            });
+    const listaFlores = this.estado.objetos.filter(o => o.tipo && o.tipo.startsWith('flor'));
 
-            return melhorFlor;
-        };
+    const obterFlorPrioritaria = (colmeiaX, colmeiaY) => {
+        let melhorFlor = null;
+        let menorDistancia = Infinity;
+        let menorAngulo = Infinity;
 
-        // Mapeamento matemático das 16 posições do bitmask dentro do bloco 4x4 do pisos.png
-        const coordenadasMask = {
-            0:  { col: 0, row: 0 },
-            1:  { col: 0, row: 1 },
-            2:  { col: 3, row: 0 },
-            3:  { col: 3, row: 1 },
-            4:  { col: 0, row: 3 },
-            5:  { col: 0, row: 2 },
-            6:  { col: 3, row: 3 },
-            7:  { col: 3, row: 2 },
-            8:  { col: 1, row: 0 },
-            9:  { col: 1, row: 1 },
-            10: { col: 2, row: 0 },
-            11: { col: 2, row: 1 },
-            12: { col: 1, row: 3 },
-            13: { col: 1, row: 2 },
-            14: { col: 2, row: 3 },
-            15: { col: 2, row: 2 }
-        };
+        listaFlores.forEach(flor => {
+            const dx = flor.x - colmeiaX;
+            const dy = flor.y - colmeiaY;
+            const distManhattan = Math.abs(dx) + Math.abs(dy);
 
-        // 3. Renderização dos Objetos
-        this.estado.objetos.forEach(obj => {
-            const config = this.objetosConfig[obj.tipo];
-            if (!config) return;
+            if (distManhattan > 0 && distManhattan <= 5) {
+                let angulo = Math.atan2(dy, dx) * (180 / Math.PI);
+                let anguloAjustado = (angulo - 180 + 360) % 360;
 
-            const larg = config.dimensao ? config.dimensao[0] : 1;
-            const alt = config.dimensao ? config.dimensao[1] : 1;
-
-            const florVinculada = (config.categoria === 'cMel') 
-                ? obterFlorPrioritaria(obj.x, obj.y) 
-                : null;
-
-            // RENDERIZAÇÃO DOS SPRITES NO GRID (MATRIZ POR CÉLULA)
-            for (let dy = 0; dy < alt; dy++) {
-                for (let dx = 0; dx < larg; dx++) {
-                    const alvoX = obj.x + dx;
-                    const alvoY = obj.y + dy;
-
-                    const celulaDOM = document.querySelector(`.celula-grade[data-x="${alvoX}"][data-y="${alvoY}"]`);
-                    if (!celulaDOM) continue;
-
-                    celulaDOM.style.position = 'relative';
-
-                    const divSprite = document.createElement('div');
-                    
-                    if (config.isPiso) {
-                        // Usa as classes mask-0 até mask-15 que batem com o seu mapaSV
-                        divSprite.className = `objeto-sprite tile-${obj.tipo} mask-${obj.mask || 0}`;
-                        
-                        // Mantém a proporção de 48px para o sprite de 32px
-                        divSprite.style.width = '32px';
-                        divSprite.style.height = '32px';
-                        divSprite.style.transform = 'scale(1.5)';
-                        divSprite.style.transformOrigin = 'top left';
-                    } else {
-                        // Lógica original para objetos normais e 2x2
-                        if (larg > 1 || alt > 1) {
-                            divSprite.classList.add('objeto-sprite', `tile-${obj.tipo}-${dx}-${dy}`);
-                        } else {
-                            divSprite.classList.add('objeto-sprite', `tile-${obj.tipo}`);
-                        }
-                    }
-
-                    // Estilos do Tile no Grid
-                    divSprite.style.position = 'absolute';
-                    divSprite.style.top = '0';
-                    divSprite.style.left = '0';
-                    divSprite.style.width = '100%';
-                    divSprite.style.height = '100%';
-                    divSprite.style.margin = '0';
-                    divSprite.style.pointerEvents = 'none';
-                    divSprite.style.zIndex = config.isPiso ? '3' : '5';
-
-                    // SÓ aplica 'none' se NÃO for piso e NÃO for 2x2 (pois o CSS cuida dos 2x2 e o JS dos pisos)
-                    if (!config.isPiso && larg === 1 && alt === 1) {
-                        divSprite.style.transform = 'none';
-                    }
-
-                    // Se for a origem [0, 0] de uma colmeia vinculada a uma flor, injeta o badge
-                    if (dx === 0 && dy === 0 && florVinculada) {
-                        const badgeFlor = document.createElement('div');
-                        badgeFlor.classList.add('badge-flor-colmeia', `tile-${florVinculada.tipo}`);
-                        divSprite.appendChild(badgeFlor);
-                    }
-
-                    celulaDOM.appendChild(divSprite);
-                }
-            }
-
-            // 4. RENDERIZAÇÃO DE ALCANCES NO CANVAS
-            if (this.estado.visibilidade[config.categoria] && config.alcance && config.alcance.length > 0 && ctx) {
-                if (config.categoria === 'cMel') {
-                    const tamanho = this.config.tamanhoCelula;
-
-                    config.alcance.forEach(([dx, dy]) => {
-                        if (dx === 0 && dy === 0) return;
-
-                        const alvoX = obj.x + dx;
-                        const alvoY = obj.y + dy;
-
-                        if (alvoX >= 0 && alvoX < this.config.largura && alvoY >= 0 && alvoY < this.config.altura) {
-                            const px = alvoX * tamanho;
-                            const py = alvoY * tamanho;
-                            const ehFlorAtiva = florVinculada && (alvoX === florVinculada.x && alvoY === florVinculada.y);
-
-                            if (ehFlorAtiva) {
-                                ctx.fillStyle = 'rgba(255, 215, 0, 0.65)';
-                                ctx.fillRect(px, py, tamanho, tamanho);
-                                ctx.strokeStyle = '#FFFFFF';
-                                ctx.lineWidth = 2;
-                                ctx.strokeRect(px + 1, py + 1, tamanho - 2, tamanho - 2);
-                            } else {
-                                ctx.fillStyle = 'rgba(255, 180, 0, 0.22)';
-                                ctx.fillRect(px, py, tamanho, tamanho);
-
-                                ctx.strokeStyle = 'rgba(255, 200, 100, 0.15)';
-                                ctx.lineWidth = 1;
-                                ctx.strokeRect(px, py, tamanho, tamanho);
-                            }
-                        }
-                    });
-
-                    ctx.strokeStyle = '#FF2222';
-                    ctx.lineWidth = 2;
-
-                    config.alcance.forEach(([dx, dy]) => {
-                        if (dx === 0 && dy === 0) return;
-                        const alvoX = obj.x + dx;
-                        const alvoY = obj.y + dy;
-
-                        if (alvoX >= 0 && alvoX < this.config.largura && alvoY >= 0 && alvoY < this.config.altura) {
-                            const px = alvoX * tamanho;
-                            const py = alvoY * tamanho;
-
-                            if (!config.alcance.some(([nx, ny]) => nx === dx && ny === dy - 1)) {
-                                ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + tamanho, py); ctx.stroke();
-                            }
-                            if (!config.alcance.some(([nx, ny]) => nx === dx && ny === dy + 1)) {
-                                ctx.beginPath(); ctx.moveTo(px, py + tamanho); ctx.lineTo(px + tamanho, py + tamanho); ctx.stroke();
-                            }
-                            if (!config.alcance.some(([nx, ny]) => nx === dx - 1 && ny === dy)) {
-                                ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py + tamanho); ctx.stroke();
-                            }
-                            if (!config.alcance.some(([nx, ny]) => nx === dx + 1 && ny === dy)) {
-                                ctx.beginPath(); ctx.moveTo(px + tamanho, py); ctx.lineTo(px + tamanho, py + tamanho); ctx.stroke();
-                            }
-                        }
-                    });
-
-                    if (florVinculada) {
-                        const cX = (obj.x + 0.5) * tamanho;
-                        const cY = (obj.y + 0.5) * tamanho;
-                        const fX = (florVinculada.x + 0.5) * tamanho;
-                        const fY = (florVinculada.y + 0.5) * tamanho;
-
-                        ctx.beginPath();
-                        ctx.moveTo(cX, cY);
-                        ctx.lineTo(fX, fY);
-                        ctx.strokeStyle = 'rgba(255, 215, 0, 0.85)';
-                        ctx.lineWidth = 2;
-                        ctx.setLineDash([4, 4]);
-                        ctx.stroke();
-                        ctx.setLineDash([]);
-                    }
-
-                } else {
-                    const corOriginal = this.coresAlcance[config.categoria];
-                    if (corOriginal) {
-                        ctx.fillStyle = corOriginal;
-                        config.alcance.forEach(([dx, dy]) => {
-                            const alvoX = obj.x + dx;
-                            const alvoY = obj.y + dy;
-                            
-                            if (alvoX >= 0 && alvoX < this.config.largura && alvoY >= 0 && alvoY < this.config.altura) {
-                                ctx.fillRect(
-                                    alvoX * this.config.tamanhoCelula, 
-                                    alvoY * this.config.tamanhoCelula, 
-                                    this.config.tamanhoCelula, 
-                                    this.config.tamanhoCelula
-                                );
-                            }
-                        });
-                    }
+                if (distManhattan < menorDistancia) {
+                    menorDistancia = distManhattan;
+                    menorAngulo = anguloAjustado;
+                    melhorFlor = flor;
+                } else if (distManhattan === menorDistancia && anguloAjustado < menorAngulo) {
+                    menorAngulo = anguloAjustado;
+                    melhorFlor = flor;
                 }
             }
         });
-    },
+        return melhorFlor;
+    };
+
+    // 3. Renderização dos Objetos
+    this.estado.objetos.forEach(obj => {
+        const config = this.objetosConfig[obj.tipo];
+        if (!config) return;
+
+        const larg = config.dimensao ? config.dimensao[0] : 1;
+        const alt = config.dimensao ? config.dimensao[1] : 1;
+        const tamanho = this.config.tamanhoCelula;
+
+        const florVinculada = (config.categoria === 'cMel') 
+            ? obterFlorPrioritaria(obj.x, obj.y) 
+            : null;
+
+        // --- RENDERIZAÇÃO DOS SPRITES NO GRID (DIVs) ---
+        for (let dy = 0; dy < alt; dy++) {
+            for (let dx = 0; dx < larg; dx++) {
+                const alvoX = obj.x + dx;
+                const alvoY = obj.y + dy;
+                const celulaDOM = document.querySelector(`.celula-grade[data-x="${alvoX}"][data-y="${alvoY}"]`);
+                if (!celulaDOM) continue;
+
+                const divSprite = document.createElement('div');
+                
+                if (config.isPiso) {
+                    divSprite.className = `objeto-sprite tile-${obj.tipo} mask-${obj.mask || 0}`;
+                    divSprite.style.width = '32px';
+                    divSprite.style.height = '32px';
+                    divSprite.style.transform = 'scale(1.5)';
+                    divSprite.style.transformOrigin = 'top left';
+                    divSprite.style.zIndex = '2'; // Piso fica no 2 (acima do CanvasF fundo)
+                } else {
+                    if (larg > 1 || alt > 1) {
+                        divSprite.classList.add('objeto-sprite', `tile-${obj.tipo}-${dx}-${dy}`);
+                    } else {
+                        divSprite.classList.add('objeto-sprite', `tile-${obj.tipo}`);
+                    }
+                    divSprite.style.zIndex = '5'; // Objetos ficam no 5
+                    if (larg === 1 && alt === 1) divSprite.style.transform = 'none';
+                }
+
+                divSprite.style.position = 'absolute';
+                divSprite.style.top = '0';
+                divSprite.style.left = '0';
+                divSprite.style.width = '100%';
+                divSprite.style.height = '100%';
+                divSprite.style.pointerEvents = 'none';
+
+                if (dx === 0 && dy === 0 && florVinculada) {
+                    const badgeFlor = document.createElement('div');
+                    badgeFlor.classList.add('badge-flor-colmeia', `tile-${florVinculada.tipo}`);
+                    divSprite.appendChild(badgeFlor);
+                }
+                celulaDOM.appendChild(divSprite);
+            }
+        }
+
+        // --- RENDERIZAÇÃO DE ALCANCES (CANVASES) ---
+        if (this.estado.visibilidade[config.categoria] && config.alcance && config.alcance.length > 0) {
+            
+            if (config.categoria === 'cMel') {
+                config.alcance.forEach(([dx, dy]) => {
+                    if (dx === 0 && dy === 0) return;
+                    const ax = obj.x + dx;
+                    const ay = obj.y + dy;
+
+                    if (ax >= 0 && ax < this.config.largura && ay >= 0 && ay < this.config.altura) {
+                        const px = ax * tamanho;
+                        const py = ay * tamanho;
+                        const ehFlorAtiva = florVinculada && (ax === florVinculada.x && ay === florVinculada.y);
+
+                        // FUNDO: Cor mel translúcida
+                        ctxF.fillStyle = 'rgba(255, 180, 0, 0.18)';
+                        ctxF.fillRect(px, py, tamanho, tamanho);
+
+                        // TOPO: Destaque da flor ativa e bordas vermelhas
+                        if (ehFlorAtiva) {
+                            ctxT.fillStyle = 'rgba(255, 215, 0, 0.35)'; // Brilho sobre a flor
+                            ctxT.fillRect(px, py, tamanho, tamanho);
+                            ctxT.strokeStyle = '#FFFFFF';
+                            ctxT.lineWidth = 3;
+                            ctxT.strokeRect(px + 2, py + 2, tamanho - 4, tamanho - 4);
+                        }
+
+                        // Bordas de limite vermelhas (ctxT para ficar sobre o piso)
+                        ctxT.strokeStyle = '#FF2222';
+                        ctxT.lineWidth = 2;
+                        if (!config.alcance.some(([nx, ny]) => nx === dx && ny === dy - 1)) {
+                            ctxT.beginPath(); ctxT.moveTo(px, py); ctxT.lineTo(px + tamanho, py); ctxT.stroke();
+                        }
+                        if (!config.alcance.some(([nx, ny]) => nx === dx && ny === dy + 1)) {
+                            ctxT.beginPath(); ctxT.moveTo(px, py + tamanho); ctxT.lineTo(px + tamanho, py + tamanho); ctxT.stroke();
+                        }
+                        if (!config.alcance.some(([nx, ny]) => nx === dx - 1 && ny === dy)) {
+                            ctxT.beginPath(); ctxT.moveTo(px, py); ctxT.lineTo(px, py + tamanho); ctxT.stroke();
+                        }
+                        if (!config.alcance.some(([nx, ny]) => nx === dx + 1 && ny === dy)) {
+                            ctxT.beginPath(); ctxT.moveTo(px + tamanho, py); ctxT.lineTo(px + tamanho, py + tamanho); ctxT.stroke();
+                        }
+                    }
+                });
+
+                // TOPO: Linha pontilhada vinculando colmeia à flor
+                if (florVinculada) {
+                    ctxT.beginPath();
+                    ctxT.setLineDash([6, 6]);
+                    ctxT.moveTo((obj.x + 0.5) * tamanho, (obj.y + 0.5) * tamanho);
+                    ctxT.lineTo((florVinculada.x + 0.5) * tamanho, (florVinculada.y + 0.5) * tamanho);
+                    ctxT.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+                    ctxT.lineWidth = 2;
+                    ctxT.stroke();
+                    ctxT.setLineDash([]);
+                }
+
+            } else {
+                // Irrigação e Proteção: Apenas preenchimento no FUNDO
+                const corOriginal = this.coresAlcance[config.categoria];
+                if (corOriginal) {
+                    ctxF.fillStyle = corOriginal;
+                    config.alcance.forEach(([dx, dy]) => {
+                        const ax = obj.x + dx;
+                        const ay = obj.y + dy;
+                        if (ax >= 0 && ax < this.config.largura && ay >= 0 && ay < this.config.altura) {
+                            ctxF.fillRect(ax * tamanho, ay * tamanho, tamanho, tamanho);
+                        }
+                    });
+                }
+            }
+        }
+    });
+},
 
     construirControles: function() {
         const container = document.getElementById('controles-container');
@@ -765,19 +761,19 @@ colocarObjeto: function(x, y, tipo) {
         ];
 
         const caminhos = [
-            { id: 'piso1', nome: 'Caminho de Madeira' },
-            { id: 'piso2', nome: 'Caminho de Pedra' },
-            { id: 'piso3', nome: 'Caminho de Palha' },
-            { id: 'piso4', nome: 'Caminho de Cristal' },
-            { id: 'piso5', nome: 'Caminho de Grama' },
-            { id: 'piso6', nome: 'Caminho de Terra' },
-            { id: 'piso7', nome: 'Caminho Placa de Madeira' },
-            { id: 'piso8', nome: 'Caminho de Cascalho' },
-            { id: 'piso9', nome: 'Caminho de Pedregulho' },
-            { id: 'piso10', nome: 'Caminho de Lajota' },
-            { id: 'piso11', nome: 'Caminho de Tijolo Vermelho' },
-            { id: 'piso12', nome: 'Caminho de Tijolo Escuro' },
-            { id: 'piso13', nome: 'Caminho de Tronco' }
+            { id: 'piso1', nome: 'Piso de Madeira' },
+            { id: 'piso2', nome: 'piso de Pedra' },
+            { id: 'piso3', nome: 'piso desgastado' },
+            { id: 'piso4', nome: 'piso de Cristal' },
+            { id: 'piso5', nome: 'piso de palha' },
+            { id: 'piso6', nome: 'caminho de cascalho' },
+            { id: 'piso7', nome: 'caminho de Madeira' },
+            { id: 'piso8', nome: 'caminho de cristal' },
+            { id: 'piso9', nome: 'caminho arredondado de pedra' },
+            { id: 'piso10', nome: 'caminho de pedras polidas' },
+            { id: 'piso11', nome: 'caminho de Tijolos' },
+            { id: 'piso12', nome: 'piso rústico de tábuas' },
+            { id: 'piso13', nome: 'piso passarela de pedras' }
         ];
 
         const criarBotao = (tipo, container, isMaster = false) => {
@@ -881,7 +877,6 @@ colocarObjeto: function(x, y, tipo) {
                 const objConfig = this.objetosConfig[obj.tipo];
                 const objLarg = (objConfig && objConfig.dimensao) ? objConfig.dimensao[0] : 1;
                 const objAlt = (objConfig && objConfig.dimensao) ? objConfig.dimensao[1] : 1;
-
                 return (x >= obj.x && x < obj.x + objLarg && y >= obj.y && y < obj.y + objAlt);
             });
 
@@ -890,10 +885,11 @@ colocarObjeto: function(x, y, tipo) {
                 const xAntigo = objRemovido.x;
                 const yAntigo = objRemovido.y;
 
+                // 1. REMOVE PRIMEIRO
                 this.estado.objetos = this.estado.objetos.filter(obj => obj !== objRemovido);
 
-                // Recalcula vizinhos para fechar as bordas ao apagar um piso
-                if (this.objetosConfig[tipoAntigo] && this.objetosConfig[tipoAntigo].isPiso) {
+                // 2. RECALCULA DEPOIS (Os vizinhos agora verão que o tile sumiu do array)
+                if (this.objetosConfig[tipoAntigo]?.isPiso) {
                     this.recalcularBitmasksVizinhos(xAntigo, yAntigo, tipoAntigo);
                 }
                 this.renderizarObjetos();
