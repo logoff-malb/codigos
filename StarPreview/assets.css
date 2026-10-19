@@ -346,3 +346,82 @@
 .tile-piso11::before { background-position: -608px -416px !important; }
 .tile-piso12::before { background-position: 0px -1120px !important; }
 .tile-piso13::before { background-position: -32px -1120px !important; }
+
+/* --------------------------------------------------------------------------
+   8. NOVO SISTEMA DE CERCAS (RECURSOS/CERCAS.PNG)
+   -------------------------------------------------------------------------- */
+
+/* --- 8.1 ÍCONES NO MENU (objetos1.png - Uso exclusivo nos BOTÕES) --- */
+
+/* Alvos: Apenas os elementos de interface (menu e submenus) */
+.botao-ferramenta[class*="tile-cerca"]::before,
+.botao-variante[class*="tile-cerca"]::before {
+    background-image: url('recursos/objetos1.png') !important;
+    background-size: 768px auto !important;
+    width: 32px !important;
+    height: 32px !important;
+    transform: none !important; /* Reseta escalas do grid */
+    top: 0 !important;
+    left: 0 !important;
+    position: relative !important;
+}
+
+/* Offsets dos Itens no Menu (objetos1.png) */
+.tile-cerca1_f::before { background-position: -320px -416px !important; } /* Cerca Madeira */
+.tile-cerca1_g::before { background-position: -416px -416px !important; } /* Portão Madeira */
+
+.tile-cerca2_f::before { background-position: -320px -384px !important; } /* Cerca madeira de lei */
+.tile-cerca2_g::before { background-position: -416px -416px !important; } /* Portão Madeira de Lei */
+
+.tile-cerca3_f::before { background-position: -352px -416px !important; } /* Cerca Pedra */
+.tile-cerca3_g::before { background-position: -416px -416px !important; } /* Portão Pedra */
+
+.tile-cerca4_f::before { background-position: -384px -416px !important; } /* Cerca Ferro */
+.tile-cerca4_g::before { background-position: -416px -416px !important; } /* Portão Ferro */
+/* Ícone único de Portão para todos os materiais no menu */
+[class*="tile-cerca"][class*="_g"]::before { background-position: -416px -416px !important; }
+
+
+/* --- 8.2 RENDERIZAÇÃO NO GRID (cerca(n).png - Sprite de 1x2 vertical) --- */
+
+/* Alvos: Apenas os objetos posicionados dentro da fazenda */
+.celula-grade .objeto-sprite[class*="tile-cerca"] {
+    /* 1. Troca o arquivo e o tamanho da folha para a folha de 16px */
+    background-image: none; /* Limpa o fallback do objetos1 */
+    background-size: 48px auto !important; /* 3 colunas de 16px */
+    
+    /* 2. Dimensões: 1x2 tiles (16px largura por 32px altura) */
+    width: 16px !important;
+    height: 32px !important; 
+    
+    /* 3. Escala: 3x para converter 16px em 48px (tamanho da sua célula) */
+    transform: scale(3) !important;
+    transform-origin: top left !important;
+    
+    /* 4. Ancoragem: Sobe 48px (1 célula) para o topo avançar na célula acima */
+    top: -48px !important; 
+    left: 0 !important;
+    
+    z-index: 4 !important;
+    image-rendering: pixelated;
+}
+
+/* Injeção das texturas de 16px exclusivas para o GRID */
+.celula-grade .tile-cerca1_f, .celula-grade .tile-cerca1_g { background-image: url('recursos/cerca1.png') !important; }
+.celula-grade .tile-cerca2_f, .celula-grade .tile-cerca2_g { background-image: url('recursos/cerca2.png') !important; }
+.celula-grade .tile-cerca3_f, .celula-grade .tile-cerca3_g { background-image: url('recursos/cerca3.png') !important; }
+.celula-grade .tile-cerca4_f, .celula-grade .tile-cerca4_g { background-image: url('recursos/cerca4.png') !important; }
+
+/* Mapeamento Bitmask (Ajustado para fatias verticais de 32px de altura) */
+/* X (Colunas de 16px) */
+.celula-grade [class*="tile-cerca"][class*="fmask-0-"] { background-position-x: 0px !important; }
+.celula-grade [class*="tile-cerca"][class*="fmask-1-"] { background-position-x: -16px !important; }
+.celula-grade [class*="tile-cerca"][class*="fmask-2-"] { background-position-x: -32px !important; }
+
+/* Y (O deslocamento aponta para o topo do sprite duplo na folha de cercas) */
+.celula-grade .fmask-0-0, .celula-grade .fmask-1-0, .celula-grade .fmask-2-0 { background-position-y: 0px !important; }
+.celula-grade .fmask-0-1, .celula-grade .fmask-1-1, .celula-grade .fmask-2-1 { background-position-y: -16px !important; }
+.celula-grade .fmask-0-2, .celula-grade .fmask-1-2, .celula-grade .fmask-2-2 { background-position-y: -32px !important; }
+.celula-grade .fmask-0-3 { background-position-y: -48px !important; }
+.celula-grade .fmask-0-4 { background-position-y: -64px !important; } /* Portão H */
+.celula-grade .fmask-0-5 { background-position-y: -80px !important; } /* Portão V */

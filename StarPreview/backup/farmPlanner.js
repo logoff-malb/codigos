@@ -607,6 +607,7 @@ const FarmPlanner = {
         const subEspantalhos = document.getElementById('submenu-espantalhos');
         const subFlores = document.getElementById('submenu-flores');
         const subColmeias = document.getElementById('submenu-colmeias');
+        const subCercas = document.getElementById('submenu-cercas'); 
 
         if (subAspersores) subAspersores.innerHTML = '';
         if (subEspantalhos) subEspantalhos.innerHTML = '';
@@ -661,6 +662,17 @@ const FarmPlanner = {
             { id: 'pedraAzul2', nome: 'Grande pedra azul' },
             { id: 'obMeteorito', nome: 'Meteorito' }
         ];
+                // DEFINIÇÃO DAS CERCAS
+        const cercas = [
+            { id: 'cerca1_f', nome: 'Cerca de Madeira' },
+            { id: 'cerca1_g', nome: 'Portão' },
+            { id: 'cerca2_f', nome: 'Cerca de Pedra' },
+            { id: 'cerca2_g', nome: 'Portão' },
+            { id: 'cerca3_f', nome: 'Cerca de Ferro' },
+            { id: 'cerca3_g', nome: 'Portão' },
+            { id: 'cerca4_f', nome: 'Cerca de Madeira de Lei' },
+            { id: 'cerca4_g', nome: 'Portão' }
+        ];
 
         const areaMaster_obstaculos = document.getElementById('btn-master-obstaculos-container');
         if (areaMaster_obstaculos) {
@@ -679,6 +691,7 @@ const FarmPlanner = {
         if (subEspantalhos) espantalhos.forEach(esp => criarBotao(esp, subEspantalhos));
         if (subFlores) flores.forEach(flr => criarBotao(flr, subFlores));
         if (subColmeias) colmeias.forEach(col => criarBotao(col, subColmeias));
+        if (subCercas) cercas.forEach(cer => criarBotao(cer, subCercas));
 
         const areaMasterAsp = document.getElementById('btn-master-aspersores-container');
         if (areaMasterAsp) {
@@ -714,6 +727,17 @@ const FarmPlanner = {
             const btnObelisco = criarBotao({ id: 'miniObelisco', nome: 'Mini-Obelisco' }, areaObelisco, true);
             btnObelisco.id = 'btn-obelisco';
         }
+
+        
+        // MASTER DAS CERCAS
+        const areaMasterCercas = document.getElementById('btn-master-cercas-container');
+        if (areaMasterCercas) {
+            areaMasterCercas.innerHTML = '';
+            const masterCerca = criarBotao({ id: 'cerca1_f', nome: 'Cercas' }, areaMasterCercas, true);
+            masterCerca.id = 'btn-master-cercas';
+        }
+        
+
 
         this.selecionarFerramenta('aspersorC');
     },

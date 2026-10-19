@@ -249,6 +249,13 @@ const FarmPlanner = {
                 isPiso: true,
                 indexPiso: i - 1 // Mapeamento vertical no pisos.png
             };
+            // cadastro dinamico das cercas
+            const materiaisCerca = ['cerca1', 'cerca2', 'cerca3', 'cerca4'];
+            materiaisCerca.forEach(mat => {
+                config[`${mat}_f`] = { categoria: 'Cercas', material: mat, subtipo: 'f', isCerca: true, dimensao: [1,1], alcance: [] };
+                config[`${mat}_g`] = { categoria: 'Cercas', material: mat, subtipo: 'g', isCerca: true, dimensao: [1,1], alcance: [] };
+                config[`${mat}_b`] = { categoria: 'Cercas', material: mat, subtipo: 'b', isCerca: true, dimensao: [1,1], alcance: [] };
+            });
         }
 
         return config;
@@ -314,31 +321,6 @@ const FarmPlanner = {
         container.appendChild(canvasFundo);
         container.appendChild(canvasTopo);
 
-    // Grid HTML
-    for (let i = 0; i < (this.config.largura * this.config.altura); i++) {
-        const x = i % this.config.largura;
-        const y = Math.floor(i / this.config.largura);
-
-        const celula = document.createElement('div');
-        celula.classList.add('celula-grade');
-        celula.dataset.x = x;
-        celula.dataset.y = y;
-        celula.style.position = 'relative';
-        celula.style.zIndex = '2'; // Células ficam entre os dois canvases
-        
-        celula.oncontextmenu = (e) => e.preventDefault();
-        celula.onmousedown = (e) => {
-            this.estado.botaoPressionado = (e.button === 2) ? 'direito' : 'esquerdo';
-            this.gerenciarClique(celula, this.estado.botaoPressionado);
-        };
-        celula.onmouseenter = () => {
-            if (this.estado.botaoPressionado) {
-                this.gerenciarClique(celula, this.estado.botaoPressionado);
-            }
-        };
-        container.appendChild(celula);
-    }
-
         // Grid HTML
         for (let i = 0; i < (this.config.largura * this.config.altura); i++) {
             const x = i % this.config.largura;
@@ -365,7 +347,9 @@ const FarmPlanner = {
                 // Lógica de Pintura: Só pinta no arrasto se for Botão Direito (Borracha)
                 // OU se for Botão Esquerdo COM ferramenta de PISO selecionada.
                 if (this.estado.botaoPressionado) {
-                    if (this.estado.botaoPressionado === 'direito' || this.ferramentaAtual.startsWith('piso')) {
+                    if (this.estado.botaoPressionado === 'direito' || 
+                        this.ferramentaAtual.startsWith('piso') || 
+                        this.ferramentaAtual.startsWith('cerca')) { 
                         this.gerenciarClique(celula, this.estado.botaoPressionado);
                     }
                 }
@@ -393,7 +377,7 @@ const FarmPlanner = {
         if (viewport) {
             viewport.addEventListener('mousedown', (e) => {
                 // DESATIVA ARRASTO DA CÂMERA SE FOR PISO (para permitir pintura)
-                if (this.ferramentaAtual.startsWith('piso')) return;
+                if (this.ferramentaAtual.startsWith('piso')|| this.ferramentaAtual.startsWith('cerca')) return;
 
                 if (e.button === 0) { // Só arrasta com o botão esquerdo
                     isDown = true;
@@ -418,6 +402,53 @@ const FarmPlanner = {
             });
         }
     },
+    // --- Lógica de Conexão Inteligente de Cercas ---
+   recalcularConexaoCerca: function(x, y, tipoCerca) {
+    const configAlvo = this.objetosConfig[tipoCerca];
+    if (!configAlvo || !configAlvo.material) return;
+    const mat = configAlvo.material;
+
+    const atualizar = (cx, cy) => {
+        const alvo = this.estado.objetos.find(o => o.x === cx && o.y === cy && o.tipo.startsWith(mat));
+        if (!alvo) return;
+
+        if (this.objetosConfig[alvo.tipo].subtipo === 'g') {
+            const vizV = this.estado.objetos.some(o => o.x === cx && (o.y === cy-1 || o.y === cy+1) && o.tipo.startsWith(mat));
+            alvo.fmask = vizV ? "portao-v" : "portao-h";
+            return;
+        }
+
+        // Bitmask: N=1, L=2, S=4, O=8
+        let mask = 0;
+        if (this.estado.objetos.some(o => o.x === cx && o.y === cy - 1 && o.tipo.startsWith(mat))) mask += 1;
+        if (this.estado.objetos.some(o => o.x + 1 === cx + 1 && o.x === cx + 1 && o.y === cy && o.tipo.startsWith(mat))) mask += 2;
+        if (this.estado.objetos.some(o => o.x === cx && o.y === cy + 1 && o.tipo.startsWith(mat))) mask += 4;
+        if (this.estado.objetos.some(o => o.x === cx - 1 && o.y === cy && o.tipo.startsWith(mat))) mask += 8;
+
+        // Mapeamento para as classes CSS (Coluna-Linha da spritesheet)
+        const mapaFmask = {
+            0:  "1-1", // Isolado
+            1:  "2-1", // Só Norte (Base Vertical)
+            2:  "0-2", // Só Leste (Ponta Esquerda)
+            3:  "0-3", // Norte + Leste (Quina BL)
+            4:  "0-1", // Só Sul (Topo Vertical)
+            5:  "0-0", // Norte + Sul (Meio Vertical)
+            6:  "2-0", // Sul + Leste (Quina TL)
+            7:  "1-0", // N+S+L (T-Vertical virado pra Direita)
+            8:  "2-2", // Só Oeste (Ponta Direita)
+            9:  "1-3", // Norte + Oeste (Quina BR)
+            10: "1-2", // Leste + Oeste (Meio Horizontal)
+            11: "2-3", // N+L+O (T-Horizontal virado pra Cima)
+            12: "1-1", // Sul + Oeste (Quina TR) -> ajuste manual se necessário
+            13: "0-3", // N+S+O (T-Vertical virado pra Esquerda)
+            14: "0-3", // S+L+O (T-Horizontal virado pra Baixo)
+            15: "1-2"  // Cruzamento (Centro)
+        };
+        alvo.fmask = mapaFmask[mask] || "1-1";
+    };
+
+    [ [x,y], [x,y-1], [x,y+1], [x+1,y], [x-1,y] ].forEach(([nx, ny]) => atualizar(nx, ny));
+},
 
     // Lógica Matemática de Bitmasking para Caminhos
     recalcularBitmasksVizinhos: function(x, y, tipoPiso) {
@@ -426,6 +457,8 @@ const FarmPlanner = {
         { dx: 1, dy: 0,  bit: 2 }, // Leste
         { dx: 0, dy: 1,  bit: 4 }, // Sul
         { dx: -1, dy: 0, bit: 8 }  // Oeste
+
+        
     ];
     const mapaSV = {
         // SEÇÃO 1: ISOLADO
@@ -455,6 +488,24 @@ const FarmPlanner = {
         11: 10,  // (2,2) - Borda Baixo (Vizinhos N+E+W)
         9:  11   // (2,3) - Quina BR (Vizinhos N+W)
     };
+    const mapaCercas = {
+        // [Coluna, Linha] da spritesheet 3x10
+        isolado:  [1, 1],
+        
+        // Conexões Verticais (Seção Vertical)
+        verticalTopo: [1, 0], 
+        verticalMeio: [0, 0], // Você descreveu 0x0 como ancora direita, mas no padrão SDV 0,0 e 0,2 são as extremidades verticais
+        verticalBase: [3, 0], // Seguindo sua lógica de Row 1, 2, 3...
+
+        // Conexões Horizontais (Row 2)
+        horizontalEsq:  [0, 2],
+        horizontalMeio: [1, 2],
+        horizontalDir:  [2, 2],
+
+        // Portões (Baseado nas suas fileiras 4 a 9)
+        portaoH: [0, 4], // Portão horizontal conectado
+        portaoV: [0, 5], // Portão vertical conectado
+    };
     const atualizarPonto = (cx, cy) => {
             const alvo = this.estado.objetos.find(o => o.x === cx && o.y === cy && o.tipo === tipoPiso);
             if (!alvo) return;
@@ -472,64 +523,82 @@ const FarmPlanner = {
             // Aplica o remapeamento para os índices 0-15 da spritesheet
             alvo.mask = mapaSV[somaBinaria] ?? 0;
         };
-
+        
         // Executa a atualização no ponto clicado e nos 4 vizinhos
         atualizarPonto(x, y);
         direcoes.forEach(dir => atualizarPonto(x + dir.dx, y + dir.dy));
 },
-    colocarObjeto: function(x, y, tipo) {
-        const config = this.objetosConfig[tipo];
-        if (!config) return;
+colocarObjeto: function(x, y, tipo) {
+    const config = this.objetosConfig[tipo];
+    if (!config) return;
 
-        // 1. ANTES DE APAGAR, verifica se havia um piso naquela célula
-        const objetoAntigo = this.estado.objetos.find(obj => obj.x === x && obj.y === y);
-        const tipoAntigoPiso = (objetoAntigo && this.objetosConfig[objetoAntigo.tipo]?.isPiso) 
-                            ? objetoAntigo.tipo 
-                            : null;
+    // 1. ANTES DE APAGAR: Verifica o que existia para atualizar os vizinhos depois
+    const objetoAntigo = this.estado.objetos.find(obj => obj.x === x && obj.y === y);
+    
+    // Captura o tipo antigo se for Piso ou Cerca
+    const tipoAntigoPiso = (objetoAntigo && this.objetosConfig[objetoAntigo.tipo]?.isPiso) 
+                        ? objetoAntigo.tipo 
+                        : null;
+    const tipoAntigoCerca = (objetoAntigo && this.objetosConfig[objetoAntigo.tipo]?.isCerca) 
+                        ? objetoAntigo.tipo 
+                        : null;
 
-         // 2. Validação de limite máximo
-        if (config.limiteMaximo) {
-            const quantidadeAtual = this.estado.objetos.filter(obj => obj.tipo === tipo).length;
-            const jaExisteAqui = this.estado.objetos.some(obj => obj.x === x && obj.y === y && obj.tipo === tipo);
+    // 2. Validação de limite máximo (ex: Mini-Obelisco)
+    if (config.limiteMaximo) {
+        const quantidadeAtual = this.estado.objetos.filter(obj => obj.tipo === tipo).length;
+        const jaExisteAqui = this.estado.objetos.some(obj => obj.x === x && obj.y === y && obj.tipo === tipo);
 
-            if (quantidadeAtual >= config.limiteMaximo && !jaExisteAqui) {
-                return;
-            }
-        }                    
-
-        // 2. Lógica de colisão (AABB) - Remove o que estiver no caminho
-        this.estado.objetos = this.estado.objetos.filter(obj => {
-            const objConfig = this.objetosConfig[obj.tipo];
-            const objLarg = objConfig?.dimensao?.[0] || 1;
-            const objAlt = objConfig?.dimensao?.[1] || 1;
-            
-            const colide = (x < obj.x + objLarg && x + 1 > obj.x && 
-                            y < obj.y + objAlt && y + 1 > obj.y);
-            return !colide;
-        });
-
-        // 3. Adiciona o novo objeto
-        this.estado.objetos.push({ x, y, tipo });
-
-        // 4. SE o que você colocou é um PISO, recalcula vizinhos para o novo tipo
-        if (config.isPiso) {
-            this.recalcularBitmasksVizinhos(x, y, tipo);
+        if (quantidadeAtual >= config.limiteMaximo && !jaExisteAqui) {
+            return;
         }
+    }                    
 
-        // 5. O SEGREDO: Se você apagou um piso antigo para colocar esse novo objeto,
-        // os vizinhos daquele piso antigo precisam saber que ele sumiu!
-        if (tipoAntigoPiso && tipoAntigoPiso !== tipo) {
-            this.recalcularBitmasksVizinhos(x, y, tipoAntigoPiso);
-        }
+    // 3. Lógica de colisão (AABB) - Remove o que estiver no caminho
+    this.estado.objetos = this.estado.objetos.filter(obj => {
+        const objConfig = this.objetosConfig[obj.tipo];
+        const objLarg = objConfig?.dimensao?.[0] || 1;
+        const objAlt = objConfig?.dimensao?.[1] || 1;
+        
+        const colide = (x < obj.x + objLarg && x + 1 > obj.x && 
+                        y < obj.y + objAlt && y + 1 > obj.y);
+        return !colide;
+    });
 
-        this.renderizarObjetos();
+    // 4. Adiciona o novo objeto
+    const novoObjeto = { x, y, tipo };
+    
+    // IMPORTANTE: Se for cerca, nasce com fmask padrão para ativar o CSS 8.2 instantaneamente
+    if (config.isCerca) {
+        novoObjeto.fmask = "1-1"; 
+    }
+
+    this.estado.objetos.push(novoObjeto);
+
+    // 5. Recalcula vizinhos do NOVO objeto que acabou de ser colocado
+    if (config.isPiso) {
+        this.recalcularBitmasksVizinhos(x, y, tipo);
+    } else if (config.isCerca) {
+        this.recalcularConexaoCerca(x, y, tipo);
+    }
+
+    // 6. ATUALIZA VIZINHOS DOS OBJETOS REMOVIDOS
+    // Se você apagou um piso antigo, os vizinhos dele precisam saber
+    if (tipoAntigoPiso && tipoAntigoPiso !== tipo) {
+        this.recalcularBitmasksVizinhos(x, y, tipoAntigoPiso);
+    }
+    
+    // Se você apagou uma cerca antiga, os vizinhos dela precisam saber
+    if (tipoAntigoCerca && tipoAntigoCerca !== tipo) {
+        this.recalcularConexaoCerca(x, y, tipoAntigoCerca);
+    }
+
+    this.renderizarObjetos();
 },
 
-    renderizarObjetos: function() {
+renderizarObjetos: function() {
     // 1. Limpa os sprites do DOM
     document.querySelectorAll('.objeto-sprite').forEach(el => el.remove());
 
-    // 2. Prepara os Canvases (Fundo e Topo)
     const canvasF = document.getElementById('canvas-alcances-fundo');
     const canvasT = document.getElementById('canvas-alcances-topo');
     if (!canvasF || !canvasT) return;
@@ -545,23 +614,17 @@ const FarmPlanner = {
         let melhorFlor = null;
         let menorDistancia = Infinity;
         let menorAngulo = Infinity;
-
         listaFlores.forEach(flor => {
             const dx = flor.x - colmeiaX;
             const dy = flor.y - colmeiaY;
             const distManhattan = Math.abs(dx) + Math.abs(dy);
-
             if (distManhattan > 0 && distManhattan <= 5) {
                 let angulo = Math.atan2(dy, dx) * (180 / Math.PI);
                 let anguloAjustado = (angulo - 180 + 360) % 360;
-
                 if (distManhattan < menorDistancia) {
-                    menorDistancia = distManhattan;
-                    menorAngulo = anguloAjustado;
-                    melhorFlor = flor;
+                    menorDistancia = distManhattan; menorAngulo = anguloAjustado; melhorFlor = flor;
                 } else if (distManhattan === menorDistancia && anguloAjustado < menorAngulo) {
-                    menorAngulo = anguloAjustado;
-                    melhorFlor = flor;
+                    menorAngulo = anguloAjustado; melhorFlor = flor;
                 }
             }
         });
@@ -576,12 +639,8 @@ const FarmPlanner = {
         const larg = config.dimensao ? config.dimensao[0] : 1;
         const alt = config.dimensao ? config.dimensao[1] : 1;
         const tamanho = this.config.tamanhoCelula;
+        const florVinculada = (config.categoria === 'cMel') ? obterFlorPrioritaria(obj.x, obj.y) : null;
 
-        const florVinculada = (config.categoria === 'cMel') 
-            ? obterFlorPrioritaria(obj.x, obj.y) 
-            : null;
-
-        // --- RENDERIZAÇÃO DOS SPRITES NO GRID (DIVs) ---
         for (let dy = 0; dy < alt; dy++) {
             for (let dx = 0; dx < larg; dx++) {
                 const alvoX = obj.x + dx;
@@ -590,30 +649,38 @@ const FarmPlanner = {
                 if (!celulaDOM) continue;
 
                 const divSprite = document.createElement('div');
-                
-                if (config.isPiso) {
+                divSprite.style.position = 'absolute';
+                divSprite.style.pointerEvents = 'none';
+
+                // --- LOGICA DE CLASSES E ESTILOS (UNIFICADA) ---
+                if (config.isCerca) {
+                    // DEIXA O CSS (assets.css) CONTROLAR WIDTH/HEIGHT/SCALE
+                    divSprite.className = `objeto-sprite tile-${obj.tipo} fmask-${obj.fmask || '1-1'}`;
+                    divSprite.style.zIndex = '4';
+                } 
+                else if (config.isPiso) {
                     divSprite.className = `objeto-sprite tile-${obj.tipo} mask-${obj.mask || 0}`;
                     divSprite.style.width = '32px';
                     divSprite.style.height = '32px';
                     divSprite.style.transform = 'scale(1.5)';
                     divSprite.style.transformOrigin = 'top left';
-                    divSprite.style.zIndex = '2'; // Piso fica no 2 (acima do CanvasF fundo)
-                } else {
+                    divSprite.style.zIndex = '2';
+                    divSprite.style.top = '0';
+                    divSprite.style.left = '0';
+                } 
+                else {
+                    // OBJETOS GERAIS (Aspersores, Espantalhos, Flores)
                     if (larg > 1 || alt > 1) {
                         divSprite.classList.add('objeto-sprite', `tile-${obj.tipo}-${dx}-${dy}`);
                     } else {
                         divSprite.classList.add('objeto-sprite', `tile-${obj.tipo}`);
                     }
-                    divSprite.style.zIndex = '5'; // Objetos ficam no 5
-                    if (larg === 1 && alt === 1) divSprite.style.transform = 'none';
+                    divSprite.style.zIndex = '5';
+                    divSprite.style.width = '100%';
+                    divSprite.style.height = '100%';
+                    divSprite.style.top = '0';
+                    divSprite.style.left = '0';
                 }
-
-                divSprite.style.position = 'absolute';
-                divSprite.style.top = '0';
-                divSprite.style.left = '0';
-                divSprite.style.width = '100%';
-                divSprite.style.height = '100%';
-                divSprite.style.pointerEvents = 'none';
 
                 if (dx === 0 && dy === 0 && florVinculada) {
                     const badgeFlor = document.createElement('div');
@@ -666,6 +733,7 @@ const FarmPlanner = {
                         if (!config.alcance.some(([nx, ny]) => nx === dx + 1 && ny === dy)) {
                             ctxT.beginPath(); ctxT.moveTo(px + tamanho, py); ctxT.lineTo(px + tamanho, py + tamanho); ctxT.stroke();
                         }
+                        
                     }
                 });
 
@@ -727,12 +795,14 @@ const FarmPlanner = {
         const subFlores = document.getElementById('submenu-flores');
         const subColmeias = document.getElementById('submenu-colmeias');
         const subPisos = document.getElementById('submenu-pisos');
+        const subCercas = document.getElementById('submenu-cercas');
 
         if (subAspersores) subAspersores.innerHTML = '';
         if (subEspantalhos) subEspantalhos.innerHTML = '';
         if (subFlores) subFlores.innerHTML = '';
         if (subColmeias) subColmeias.innerHTML = '';
         if (subPisos) subPisos.innerHTML = '';
+        if (subCercas) subCercas.innerHTML = '';
 
         const aspersores = [
             { id: 'aspersorC', nome: 'Aspersor Comum' },
@@ -775,6 +845,16 @@ const FarmPlanner = {
             { id: 'piso12', nome: 'piso rústico de tábuas' },
             { id: 'piso13', nome: 'piso passarela de pedras' }
         ];
+        const cercas = [
+            { id: 'cerca1_f', nome: 'Cerca de Madeira' },
+            { id: 'cerca1_g', nome: 'Portão de Madeira' },
+            { id: 'cerca2_f', nome: 'Cerca de Madeira de Lei' },
+            { id: 'cerca2_g', nome: 'Portão de Madeira de Lei' },
+            { id: 'cerca3_f', nome: 'Cerca de pedra' },
+            { id: 'cerca3_g', nome: 'Portão de pedra' },
+            { id: 'cerca4_f', nome: 'Cerca de ferro' },
+            { id: 'cerca4_g', nome: 'Portão de ferro' }
+        ];
 
         const criarBotao = (tipo, container, isMaster = false) => {
             const btn = document.createElement('button');   
@@ -799,6 +879,13 @@ const FarmPlanner = {
             { id: 'obMeteorito', nome: 'Meteorito' }
         ];
 
+        if (subAspersores) aspersores.forEach(asp => criarBotao(asp, subAspersores));
+        if (subEspantalhos) espantalhos.forEach(esp => criarBotao(esp, subEspantalhos));
+        if (subFlores) flores.forEach(flr => criarBotao(flr, subFlores));
+        if (subColmeias) colmeias.forEach(col => criarBotao(col, subColmeias));
+        if (subPisos) caminhos.forEach(piso => criarBotao(piso, subPisos));
+        if (subCercas) cercas.forEach(c => criarBotao(c, subCercas)); // Nova linha
+
         const areaMaster_obstaculos = document.getElementById('btn-master-obstaculos-container');
         if (areaMaster_obstaculos) {
             areaMaster_obstaculos.innerHTML = '';
@@ -812,11 +899,6 @@ const FarmPlanner = {
             obstaculos.forEach(item => criarBotao(item, sub_obstaculos));
         }
 
-        if (subAspersores) aspersores.forEach(asp => criarBotao(asp, subAspersores));
-        if (subEspantalhos) espantalhos.forEach(esp => criarBotao(esp, subEspantalhos));
-        if (subFlores) flores.forEach(flr => criarBotao(flr, subFlores));
-        if (subColmeias) colmeias.forEach(col => criarBotao(col, subColmeias));
-        if (subPisos) caminhos.forEach(piso => criarBotao(piso, subPisos));
 
         const areaMasterAsp = document.getElementById('btn-master-aspersores-container');
         if (areaMasterAsp) {
@@ -859,6 +941,12 @@ const FarmPlanner = {
             const btnObelisco = criarBotao({ id: 'miniObelisco', nome: 'Mini-Obelisco' }, areaObelisco, true);
             btnObelisco.id = 'btn-obelisco';
         }
+        const areaMasterCercas = document.getElementById('btn-master-cercas-container');
+        if (areaMasterCercas) {
+        areaMasterCercas.innerHTML = '';
+        const masterCerca = criarBotao({ id: 'cerca1_f', nome: 'Cercas' }, areaMasterCercas, true);
+        masterCerca.id = 'btn-master-cercas';
+        }
 
         this.selecionarFerramenta('aspersorC');
     },
@@ -884,13 +972,15 @@ const FarmPlanner = {
                 const tipoAntigo = objRemovido.tipo;
                 const xAntigo = objRemovido.x;
                 const yAntigo = objRemovido.y;
-
+                const configRemovido = this.objetosConfig[tipoAntigo];
                 // 1. REMOVE PRIMEIRO
                 this.estado.objetos = this.estado.objetos.filter(obj => obj !== objRemovido);
 
-                // 2. RECALCULA DEPOIS (Os vizinhos agora verão que o tile sumiu do array)
-                if (this.objetosConfig[tipoAntigo]?.isPiso) {
+                  // Lógica de atualização de vizinhos para Pisos e Cercas
+                if (configRemovido?.isPiso) {
                     this.recalcularBitmasksVizinhos(xAntigo, yAntigo, tipoAntigo);
+                } else if (configRemovido?.isCerca) {
+                    this.recalcularConexaoCerca(xAntigo, yAntigo, tipoAntigo);
                 }
                 this.renderizarObjetos();
             }
@@ -938,6 +1028,8 @@ const FarmPlanner = {
             sincronizarMaster('btn-master-colmeias');
         } else if (tipo.startsWith('piso')) {
             sincronizarMaster('btn-master-pisos');
+        } else if (tipo.startsWith('cerca')) { // <--- ADICIONE ESTE BLOCO
+            sincronizarMaster('btn-master-cercas');
         } else {
             const submenuPai = botaoAlvo ? botaoAlvo.closest('.submenu-variacoes') : document.querySelector(`.submenu-variacoes [data-tipo="${tipo}"]`)?.closest('.submenu-variacoes');
             

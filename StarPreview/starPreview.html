@@ -134,12 +134,19 @@ if (painel && painel.classList.contains("retraido")) {
     if (typeof atualizarPainel === "function") atualizarPainel();
   }
 
+  
   /* --- 2. LÓGICA DO MODAL DE PLANTIO (SISTEMA UNIFICADO - SEM CONFLITOS) --- */
 
 function abrirModalPlantio() {
   plantaAdultaAtiva = false;
   itemSelecionadoPlantio = null;
-  
+  carregarImagens();
+   setTimeout(() => {
+            if (itemSelecionadoPlantio === null && imgItemEl) {
+                imgItemEl.src = "recursos/enxada.png";
+            }
+        }, 1000);
+        
   const btnA = document.getElementById('btnPlantaAdulta');
   const iconA = document.getElementById('statusAdultaIcon');
   if (btnA) { 
@@ -169,6 +176,18 @@ function fecharModalPlantioLimpo() {
 
   // Reseta o estado global de forma segura
   plantaAdultaAtiva = false; 
+  
+   // 🌟 LIMPEZA DA IMAGEM AO FECHAR:
+  const imgItemEl = document.getElementById('imagemItem');
+  if (imgItemEl) {
+      imgItemEl.className = "";
+      imgItemEl.style.backgroundImage = "none";
+      imgItemEl.style.backgroundPosition = "";
+      imgItemEl.style.filter = "none";
+      imgItemEl.style.width = "";
+      imgItemEl.style.height = "";
+      imgItemEl.src = "recursos/enxada.png";
+  }
 
   const btnAdulta = document.getElementById('btnPlantaAdulta');
   if (btnAdulta) {
@@ -184,6 +203,38 @@ function fecharModalPlantioLimpo() {
   document.getElementById('checkIlha').checked = false;
   
   document.getElementById('msgViabilidade').innerHTML = "";
+}
+
+// CARREGAMENTO DE IMAGENS COM RE-TENTATIVA SILENCIOSA
+// ========================================================
+const IMAGENS_ESSENCIAIS = [
+    'recursos/enxada.png',
+    'recursos/enxada.gif',
+    'recursos/objetos1.png',
+    'recursos/objetos2.png',
+    'recursos/objetos3.png'
+];
+
+const cacheImagens = {};
+
+function carregarImagens() {
+    IMAGENS_ESSENCIAIS.forEach(src => {
+        if (!cacheImagens[src]) {
+            tentarCarregar(src);
+        }
+    });
+
+    function tentarCarregar(src, delay = 500) {
+        const img = new Image();
+        img.src = src;
+        img.onload = () => {
+            cacheImagens[src] = img;
+        };
+        img.onerror = () => {
+            // Re-tentativa automática e silenciosa em segundo plano
+            setTimeout(() => tentarCarregar(src, delay * 1.5), delay);
+        };
+    }
 }
 
 // Inicialização centralizada dos Eventos Reativos (Executa apenas uma vez)
@@ -235,19 +286,6 @@ window.addEventListener("DOMContentLoaded", () => {
 </script>
 <!-- FUNÇÃO PARA CARREGAR O JSON-->
  <script>
-// apagado  let jsonItens = []; // global
-async function carregarJSON() {
-  try {
-    const resposta = await fetch('produtos_stardew.json'); // caminho do seu arquivo
-    if (!resposta.ok) throw new Error('Erro ao carregar o JSON');
-    jsonItens = await resposta.json();
-    console.log(`JSON carregado com ${jsonItens.length} itens.`);
-  } catch (erro) {
-    console.error('Erro ao carregar o JSON:', erro);
-  }
-}
-
-// chama assim que a página for carregada
 /* --- CARREGAMENTO DO JSON --- */
 async function carregarJSON() {
     try {
@@ -472,6 +510,10 @@ window.addEventListener("DOMContentLoaded", () => {
                 <!-- Os 13 botões serão gerados pelo FarmPlanner.gerarMenus() -->
             </div>
         </div>
+        <div class="botao-container-expansivel">
+            <div id="btn-master-cercas-container"></div>
+            <div class="submenu-variacoes" id="submenu-cercas"></div>
+        </div>
         </div>
         <div id="controles-container"></div>
     </div>
@@ -502,14 +544,26 @@ window.addEventListener("DOMContentLoaded", () => {
         <div id="containerLojasSementes" style="margin: 12px auto 0 auto; display: none; flex-direction: column; gap: 6px; width: 100%; max-width: 90px; align-items: center;"></div>
       </div>
       
-      <!-- Contexto (Estufa / Ilha) -->
-      <div class="contexto-plantio" style="margin-top: 15px; text-align: left; background: rgba(0,0,0,0.1); padding: 8px; border-radius: 4px;">
-  <p style="margin: 0 0 8px 0; font-family: 'Stardew', sans-serif; font-size: 11px; color: #4b2c20; font-weight: bold; line-height: 1.3;">
-    ℹ️ Deixe em branco para plantar no Vale (Fazenda)
-  </p>
-  <label><input type="checkbox" id="checkEstufa"> 🏠 Estufa</label><br>
-  <label><input type="checkbox" id="checkIlha"> 🌴 Ilha</label>
-</div>
+      
+        <!-- Contexto (Estufa / Ilha) + Semente -->
+    <div class="contexto-plantio">
+    <p class="contexto-plantio-aviso">
+        ℹ️ Deixe em branco para plantar no Vale (Fazenda)
+    </p>
+    
+    <div class="contexto-plantio-corpo">
+        <!-- Checkboxes -->
+        <div class="contexto-opcoes">
+        <label><input type="checkbox" id="checkEstufa"> 🏠 Estufa</label>
+        <label><input type="checkbox" id="checkIlha"> 🌴 Ilha</label>
+        </div>
+        
+        <!-- Caixinha da Semente -->
+        <div id="containerSementePlantio" class="box-semente-plantio">
+        <div id="spriteSementeItem" class="sprite-item"></div>
+        </div>
+    </div>
+    </div>
       
       <!-- Bloco de Informações Dinâmicas (Estilo Caixa de Destaque) -->
       <div id="infoCultivoContainer">
@@ -522,23 +576,34 @@ window.addEventListener("DOMContentLoaded", () => {
     <!-- CONTEÚDO PRINCIPAL DIREITA -->
     <div class="modal-principal-plantio">
   
-  <div class="filtro-container-plantio" style="display: flex; gap: 5px; margin-bottom: 10px; align-items: center; flex-wrap: wrap;">
-    <input type="number" id="diaPlantio" min="1" max="28" value="1" style="width: 45px;">
-    <select id="estacaoPlantio" onchange="atualizarListaItensPlantio()">
+  <div class="filtro-container-plantio">
+  <!-- Linha 1: Controles de Estação e Ordenação -->
+  <div class="linha-filtros-topo">
+    <input type="number" id="diaPlantio" min="1" max="28" value="1" class="input-dia-plantio">
+    <select id="estacaoPlantio" class="select-filtro-stardew" onchange="atualizarListaItensPlantio()">
       <option value="primavera">Primavera</option>
       <option value="verao">Verão</option>
       <option value="outono">Outono</option>
       <option value="inverno">Inverno</option>
     </select>
-    <select id="filtroPlantio" onchange="atualizarListaItensPlantio()">
+    <select id="filtroPlantio" class="select-filtro-stardew" onchange="atualizarListaItensPlantio()">
       <option value="todos">Todos</option>
       <option value="estacao">Da Estação</option>
     </select>
-    
-    <button type="button" id="btnOrdenarPreco" onclick="alternarOrdenacaoPreco()" style="padding: 4px 8px; border-radius: 4px; border: 1px solid #643925; background: #fff3d1; color: #4b2c20; font-weight: bold; cursor: pointer; height: 24px; width: 75px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85em;" title="Ordenar por preço base">
-  Valor
-</button>
+    <button type="button" id="btnOrdenarPreco" class="btn-ordenar-stardew" onclick="alternarOrdenacaoPreco()" title="Ordenar por preço base">
+      Valor
+    </button>
   </div>
+
+  <!-- Linha 2: Barra de Pesquisa Interna -->
+  <div class="linha-busca-plantio">
+    <div class="campo-busca-wrapper">
+      <span class="icone-busca">🔍</span>
+      <input type="text" id="campoBuscaPlantio" placeholder="Buscar cultivo..." oninput="atualizarListaItensPlantio()" autocomplete="off">
+      <button type="button" id="btnLimparBusca" class="btn-limpar-busca" onclick="limparBuscaPlantio()" title="Limpar pesquisa">✕</button>
+    </div>
+  </div>
+</div>
 
   <ul id="listaItens"></ul>
 
@@ -555,6 +620,40 @@ window.addEventListener("DOMContentLoaded", () => {
     <button type="button" id="fecharModalPlantio" onclick="fecharModalPlantioLimpo()">Fechar</button>
   </div>
 </div></dialog>
+
+<!-- ==================== MODAL PROCESSAMENTO ==================== -->
+<dialog id="modalProcessamento">
+  <div class="modal-conteudo-processamento">
+    
+    <!-- 1. Menu Horizontal de Ferramentas / Máquinas -->
+    <div class="menu-abas-maquinas">
+      <button type="button" class="aba-maquina-btn ativa" id="aba-jarra" onclick="selecionarAbaProcessamento('jarra')">
+        <div class="sprite-maquina maquina-jarra"></div>
+        <span>Jarra</span>
+      </button>
+
+      <button type="button" class="aba-maquina-btn" id="aba-barril" onclick="selecionarAbaProcessamento('barril')">
+        <div class="sprite-maquina maquina-barril"></div>
+        <span>Barril</span>
+      </button>
+    </div>
+
+    <!-- 2. Cabeçalho descritivo com contagem -->
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <p id="tituloAbaProcessamento" class="titulo-secao-processamento">Itens para Jarra (Geléia ou Picles):</p>
+      <span id="contadorItensProcessamento" style="font-size: 12px; font-weight: bold; color: #643925;"></span>
+    </div>
+
+    <!-- 3. Grade reutilizando a mesma estrutura limpa do modal de plantio -->
+    <div id="listaItensProcessamento" class="lista-itens-plantio" style="flex: 1; min-height: 0; margin-top: 0;"></div>
+
+    <!-- 4. Botões do rodapé -->
+    <div class="botoes-modal-plantio">
+      <button type="button" class="btn-cancelar" onclick="document.getElementById('modalProcessamento').close()">Fechar</button>
+    </div>
+
+  </div>
+</dialog>
 
 <!-- script do modal de cadastro-->
 <script>
@@ -927,6 +1026,15 @@ function atualizarListaItensPlantio() {
     const filtroSelect = document.getElementById('filtroPlantio');
     const termoFiltro = filtroSelect ? filtroSelect.value : 'todos';
     const estacaoAlvo = document.getElementById('estacaoPlantio').value;
+
+        // Campo de busca em texto
+    const inputBusca = document.getElementById('campoBuscaPlantio');
+    const btnLimpar = document.getElementById('btnLimparBusca');
+    const termoBusca = inputBusca ? inputBusca.value.trim().toLowerCase() : '';
+        // Alterna a visibilidade do botão "X" conforme tem ou não texto
+    if (btnLimpar) {
+        btnLimpar.style.display = termoBusca.length > 0 ? 'block' : 'none';
+    }
     
     let listaFiltrada = jsonItens.filter(i => {
         const tipos = Array.isArray(i.tipo) ? i.tipo : [i.tipo];
@@ -952,6 +1060,18 @@ function atualizarListaItensPlantio() {
         });
     }
 
+    // 3. 🌟 FILTRO DE PESQUISA TEXTUAL (Case-insensitive e sem acentos)
+    if (termoBusca) {
+        // Remove acentos da busca (ex: "abobora" acha "abóbora")
+        const termoLimpo = termoBusca.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        
+        listaFiltrada = listaFiltrada.filter(i => {
+            const nomeLimpo = (i.nome || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            return nomeLimpo.includes(termoLimpo);
+        });
+    }
+
+    // 4. ORDENAÇÃO POR PREÇO (se ativada)
     if (window.ordemPrecoAtual === 'maior-preco') {
         listaFiltrada = [...listaFiltrada].sort((a, b) => {
             const precoA = parseInt(a.valorBase, 10) || 0;
@@ -973,8 +1093,21 @@ function renderizarItensPlantio(itens) {
         itemDiv.className = "item-plantio";
         const urlImg = item.imagem ? item.imagem.replace(/\\/g, "/") : "";
 
+        // 1. Gera o visual do item no grid
+        let visualHTML = "";
+        if (item.sprite) {
+            // Limpa vírgulas acidentais das coordenadas
+            const posSprite = item.sprite.replace(',', '');
+            // Identifica se usa a folha de objetos3 ou a padrão objetos1
+            const classeFolha = (item.sheet === "objetos3") ? "sprite-obj3" : "";
+            visualHTML = `<div class="sprite-item ${classeFolha}" style="background-position: ${posSprite};"></div>`;
+        } else {
+            // Imagem antiga com o filtro de teste aplicado pelo CSS
+            visualHTML = `<img src="${urlImg}" alt="${item.nome}" onerror="this.style.display='none'">`;
+        }
+
         itemDiv.innerHTML = `
-            <img src="${urlImg}" alt="${item.nome}" onerror="this.style.display='none'">
+            ${visualHTML}
             <p>${item.nome}</p>
         `;
         
@@ -987,7 +1120,60 @@ function renderizarItensPlantio(itens) {
 
             if (nomeEl) nomeEl.textContent = item.nome;
             if (valorEl) valorEl.textContent = item.valorBase || 0;
-            if (imgPrincipal) imgPrincipal.src = urlImg;
+
+            // 2. Atualiza a foto de destaque lateral (com sprite ou PNG antigo)
+            if (imgPrincipal) {
+                if (item.sprite) {
+                    imgPrincipal.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E";
+                    
+                    imgPrincipal.style.display = "block";
+                    imgPrincipal.style.width = "";
+                    imgPrincipal.style.height = "";
+                    const posSpriteLimpa = item.sprite.replace(',', '');
+
+                    // Aplica as classes e o arquivo correto de acordo com a folha (sheet)
+                    if (item.sheet === "objetos3") {
+                        imgPrincipal.className = "sprite-item sprite-obj3 sprite-modal-destaque";
+                        imgPrincipal.style.backgroundImage = "url('recursos/objetos3.png')";
+                    } else {
+                        imgPrincipal.className = "sprite-item sprite-modal-destaque";
+                        imgPrincipal.style.backgroundImage = "url('recursos/objetos1.png')";
+                    }
+
+                    imgPrincipal.style.backgroundPosition = posSpriteLimpa;
+                    imgPrincipal.style.filter = "none"; // Sprite fica 100% colorido
+                } else {
+                    imgPrincipal.className = "";
+                    imgPrincipal.style.backgroundImage = "none";
+                    imgPrincipal.src = urlImg;
+                    imgPrincipal.style.display = "block";
+                    // Efeito de teste na foto antiga da barra lateral
+                    imgPrincipal.style.filter = "grayscale(0.85) sepia(0.4) opacity(0.65)";
+                }
+            }
+
+            // 🌟 Exibe o sprite da semente (picSem) se cadastrado no JSON:
+                const containerSem = document.getElementById('containerSementePlantio');
+                const spriteSem = document.getElementById('spriteSementeItem');
+
+                if (containerSem && spriteSem) {
+                    if (item.picSem) {
+                        const posSemLimpa = item.picSem.replace(',', '');
+                        // Se o item usar objetos3, a semente também puxa objetos3, senão objetos1
+                        const folhaSemente = (item.sheet === "objetos3") ? "sprite-obj3" : "";
+                        
+                        spriteSem.className = `sprite-item ${folhaSemente}`;
+                        spriteSem.style.backgroundImage = (item.sheet === "objetos3") 
+                            ? "url('recursos/objetos3.png')" 
+                            : "url('recursos/objetos1.png')";
+                        spriteSem.style.backgroundPosition = posSemLimpa;
+                        
+                        containerSem.style.display = "flex";
+                    } else {
+                        // Se for coleta ou não tiver semente cadastrada, esconde
+                        containerSem.style.display = "none";
+                    }
+                }
 
             plantaAdultaAtiva = false;
             
@@ -1040,9 +1226,16 @@ function renderizarItensPlantio(itens) {
         listaItensContainer.appendChild(itemDiv);
     });
 }
-
 window.ordemPrecoAtual = 'padrao';
-
+// Função para limpar o campo de busca
+function limparBuscaPlantio() {
+    const inputBusca = document.getElementById('campoBuscaPlantio');
+    if (inputBusca) {
+        inputBusca.value = '';
+        inputBusca.focus();
+    }
+    atualizarListaItensPlantio();
+}
 function alternarOrdenacaoPreco() {
     const btnPreco = document.getElementById('btnOrdenarPreco');
     if (!btnPreco) return;
@@ -1185,7 +1378,9 @@ function criarEventoPlantio(item) {
             nome: sementeAtiva.nome,
             
             // 🌟 CORREÇÃO 2: Salva a imagem herdada do item original para que o card saiba o que renderizar!
-            imagem: sementeAtiva.imagem || "", 
+            sprite: sementeAtiva.sprite || "",
+            sheet: sementeAtiva.sheet || "objetos1",
+            imagem: sementeAtiva.imagem || "",
             
             dataPlantio: `Dia ${diaVal} - ${estacaoVal} - Ano ${anoVal}`,
             status: ehArvore ? "Produzindo" : "Em andamento", 
@@ -1221,135 +1416,6 @@ function criarEventoPlantio(item) {
         console.error("Erro fatal ao tentar criar o evento de plantio:", erro);
     }
 }
-
-function gerarHtmlPlantio(ev) {
-    const statusClean = ev.status ? ev.status.toLowerCase().replace(/\s/g, '-') : 'pendente';
-    
-    const estacaoEvento = (ev.colheitas && ev.colheitas[0]?.estacao) 
-        ? ev.colheitas[0].estacao.toLowerCase() 
-        : 'primavera';
-
-    // Define se o card já deve nascer colapsado visualmente baseado nos dados salvos
-    const classeMinimizadoInicial = ev.minimizado ? "card-recolhido" : "";
-
-    const colheitasHTML = (ev.colheitas || []).map(c => {
-        const diaTratado = (c.dia === undefined || c.dia === null || isNaN(c.dia)) ? 1 : c.dia;
-        const estacaoTratada = c.estacao || 'Primavera';
-        const tipoTratado = c.tipo || 'Colheita';
-        const anoTratado = c.ano || ev.anoFinalCalculado || 1; 
-        
-        return `<li>✨ ${tipoTratado}: Dia ${diaTratado} (${estacaoTratada}) - Ano ${anoTratado}</li>`;
-    }).join('') || '<li>Sem previsão.</li>';
-
-    let botaoColheitaHTML = '';
-    
-    if (ev.diaColheita !== undefined && ev.diaColheita !== null && ev.diaColheita !== "") {
-        const intervaloRebroto = parseInt(ev.diaColheita, 10);
-        
-        if (!isNaN(intervaloRebroto) && intervaloRebroto > 0) {
-            const ultimaColheita = ev.colheitas && ev.colheitas.length > 0 ? ev.colheitas[ev.colheitas.length - 1] : null;
-            
-            const diaDaColheitaAtual = (ultimaColheita && ultimaColheita.dia !== undefined && ultimaColheita.dia !== null && !isNaN(ultimaColheita.dia)) 
-                ? parseInt(ultimaColheita.dia, 10) 
-                : 1;
-
-            const arvoresFrutiferas = ['pêssego', 'pessego', 'banana', 'cereja', 'damasco', 'laranja', 'maçã', 'maca', 'romã', 'roma'];
-            const renderEhArvore = (Array.isArray(ev.tipo) && ev.tipo.includes('arvore')) || 
-                                   (intervaloRebroto === 1 && arvoresFrutiferas.includes(ev.nome.toLowerCase()));
-
-            let foraDeEpoca = (ev.status === "Fora de Época" || ev.status === "fora-de-epoca");
-
-            if (!foraDeEpoca && !renderEhArvore) {
-                const ehAmbienteInterno = ev.naEstufa || ev.naIlha || ev.nome.toLowerCase() === "fruta do cacto";
-
-                if (!ehAmbienteInterno) {
-                    const estacoesBrutas = Array.isArray(ev.estacao) ? ev.estacao : String(ev.estacao || '').split(',');
-                    
-                    if (estacoesBrutas.length > 0 && estacoesBrutas[0] !== '') {
-                        const estacoesSuportadas = estacoesBrutas.map(e => e.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
-                        const estacaoCardAtual = ultimaColheita ? ultimaColheita.estacao : estacaoEvento;
-                        
-                        const simulacaoProxima = avancarTempoCalendario(diaDaColheitaAtual, intervaloRebroto, estacaoCardAtual);
-                        let estacaoDaProximaColheita = simulacaoProxima.estacao.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-                        if (!estacoesSuportadas.includes(estacaoDaProximaColheita)) {
-                            foraDeEpoca = true;
-                        }
-                    }
-                }
-            }
-
-            if (foraDeEpoca) {
-                botaoColheitaHTML = `<button class="btn-colheita-recalcular desativado" disabled title="Este item encerrou seu ciclo de produção">🍂 Fora de Época</button>`;
-            } else {
-                if (renderEhArvore) {
-                    const ultrapassa2x = (diaDaColheitaAtual + (intervaloRebroto * 2)) > 28 && !ev.naEstufa;
-                    const ultrapassa3x = (diaDaColheitaAtual + (intervaloRebroto * 3)) > 28 && !ev.naEstufa;
-
-                    botaoColheitaHTML = `
-                        <div class="grupo-colheita-arvore" style="display: flex; gap: 4px; align-items: center;">
-                            <select id="qtd-colheita-${ev.id}" style="padding: 2px 4px; border-radius: 4px; border: 1px solid #4a210d; background: #fff3d1; color: #4a210d; font-weight: bold; cursor: pointer;">
-                                <option value="1">1x</option>
-                                <option value="2" ${ultrapassa2x ? 'disabled style="color: #a0a0a0; background-color: #e0e0e0;"' : ''}>2x</option>
-                                <option value="3" ${ultrapassa3x ? 'disabled style="color: #a0a0a0; background-color: #e0e0e0;"' : ''}>3x</option>
-                            </select>
-                            <button class="btn-colheita-recalcular" onclick="recalcularProximaColheita(${ev.id})">🌾 Colhido</button>
-                        </div>
-                    `;
-                } else {
-                    botaoColheitaHTML = `<button class="btn-colheita-recalcular" onclick="recalcularProximaColheita(${ev.id})">🌾 Colhido</button>`;
-                }
-            }
-        } 
-    }
-
-    let localPlantioTexto = "📍 Vale";
-    if (ev.naEstufa) {
-        localPlantioTexto = "🏠 Estufa";
-    } else if (ev.naIlha) {
-        localPlantioTexto = "🌴 Ilha";
-    }
-
-    const urlImgCard = ev.imagem ? ev.imagem.replace(/\\/g, "/") : "";
-
-    return `
-        <div id="card-evento-${ev.id}" class="caixa-evento animated fadeIn ${classeMinimizadoInicial}">
-
-        <div class="header-evento">
-        <div class="header-titulo">
-        <button class="btn-minimizar" onclick="alternarMinimizarCard(${ev.id})" title="Minimizar/Expandir">−</button>
-        
-        ${urlImgCard ? `<img src="${urlImgCard}" class="foto-header" alt="${ev.nome}" onerror="this.style.display='none'">` : ''}
-        
-        <strong>${ev.nome}</strog>
-        </div>
-        <span class="status ${statusClean}">${localPlantioTexto}</span>
-        </div>
-            <div class="conteudo-card">
-                <div class="corpo-card">
-                    <div class="detalhes-plantio">
-                        <div class="info-plantio">📅 Plantio: ${ev.dataPlantio}</div>
-                        <ul class="lista-colheitas">${colheitasHTML}</ul>
-                    </div>
-
-                    ${urlImgCard ? `
-                    <div class="container-foto">
-                        <img src="${urlImgCard}" alt="${ev.nome}" onerror="this.style.display='none'">
-                    </div>
-                    ` : ''}
-                </div>
-
-                <div class="acoes">
-                    <div class="acoes-esquerda">${botaoColheitaHTML}</div>
-                    <div class="acoes-direita">
-                        <button class="btn-delete" data-estacao="${estacaoEvento}" onclick="excluirEventoPess(${ev.id})"></button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
 
 function validarPlantioDinamico() {
     if (!itemSelecionadoPlantio) return;
@@ -1484,6 +1550,118 @@ function validarPlantioDinamico() {
     btnConfirmar.disabled = !viavel;
 }
  
+</script>
+<!--MODAL DE PROCESSAMENTO (COLE AQUI)-->
+<script>
+  let maquinaProcessamentoAtiva = 'jarra';
+
+  function ativarFuncao(funcao) {
+      if (funcao === 'processamento') {
+          abrirModalProcessamento();
+      }
+  }
+
+  function abrirModalProcessamento() {
+      const modal = document.getElementById('modalProcessamento');
+      if (modal) {
+          modal.showModal();
+          selecionarAbaProcessamento('jarra');
+      }
+  }
+
+  function selecionarAbaProcessamento(maquina) {
+      maquinaProcessamentoAtiva = maquina;
+
+      document.querySelectorAll('.aba-maquina-btn').forEach(btn => btn.classList.remove('ativa'));
+      const btnAtivo = document.getElementById(`aba-${maquina}`);
+      if (btnAtivo) btnAtivo.classList.add('ativa');
+
+      const titulo = document.getElementById('tituloAbaProcessamento');
+      if (titulo) {
+          if (maquina === 'jarra') {
+              titulo.textContent = 'Itens para Jarra de Conserva (Geléia ou Picles):';
+          } else if (maquina === 'barril') {
+              titulo.textContent = 'Itens para Barril (Vinho ou Suco):';
+          }
+      }
+
+      renderizarItensProcessamento();
+  }
+
+  function renderizarItensProcessamento() {
+      const container = document.getElementById('listaItensProcessamento');
+      const contador = document.getElementById('contadorItensProcessamento');
+      if (!container || typeof jsonItens === 'undefined' || !jsonItens.length) return;
+
+      container.innerHTML = '';
+
+      let itensFiltrados = [];
+      if (maquinaProcessamentoAtiva === 'jarra') {
+          itensFiltrados = jsonItens.filter(item => item.prGeleia === true || item.prPicles === true);
+      } else if (maquinaProcessamentoAtiva === 'barril') {
+          itensFiltrados = jsonItens.filter(item => item.prVinho === true || item.prSuco === true);
+      }
+
+      if (contador) {
+          contador.textContent = `${itensFiltrados.length} itens disponíveis`;
+      }
+
+      itensFiltrados.forEach(item => {
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'item-plantio';
+
+          let visualHTML = '';
+          if (item.sprite) {
+              const posSprite = item.sprite.replace(',', '');
+              const classeFolha = (item.sheet === 'objetos3') ? 'sprite-obj3' : '';
+              visualHTML = `<div class="sprite-item ${classeFolha}" style="background-position: ${posSprite};"></div>`;
+          } else if (item.imagem) {
+              visualHTML = `<img src="${item.imagem.replace(/\\/g, '/')}" alt="${item.nome}" onerror="this.style.display='none'">`;
+          }
+
+          let rotuloProducao = '';
+          if (maquinaProcessamentoAtiva === 'jarra') {
+              rotuloProducao = item.prGeleia ? 'Geléia' : 'Picles';
+          } else if (maquinaProcessamentoAtiva === 'barril') {
+              rotuloProducao = item.prVinho ? 'Vinho' : 'Suco';
+          }
+
+          itemDiv.innerHTML = `
+              ${visualHTML}
+              <p style="font-weight: bold; margin-top: 3px;">${item.nome}</p>
+              <span style="font-size: 9px; color: #643925; opacity: 0.85;">(${rotuloProducao})</span>
+          `;
+
+          itemDiv.onclick = () => {
+              document.querySelectorAll('#listaItensProcessamento .item-plantio').forEach(el => el.classList.remove('selecionado'));
+              itemDiv.classList.add('selecionado');
+              console.log(`Item selecionado para ${maquinaProcessamentoAtiva}:`, item.nome);
+          };
+
+          container.appendChild(itemDiv);
+      });
+  }
+
+  // ========================================================
+  // SUA FUNÇÃO ORIGINAL FICA LOGO ABAIXO, INTACTA:
+  // ========================================================
+  function gerarHtmlProcessamento(ev) {
+      return `
+          <div class="caixa-evento animated fadeIn secao-processamento">
+              <div class="header-evento">
+                  <strong>${ev.nomeProduto}</strong>
+                  <span class="status em-andamento">Processando</span>
+              </div>
+              <div class="info-plantio">⚙️ Máquina: ${ev.maquina}</div>
+              <ul class="lista-colheitas">
+                  <li>⏱️ Pronto em: ${ev.diasRestantes} dias</li>
+              </ul>
+              <div class="acoes" style="display: flex; justify-content: flex-end; align-items: center; margin-top: 8px;">
+                  <button class="btn-delete" data-estacao="item" onclick="excluirProcessamento(${ev.id})"></button>
+              </div>
+          </div>
+      `;
+  }
 </script>
 
 <!-- PAINEL LATERAL ESQUERDO (Eventos Personalizados) -->
@@ -1624,6 +1802,94 @@ window.recalcularProximaColheita = function(id) {
     }
 };
 
+window.adiarColheita = function(id) {
+    const cultivo = eventosPess.find(ev => ev.id === id);
+    if (!cultivo) return;
+
+    // Trava de segurança: árvores não podem ser adiadas
+    const arvoresFrutiferas = ['pêssego', 'pessego', 'banana', 'cereja', 'damasco', 'laranja', 'maçã', 'maca', 'romã', 'roma'];
+    const ehArvore = (Array.isArray(cultivo.tipo) && cultivo.tipo.includes('arvore')) || 
+                     arvoresFrutiferas.includes((cultivo.nome || '').toLowerCase());
+    if (ehArvore) return;
+
+    if (cultivo.status === "Fora de Época" || cultivo.status === "fora-de-epoca") return;
+    if (!cultivo.colheitas || cultivo.colheitas.length === 0) return;
+
+    const ehAmbienteInterno = cultivo.naEstufa || cultivo.naIlha || (cultivo.nome && cultivo.nome.toLowerCase() === "fruta do cacto");
+
+    // Sanitiza as estações aceitas pelo item
+    const estacoesBrutas = Array.isArray(cultivo.estacao) ? cultivo.estacao : (cultivo.estacao ? String(cultivo.estacao).split(',') : []);
+    const estacoesAceitas = estacoesBrutas.map(e => e.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+
+    let cultivoMorreu = false;
+
+    // Avança 1 dia na colheita agendada
+    cultivo.colheitas.forEach(c => {
+        const diaBase = (c.dia === undefined || c.dia === null || isNaN(c.dia)) ? 1 : parseInt(c.dia, 10);
+        const estacaoBase = c.estacao || "Primavera";
+        const anoBase = (c.ano === undefined || c.ano === null || isNaN(c.ano)) ? 1 : parseInt(c.ano, 10);
+
+        // Avança 1 dia no motor do calendário
+        const resultadoNovo = avancarTempoCalendario(diaBase, 1, estacaoBase);
+        const estacaoNovaLimpa = resultadoNovo.estacao.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+        // Controle de virada de ano
+        const ordemEstacoes = ['primavera', 'verao', 'outono', 'inverno'];
+        const idxAntes = ordemEstacoes.indexOf(estacaoBase.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+        const idxDepois = ordemEstacoes.indexOf(estacaoNovaLimpa);
+
+        let novoAno = anoBase;
+        if (idxAntes !== -1 && idxDepois !== -1 && idxDepois < idxAntes) {
+            novoAno = anoBase + 1;
+        }
+
+        // Validação de sazonalidade ao ar livre
+        if (!ehAmbienteInterno && estacoesAceitas.length > 0 && estacoesAceitas[0] !== '') {
+            if (!estacoesAceitas.includes(estacaoNovaLimpa)) {
+                cultivoMorreu = true;
+            }
+        }
+
+        c.dia = resultadoNovo.dia;
+        c.estacao = resultadoNovo.estacao;
+        c.ano = novoAno;
+    });
+
+    if (cultivoMorreu) {
+        cultivo.status = "Fora de Época";
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: "Cultivo Perdeu a Época!",
+                text: `${cultivo.nome} foi adiado para ${cultivo.colheitas[0].estacao}, estação na qual ele não sobrevive ao ar livre.`,
+                icon: "warning",
+                confirmButtonColor: "#643925",
+                background: "#fff3d1",
+                color: "#4a210d"
+            });
+        }
+    } else {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 1600,
+                icon: 'info',
+                title: '+1 dia adicionado',
+                background: '#fff3d1',
+                color: '#4a210d',
+                iconColor: '#4a210d'
+            });
+        }
+    }
+
+    if (cultivo.colheitas[0]?.ano) {
+        cultivo.anoFinalCalculado = cultivo.colheitas[0].ano;
+    }
+
+    salvarPessStorage();
+    renderizarPainelPess();
+};
 // ========================================================
 // 3. SUB-FUNÇÕES DE MONTAGEM
 // ========================================================
@@ -1634,6 +1900,9 @@ function gerarHtmlPlantio(ev) {
         ? ev.colheitas[0].estacao.toLowerCase() 
         : 'primavera';
 
+    // Define se o card já deve nascer colapsado visualmente baseado nos dados salvos
+    const classeMinimizadoInicial = ev.minimizado ? "card-recolhido" : "";
+
     const colheitasHTML = (ev.colheitas || []).map(c => {
         const diaTratado = (c.dia === undefined || c.dia === null || isNaN(c.dia)) ? 1 : c.dia;
         const estacaoTratada = c.estacao || 'Primavera';
@@ -1643,6 +1912,14 @@ function gerarHtmlPlantio(ev) {
         return `<li>✨ ${tipoTratado}: Dia ${diaTratado} (${estacaoTratada}) - Ano ${anoTratado}</li>`;
     }).join('') || '<li>Sem previsão.</li>';
 
+    // Identificação precisa e segura de árvores
+    const arvoresFrutiferas = ['pêssego', 'pessego', 'banana', 'cereja', 'damasco', 'laranja', 'maçã', 'maca', 'romã', 'roma'];
+    const ehArvore = (Array.isArray(ev.tipo) && ev.tipo.includes('arvore')) || 
+                     arvoresFrutiferas.includes((ev.nome || '').toLowerCase());
+
+    let foraDeEpoca = (ev.status === "Fora de Época" || ev.status === "fora-de-epoca");
+
+    // 1. Botão de Colheita / Recalcular Rebroto
     let botaoColheitaHTML = '';
     
     if (ev.diaColheita !== undefined && ev.diaColheita !== null && ev.diaColheita !== "") {
@@ -1655,14 +1932,9 @@ function gerarHtmlPlantio(ev) {
                 ? parseInt(ultimaColheita.dia, 10) 
                 : 1;
 
-            const arvoresFrutiferas = ['pêssego', 'pessego', 'banana', 'cereja', 'damasco', 'laranja', 'maçã', 'maca', 'romã', 'roma'];
-            const renderEhArvore = (Array.isArray(ev.tipo) && ev.tipo.includes('arvore')) || 
-                                   (intervaloRebroto === 1 && arvoresFrutiferas.includes(ev.nome.toLowerCase()));
-
-            let foraDeEpoca = (ev.status === "Fora de Época" || ev.status === "fora-de-epoca");
-
-            if (!foraDeEpoca && !renderEhArvore) {
-                const ehAmbienteInterno = ev.naEstufa || ev.naIlha || ev.nome.toLowerCase() === "fruta do cacto";
+            // Simulação dinâmica para descobrir se o próximo rebroto passará da estação
+            if (!foraDeEpoca && !ehArvore) {
+                const ehAmbienteInterno = ev.naEstufa || ev.naIlha || (ev.nome || '').toLowerCase() === "fruta do cacto";
 
                 if (!ehAmbienteInterno) {
                     const estacoesBrutas = Array.isArray(ev.estacao) ? ev.estacao : String(ev.estacao || '').split(',');
@@ -1683,26 +1955,34 @@ function gerarHtmlPlantio(ev) {
 
             if (foraDeEpoca) {
                 botaoColheitaHTML = `<button class="btn-colheita-recalcular desativado" disabled title="Este item encerrou seu ciclo de produção">🍂 Fora de Época</button>`;
-            } else {
-                if (renderEhArvore) {
-                    const ultrapassa2x = (diaDaColheitaAtual + (intervaloRebroto * 2)) > 28 && !ev.naEstufa;
-                    const ultrapassa3x = (diaDaColheitaAtual + (intervaloRebroto * 3)) > 28 && !ev.naEstufa;
+            } else if (ehArvore) {
+                const ultrapassa2x = (diaDaColheitaAtual + (intervaloRebroto * 2)) > 28 && !ev.naEstufa;
+                const ultrapassa3x = (diaDaColheitaAtual + (intervaloRebroto * 3)) > 28 && !ev.naEstufa;
 
-                    botaoColheitaHTML = `
-                        <div class="grupo-colheita-arvore" style="display: flex; gap: 4px; align-items: center;">
-                            <select id="qtd-colheita-${ev.id}" style="padding: 2px 4px; border-radius: 4px; border: 1px solid #4a210d; background: #fff3d1; color: #4a210d; font-weight: bold; cursor: pointer;">
-                                <option value="1">1x</option>
-                                <option value="2" ${ultrapassa2x ? 'disabled style="color: #a0a0a0; background-color: #e0e0e0;"' : ''}>2x</option>
-                                <option value="3" ${ultrapassa3x ? 'disabled style="color: #a0a0a0; background-color: #e0e0e0;"' : ''}>3x</option>
-                            </select>
-                            <button class="btn-colheita-recalcular" onclick="recalcularProximaColheita(${ev.id})">🌾 Colhido</button>
-                        </div>
-                    `;
-                } else {
-                    botaoColheitaHTML = `<button class="btn-colheita-recalcular" onclick="recalcularProximaColheita(${ev.id})">🌾 Colhido</button>`;
-                }
+                botaoColheitaHTML = `
+                    <div class="grupo-colheita-arvore" style="display: flex; gap: 4px; align-items: center;">
+                        <select id="qtd-colheita-${ev.id}" style="padding: 2px 4px; border-radius: 4px; border: 1px solid #4a210d; background: #fff3d1; color: #4a210d; font-weight: bold; cursor: pointer;">
+                            <option value="1">1x</option>
+                            <option value="2" ${ultrapassa2x ? 'disabled style="color: #a0a0a0; background-color: #e0e0e0;"' : ''}>2x</option>
+                            <option value="3" ${ultrapassa3x ? 'disabled style="color: #a0a0a0; background-color: #e0e0e0;"' : ''}>3x</option>
+                        </select>
+                        <button class="btn-colheita-recalcular" onclick="recalcularProximaColheita(${ev.id})">🌾 Colhido</button>
+                    </div>
+                `;
+            } else {
+                botaoColheitaHTML = `<button class="btn-colheita-recalcular" onclick="recalcularProximaColheita(${ev.id})">🌾 Colhido</button>`;
             }
         } 
+    }
+
+    // 2. Botão Adiar 1 Dia (Não aplicável a árvores ou plantas mortas/fora de época)
+    let botaoAdiarHTML = '';
+    if (ehArvore) {
+        botaoAdiarHTML = `<button class="btn-adiar-dia desativado" disabled title="Não é possível adiar a produção de árvores">⏳ atrasar +1 Dia</button>`;
+    } else if (foraDeEpoca) {
+        botaoAdiarHTML = `<button class="btn-adiar-dia desativado" disabled title="Cultivo já encerrado/fora de época">⏳ atrasar +1 Dia</button>`;
+    } else {
+        botaoAdiarHTML = `<button class="btn-adiar-dia" onclick="adiarColheita(${ev.id})" title="Adiar a data desta colheita em 1 dia">⏳ atrasar +1 Dia</button>`;
     }
 
     let localPlantioTexto = "📍 Vale";
@@ -1712,42 +1992,61 @@ function gerarHtmlPlantio(ev) {
         localPlantioTexto = "🌴 Ilha";
     }
 
-    const urlImgCard = ev.imagem ? ev.imagem.replace(/\\/g, "/") : "";
+    // 🌟 Gera o HTML da imagem (Sprite novo ou Foto antiga):
+    let visualMini = '';
+    let visualGrande = '';
 
-    
-    const classeMinimizadoInicial = ev.minimizado ? "card-recolhido" : "";
-
-return `
-    <div id="card-evento-${ev.id}" class="caixa-evento animated fadeIn ${classeMinimizadoInicial}">
+    if (ev.sprite) {
+        const posLimpa = ev.sprite.replace(',', '');
+        const classeFolha = (ev.sheet === "objetos3") ? "sprite-obj3" : "";
         
-        <div class="header-evento">
-            <div class="header-titulo">
-                 <button class="btn-minimizar" onclick="alternarMinimizarCard(${ev.id})" title="Minimizar/Expandir">−</button>
-                 <strong>${ev.nome}</strong>
-                 ${urlImgCard ? `<img src="${urlImgCard}" class="foto-header" alt="${ev.nome}" onerror="this.style.display='none'">` : ''}
+        // Ícone pequeno do cabeçalho (quando recolhido)
+        visualMini = `<div class="sprite-item foto-header ${classeFolha}" style="background-position: ${posLimpa};"></div>`;
+        // Imagem grande do corpo do card
+        visualGrande = `<div class="sprite-item sprite-card-grande ${classeFolha}" style="background-position: ${posLimpa};"></div>`;
+    } else if (ev.imagem) {
+        const urlImgCard = ev.imagem.replace(/\\/g, "/");
+        visualMini = `<img src="${urlImgCard}" class="foto-header" alt="${ev.nome}" onerror="this.style.display='none'">`;
+        visualGrande = `<img src="${urlImgCard}" alt="${ev.nome}" onerror="this.style.display='none'">`;
+    }
+
+    return `
+        <div id="card-evento-${ev.id}" class="caixa-evento animated fadeIn ${classeMinimizadoInicial}">
+            <div class="header-evento">
+                <div class="header-titulo">
+                    <button class="btn-minimizar" onclick="alternarMinimizarCard(${ev.id})" title="Minimizar/Expandir">−</button>
+                    <strong>${ev.nome}</strong>
+                    ${visualMini} <!-- Substituiu o urlImgCard antigo do cabeçalho -->
+                </div>
+                <span class="status ${statusClean}">${localPlantioTexto}</span>
             </div>
             
-            <span class="status ${statusClean}">${localPlantioTexto}</span>
-        </div>
-        
-        <div class="conteudo-card">
-            <div class="corpo-card">
-                <div class="detalhes-plantio">
-                    <div class="info-plantio">📅 Plantio: ${ev.dataPlantio}</div>
-                    <ul class="lista-colheitas">${colheitasHTML}</ul>
+            <div class="conteudo-card">
+                <div class="corpo-card">
+                    <div class="detalhes-plantio">
+                        <div class="info-plantio">📅 Plantio: ${ev.dataPlantio}</div>
+                        <ul class="lista-colheitas">${colheitasHTML}</ul>
+                    </div>
+                    
+                    <div class="container-foto">
+                        ${visualGrande} <!-- Substituiu o urlImgCard antigo do corpo -->
+                    </div>
                 </div>
-                ${urlImgCard ? `<div class="container-foto"><img src="${urlImgCard}" alt="${ev.nome}" onerror="this.style.display='none'"></div>` : ''}
-            </div>
-            <div class="acoes">
-                <div class="acoes-esquerda">${botaoColheitaHTML}</div>
-                <div class="acoes-direita">
-                    <button class="btn-delete" data-estacao="${estacaoEvento}" onclick="excluirEventoPess(${ev.id})"></button>
+
+                <div class="acoes">
+                    <div class="acoes-esquerda">
+                        ${botaoColheitaHTML}
+                        ${botaoAdiarHTML}
+                    </div>
+                    <div class="acoes-direita">
+                        <button class="btn-delete" data-estacao="${estacaoEvento}" onclick="excluirEventoPess(${ev.id})"></button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-`;
+    `;
 }
+
 function gerarHtmlProcessamento(ev) {
     return `
         <div class="caixa-evento animated fadeIn secao-processamento">
