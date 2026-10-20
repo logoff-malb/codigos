@@ -1465,13 +1465,13 @@ botao-ferramenta[onclick*="colmeia"]::before{
     transform: translate(-50%, -75%) !important;
 }
 
-/* EFEITO DE TESTE: Deixa apenas as fotos PNG antigas pálidas/amareladas */
+/* EFEITO DE TESTE: Deixa apenas as fotos PNG antigas pálidas
 .item-plantio img,
 .container-foto img,
 .foto-header img,
 #imagemItem[src] {
     filter: grayscale(0.85) sepia(0.4) opacity(0.65);
-}
+} */
 
 /* ========================================================
    FOLHA OBJETOS2.PNG (MÁQUINAS E ARTESANATO - 8 COLUNAS DE 32px)

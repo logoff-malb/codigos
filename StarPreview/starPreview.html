@@ -298,8 +298,9 @@ async function carregarJSON() {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
+    carregarImagens();
     carregarJSON();
-    
+     
     // Inicializa o modal se o script do modal já tiver carregado a função
     if (typeof inicializarComponentes === "function") {
         inicializarComponentes();
