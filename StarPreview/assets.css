@@ -382,46 +382,51 @@
 [class*="tile-cerca"][class*="_g"]::before { background-position: -416px -416px !important; }
 
 
-/* --- 8.2 RENDERIZAÇÃO NO GRID (cerca(n).png - Sprite de 1x2 vertical) --- */
+/* ==========================================================================
+   8.2 RENDERIZAÇÃO NO GRID (Cercas e Portões de 16x32px)
+   ========================================================================== */
 
-/* Alvos: Apenas os objetos posicionados dentro da fazenda */
 .celula-grade .objeto-sprite[class*="tile-cerca"] {
-    /* 1. Troca o arquivo e o tamanho da folha para a folha de 16px */
-    background-image: none; /* Limpa o fallback do objetos1 */
     background-size: 48px auto !important; /* 3 colunas de 16px */
-    
-    /* 2. Dimensões: 1x2 tiles (16px largura por 32px altura) */
     width: 16px !important;
-    height: 32px !important; 
-    
-    /* 3. Escala: 3x para converter 16px em 48px (tamanho da sua célula) */
+    height: 32px !important;
     transform: scale(3) !important;
     transform-origin: top left !important;
-    
-    /* 4. Ancoragem: Sobe 48px (1 célula) para o topo avançar na célula acima */
-    top: -48px !important; 
+    top: -48px !important; /* Estende 1 célula para cima */
     left: 0 !important;
-    
     z-index: 4 !important;
-    image-rendering: pixelated;
+    pointer-events: none !important; /* Impede interceptar cliques no grid */
+    image-rendering: pixelated !important;
 }
 
-/* Injeção das texturas de 16px exclusivas para o GRID */
-.celula-grade .tile-cerca1_f, .celula-grade .tile-cerca1_g { background-image: url('recursos/cerca1.png') !important; }
-.celula-grade .tile-cerca2_f, .celula-grade .tile-cerca2_g { background-image: url('recursos/cerca2.png') !important; }
-.celula-grade .tile-cerca3_f, .celula-grade .tile-cerca3_g { background-image: url('recursos/cerca3.png') !important; }
-.celula-grade .tile-cerca4_f, .celula-grade .tile-cerca4_g { background-image: url('recursos/cerca4.png') !important; }
+/* Injeção do arquivo correto por material */
+.celula-grade [class*="tile-cerca1"] { background-image: url('recursos/cerca1.png') !important; }
+.celula-grade [class*="tile-cerca2"] { background-image: url('recursos/cerca2.png') !important; }
+.celula-grade [class*="tile-cerca3"] { background-image: url('recursos/cerca3.png') !important; }
+.celula-grade [class*="tile-cerca4"] { background-image: url('recursos/cerca4.png') !important; }
 
-/* Mapeamento Bitmask (Ajustado para fatias verticais de 32px de altura) */
-/* X (Colunas de 16px) */
-.celula-grade [class*="tile-cerca"][class*="fmask-0-"] { background-position-x: 0px !important; }
-.celula-grade [class*="tile-cerca"][class*="fmask-1-"] { background-position-x: -16px !important; }
-.celula-grade [class*="tile-cerca"][class*="fmask-2-"] { background-position-x: -32px !important; }
+/* --- MAPEAMENTO EXATO DE JUNCÕES --- */
 
-/* Y (O deslocamento aponta para o topo do sprite duplo na folha de cercas) */
-.celula-grade .fmask-0-0, .celula-grade .fmask-1-0, .celula-grade .fmask-2-0 { background-position-y: 0px !important; }
-.celula-grade .fmask-0-1, .celula-grade .fmask-1-1, .celula-grade .fmask-2-1 { background-position-y: -16px !important; }
-.celula-grade .fmask-0-2, .celula-grade .fmask-1-2, .celula-grade .fmask-2-2 { background-position-y: -32px !important; }
-.celula-grade .fmask-0-3 { background-position-y: -48px !important; }
-.celula-grade .fmask-0-4 { background-position-y: -64px !important; } /* Portão H */
-.celula-grade .fmask-0-5 { background-position-y: -80px !important; } /* Portão V */
+/* Linha Inferior: Meio horizontal (-16px -64px) */
+.celula-grade .fmask-base-meio { background-position: -16px -64px !important; }
+
+/* Junções Horizontais normais / isoladas */
+.celula-grade .fmask-dir       { background-position: -0px -0px !important; }
+.celula-grade .fmask-esq       { background-position: -32px -0px !important; }
+.celula-grade .fmask-esq-dir   { background-position: -16px -32px !important; }
+
+/* Junções Verticais e Cantos Inferiores */
+.celula-grade .fmask-cima      { background-position: -0px -32px !important; }
+.celula-grade .fmask-cima-dir  { background-position: -0px -64px !important; }
+.celula-grade .fmask-cima-esq  { background-position: -32px -64px !important; }
+
+/* Isolada */
+.celula-grade .fmask-isolada   { background-position: -32px -32px !important; }
+
+/* Quebrada (Uso futuro) */
+.celula-grade .fmask-quebrada  { background-position: -16px -0px !important; }
+
+/* Portões */
+.celula-grade .fmask-portao-h  { background-position: -0px -128px !important; }
+.celula-grade .fmask-portao-v  { background-position: -0px -160px !important; }
+.celula-grade .fmask-portao-t  { background-position: -32px -160px !important; }

@@ -582,3 +582,99 @@ me explique cada linha desse css, observe que apartir do comentário "6. obstacu
 
 
 agora eu quero adicionar um botão cercas com um comportamento parecido com o de pisos mas com uma lógica mais simples vão ser usados 4 arquivos chamados cerca (cerca1, 2 e etc), todos tiles tem 16px de altura e largura, mas é importante notar os tipos de tiles e como eles se encaixam, possuem três tipos básicos: portão, cerca e cerca quebrada, e são esses tiles que estaram disponíveis no submenu do botão, o restante da spritesheet lida com a interação dos tipos básicos, separando e uma matriz a primeira linha sendo uma cerca quebrada entre duas cercas onde 0x0 é uma cerca que se acora a um objeto na direita, 0x1 é cerca quebrada e 0x2 a cerca que se ancora ao objeto da esquerda; a segunda linha é uma horizonzal de uma cerca que se ancora ao objeto de cima na esquerda 1x0. o bloco isolado que se forma ao colocar uma cerca no meio 1x1. e na direita 1x2 há a cerca que não se ancora a nada mas recebe ancora; com a terceira linha 2x0,1,2 é a linha horizontal que se forma da conexão de 3 cercas com ancoragem nas extremidades esquerda e direita; a quarta linha tem 3 elementos mas o ultimo não será usado, é a particula de quando se quebra uma cerca, trata-se de 3x0 uma cerca com ancoragem a esquerda que recebe um portão na direita e 3x1 uma cerca com ancoragem na direita e recebe um portão em sua esquerda; a quinta linha é um sprite composto de um portão na horizontal ancorado na esquerda e na direita 4x0 e 4x1 , 4x2 não será usado; a sexta linha 5,0 é um portão fechado na vertical com ancoragem em cima e embaixo, 5x1  e 5x2 não serão usados; na sétima linha 6x0 há o portão horizontal com ancoragem somente na esquerda o resto não será usado; na oitava linha 7x0 há o o portão horizontal com ancoragem somente na direita o resto não será utilizado, linha nona tem 8x0 portão na vertical com ancoragem em cima, 8x1,2 não é usado; décima e ultima linha portão vertical 9:0 com ancoragem embaixo. consegue construir o mapa de sprites com essa descrição? se sim crie o novo objeto cercas com 4 botões no submenu, esses botões devem trocar para o arquivo cerca1, cerca 2 e etc os arquivos são símétricos então a lógica só precisa ser construida uma vez. o arquivo cerca1 e demais estão no diretório /recursos
+
+acará-disco azul, valorBase: 120, local: ilha norte;
+achigã, valorBase: 100, local: lago da montanha, hora ["06:00", "19:00"]
+achigã-pequeno, valorBase: 50, local:[lago da floresta, rio da cidade], estacao[primavera, outono]
+albacora valorBase: 75, local: oceano, estacao[outono,inverno]
+alocine valorBase: 60, local:[rio da cidade, rio da floresta] ["06:00", "11]
+anchova, valorBase: 30, local: oceano, estacao: [primavera, outono ]
+areinha, valorBase: 75, local: deserto
+arenque valorBase: 30, local:
+arraia valorBase: 180, local:
+atum, valorBase: 100, local: [oceano, ilha sul, ilha sudeste, ilha caverna, ilha oeste],hora ["06:00", "19:00"], estacao [verao, inverno]
+bagre, valorBase: 200, local: [lago da floresta, pantano]
+baiacu, valorBase: 200, local:oceano
+brema, valorBase: 45, local:[rio da cidade, rio da floresta]
+carpa, valorBase: 30, local: lago da montanha
+carpa escorpionica valorBase: 150, local:
+carpa mutante valorBase: 1000, local: esgoto
+carpa da meia-noite valorBase: 150, local: [lago da montanha, lagoa da floresta, ilha]
+carpa radiotiva valorBase:, local:
+chione valorBase:, local:
+cioba valorBase:, local:
+dourado valorBase:, local:
+
+lúcio valorBase:, local:
+peixe-sol valorBase:, local:
+salmonete valorBase:, local:
+sardinha, oceano
+truta arco-íris, [cidade lago da floresta]
+salmão, [cidade lago da floresta]
+picão-verde, valorBase:, local: [cidade lago da floresta]
+perca, valorBase:, local:
+
+enguia valorBase:, local:
+polvo valorBase:, local:
+
+lula valorBase:, local:
+pepino do mar valorBase:, local:
+super pepino valorBase:, local:
+peixe-fantasma valorBase:, local:
+
+
+
+[
+  {"id":85,"nome":"acará-disco azul","tipo":["peixe"],"valorBase":120,"local":["ilha norte","ilha oeste"],"estacao":[],"hora":[],"sprite":"-704px -1088px","dificuldade":60,"comportamento":"dardo","cura":[17,38]},
+  {"id":86,"nome":"achigã","tipo":["peixe"],"valorBase":100,"local":["lago da montanha"],"estacao":[],"hora":["06:00","19:00"],"sprite":"-512px -160px","comportamento":"misto","dificuldade":50,"cura":[17,38]},
+  {"id":87,"nome":"achigã-pequeno","tipo":["peixe"],"valorBase":50,"local":["lago da floresta","rio da cidade"],"estacao":["primavera","outono"],"hora":[],"sprite":"-544px -160px","comportamento":"misto","dificuldade":28,"cura":[11,25]},
+  {"id":88,"nome":"albacora","tipo":["peixe"],"valorBase":75,"local":["oceano"],"estacao":["outono","inverno"],"hora":[["06:00","11:00"],["18:00","02:00"]],"sprite":"-288px -928px","dificuldade":60,"comportamento":"misto","cura":[11,25]},
+  {"id":89,"nome":"alocine","tipo":["peixe"],"valorBase":60,"local":["rio da cidade","rio da floresta"],"estacao":["primavera","verao","outono"],"hora":["09:00","02:00"],"sprite":"-320px -928px","clima":["chuvoso"],"dificuldade":45,"comportamento":"suave","cura":[11,25]},
+  {"id":90,"nome":"anchova","tipo":["peixe"],"valorBase":30,"local":["oceano"],"estacao":["primavera","outono"],"hora":[],"sprite":"-288px -160px","dificuldade":30,"comportamento":"dardo","cura":[5,13]},
+  {"id":91,"nome":"areinha","tipo":["peixe"],"valorBase":75,"local":["deserto"],"estacao":[],"hora":["06:00","20:00"],"sprite":"-640px -192px","dificuldade":65,"comportamento":"misto","cura":[5,13]},
+  {"id":92,"nome":"arenque","tipo":["peixe"],"valorBase":30,"local":["oceano"],"estacao":["primavera","inverno"],"hora":[],"sprite":"-96px -192px","dificuldade":25,"comportamento":"dardo","cura":[5,13]},
+  {"id":93,"nome":"arraia","tipo":["peixe"],"valorBase":180,"local":["ilha caverna"],"estacao":[],"hora":[],"sprite":"-640px -1088px","comportamento":"pesado","dificuldade":80,"cura":[17,38]},
+  {"id":94,"nome":"atum","tipo":["peixe"],"valorBase":100,"local":["oceano","ilha sul","ilha sudeste","ilha caverna","ilha oeste"],"estacao":["verao","inverno"],"hora":[["06:00","19:00"],["06:00","02:00"]],"sprite":"-320px -160px","comportamento":"suave","dificuldade":70,"cura":[17,38]},
+  {"id":95,"nome":"bagre","tipo":["peixe"],"valorBase":200,"local":["lago da floresta","rio da cidade","rio da floresta","pantano","bosque secreto"],"estacao":["primavera","outono","inverno"],"hora":["06:00","00:00"],"sprite":"-736px -160px","clima":["chuvoso"],"dificuldade":75,"comportamento":"misto","cura":[22,50]},
+  {"id":96,"nome":"baiacu","tipo":["peixe"],"valorBase":200,"local":["oceano","ilha sul","ilha caverna","ilha oeste"],"estacao":["verao"],"hora":["12:00","16:00"],"sprite":"-256px -160px","clima":["ensolarado"],"comportamento":"flutuante","dificuldade":80,"cura":[0,-100]},
+  {"id":97,"nome":"brema","tipo":["peixe"],"valorBase":45,"local":["rio da cidade","rio da floresta"],"estacao":[],"hora":["16:00","02:00"],"sprite":"-384px -160px","dificuldade":35,"comportamento":"suave","cura":[5,13]},
+  {"id":98,"nome":"carpa","tipo":["peixe"],"valorBase":30,"local":["lago da montanha","esgoto","covil dos insetos","bosque secreto"],"estacao":["primavera","verao","outono"],"hora":[],"sprite":"-704px -160px","comportamento":"misto","dificuldade":15,"cura":[5,13]},
+  {"id":99,"nome":"carpa da meia-noite","tipo":["peixe"],"valorBase":150,"local":["lago da montanha","lagoa da floresta","ilha oeste","ilha norte"],"estacao":["outono","inverno"],"hora":["22:00","02:00"],"sprite":"-160px -352px","comportamento":"misto","dificuldade":55,"cura":[22,50]},
+  {"id":100,"nome":"carpa escorpionica","tipo":["peixe"],"valorBase":150,"local":["deserto"],"estacao":[],"hora":["06:00","20:00"],"sprite":"-672px -192px","comportamento":"dardo","dificuldade":90,"cura":[0,-125]},
+  {"id":101,"nome":"carpa mutante","tipo":["peixe"],"valorBase":1000,"local":["esgoto"],"estacao":[],"hora":[],"sprite":"-320px -896px","cura":[11,25],"comportamento":"dardo","dificuldade":80},
+  {"id":102,"nome":"carpa radiotiva","tipo":["peixe"],"valorBase":1000,"local":["esgoto"],"estacao":[],"hora":[],"sprite":"-416px -1184px","cura":[11,25],"comportamento":"dardo","dificuldade":80},
+  {"id":103,"nome":"chione","tipo":["peixe"],"valorBase":500,"local":["minas (nv 60)"],"estacao":[],"hora":[],"sprite":"-544px -192px","cura":[17,38],"comportamento":"dardo","dificuldade":85},
+  {"id":104,"nome":"cioba","tipo":["peixe"],"valorBase":50,"local":["oceano"],"estacao":[],"hora":["06:00","19:00"],"sprite":"-192px -192px","comportamento":"misto","dificuldade":40,"cura":[11,25],"clima":["chuvoso"]},
+  {"id":105,"nome":"dourado","tipo":["peixe"],"valorBase":100,"local":["rio da floresta"],"estacao":["verao"],"hora":["06:00","19:00"],"sprite":"-256px -928px","cura":[11,25],"dificuldade":78,"comportamento":"misto"},
+  {"id":106,"nome":"enguia","tipo":["peixe"],"valorBase":85,"local":["oceano"],"estacao":["primavera","outono"],"hora":["16:00","02:00"],"sprite":"-128px -192px","cura":[13,30],"dificuldade":70,"comportamento":"suave","clima":["chuvoso"]},
+  {"id":107,"nome":"enguia de lava","tipo":["peixe"],"valorBase":700,"local":["minas (nv 100)","caldeira do vulcão"],"estacao":[],"hora":[],"clima":[],"sprite":"-576px -192px","comportamento":"misto","dificuldade":90,"cura":[22,50]},
+  {"id":108,"nome":"esquálio","tipo":["peixe"],"valorBase":50,"local":["lago da montanha","rio da floresta"],"estacao":[],"hora":[],"clima":[],"sprite":"-192px -928px","comportamento":"dardo","dificuldade":35,"cura":[11,25]},
+  {"id":109,"nome":"esturjão","tipo":["peixe"],"valorBase":200,"local":["lago da montanha"],"estacao":["verao","inverno"],"hora":["06:00","19:00"],"clima":[],"sprite":"-64px -928px","comportamento":"misto","dificuldade":78,"cura":[11,25]},
+  {"id":110,"nome":"filho do peixe-carmim","tipo":["peixe"],"valorBase":1500,"local":["oceano"],"estacao":[],"hora":["06:00","20:00"],"clima":[],"sprite":"-320px -1184px","comportamento":"misto","dificuldade":95,"cura":[17,38]},
+  {"id":111,"nome":"gobi","tipo":["peixe"],"valorBase":150,"local":["cachoeira da floresta"],"estacao":[],"hora":["08:00","18:00"],"clima":[],"sprite":"null","comportamento":"dardo","dificuldade":55,"cura":[0,-62]},
+  {"id":112,"nome":"halibute","tipo":["peixe"],"valorBase":80,"local":["oceano"],"estacao":["primavera","verao","inverno"],"hora":[["06:00","11:00"],["19:00","02:00"]],"clima":[],"sprite":"-384px -928px","comportamento":"pesado","dificuldade":50,"cura":[11,25]},
+  {"id":113,"nome":"lenda","tipo":["peixe"],"valorBase":5000,"local":["lago da montanha"],"estacao":["primavera"],"hora":["06:00","20:00"],"clima":["chuvoso"],"sprite":"-608px -192px","comportamento":"misto","dificuldade":110,"cura":[224,500]},
+  {"id":114,"nome":"lenda ii","tipo":["peixe"],"valorBase":5000,"local":["lago da montanha"],"estacao":[],"hora":["06:00","20:00"],"clima":["chuvoso"],"sprite":"-384px -1184px","comportamento":"misto","dificuldade":110,"cura":[224,500]},
+  {"id":115,"nome":"linguado","tipo":["peixe"],"valorBase":100,"local":["oceano","ilha sul","ilha caverna","ilha oeste"],"estacao":["primavera","verao"],"hora":["06:00","20:00"],"clima":[],"sprite":"-96px -352px","comportamento":"pesado","dificuldade":50,"cura":[17,38]},
+  {"id":116,"nome":"lúcio","tipo":["peixe"],"valorBase":100,"local":["rio da cidade","rio da floresta","lago da floresta"],"estacao":["verao","inverno"],"hora":[],"sprite":"-0px -192px","cura":[17,38],"comportamento":"dardo","dificuldade":60},
+  {"id":117,"nome":"lula","tipo":["peixe"],"valorBase":80,"local":["oceano"],"estacao":["inverno"],"hora":["18:00","02:00"],"sprite":"-224px -192px","cura":[11,25],"comportamento":"pesado","dificuldade":75},
+  {"id":118,"nome":"lula da meia-noite","tipo":["peixe"],"valorBase":100,"local":["mercado noturno","praia pier"],"estacao":[],"hora":["06:00","19:00"],"clima":[],"sprite":"-192px -1056px","comportamento":"pesado","dificuldade":55,"cura":[17,38]},
+  {"id":119,"nome":"peixe-fantasma","tipo":["peixe"],"valorBase":null,"local":[],"estacao":[],"hora":[],"sprite":"null"},
+  {"id":120,"nome":"peixe-sol","tipo":["peixe"],"valorBase":null,"local":[],"estacao":[],"hora":[],"sprite":"null"},
+  {"id":121,"nome":"pepino do mar","tipo":["peixe"],"valorBase":null,"local":[],"estacao":[],"hora":[],"sprite":"null"},
+  {"id":122,"nome":"perca","tipo":["peixe"],"valorBase":null,"local":[],"estacao":[],"hora":[],"sprite":"null"},
+  {"id":123,"nome":"picão-verde","tipo":["peixe"],"valorBase":null,"local":["cidade","lago da floresta"],"estacao":[],"hora":[],"sprite":"null"},
+  {"id":124,"nome":"polvo","tipo":["peixe"],"valorBase":null,"local":[],"estacao":[],"hora":[],"sprite":"null"},
+  {"id":125,"nome":"salmão","tipo":["peixe"],"valorBase":null,"local":["cidade","lago da floresta"],"estacao":[],"hora":[],"sprite":"null"},
+  {"id":126,"nome":"salmonete","tipo":["peixe"],"valorBase":null,"local":[],"estacao":[],"hora":[],"sprite":"null"},
+  {"id":127,"nome":"sardinha","tipo":["peixe"],"valorBase":null,"local":["oceano"],"estacao":[],"hora":[],"sprite":"null"},
+  {"id":128,"nome":"super pepino","tipo":["peixe"],"valorBase":null,"local":[],"estacao":[],"hora":[],"sprite":"null"},
+  {"id":129,"nome":"truta arco-íris","tipo":["peixe"],"valorBase":null,"local":["cidade","lago da floresta"],"estacao":[],"hora":[],"sprite":"null"}
+]
+ 
+configurar uma excessão para: 
+o horário de pesca do atum na ilha, 
+para o bagre que pode ser pescado a qualquer hora e estação no bosque e no pantano
+carpa da meia noite aparece na agua doce da ilha oeste
+filho do peixe carmim e peixe carmim no pier leste da praia
+adicionar sprite do gobi na objetos3

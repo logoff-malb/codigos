@@ -412,42 +412,63 @@ const FarmPlanner = {
         const alvo = this.estado.objetos.find(o => o.x === cx && o.y === cy && o.tipo.startsWith(mat));
         if (!alvo) return;
 
+        const ehVizinho = (vx, vy) => {
+            return this.estado.objetos.some(o => o.x === vx && o.y === vy && o.tipo.startsWith(mat));
+        };
+
+        const temN = ehVizinho(cx, cy - 1);
+        const temS = ehVizinho(cx, cy + 1);
+        const temL = ehVizinho(cx + 1, cy);
+        const temO = ehVizinho(cx - 1, cy);
+
+        // --- TRATAMENTO DE PORTÃO (_g) ---
         if (this.objetosConfig[alvo.tipo].subtipo === 'g') {
-            const vizV = this.estado.objetos.some(o => o.x === cx && (o.y === cy-1 || o.y === cy+1) && o.tipo.startsWith(mat));
-            alvo.fmask = vizV ? "portao-v" : "portao-h";
+            const vizinhosTotais = (temN ? 1 : 0) + (temS ? 1 : 0) + (temL ? 1 : 0) + (temO ? 1 : 0);
+            if (vizinhosTotais >= 3) {
+                alvo.fmask = "portao-t"; // -32px -160px
+            } else if (temN || temS) {
+                alvo.fmask = "portao-v"; // -0px -160px
+            } else {
+                alvo.fmask = "portao-h"; // -0px -128px
+            }
             return;
         }
 
-        // Bitmask: N=1, L=2, S=4, O=8
-        let mask = 0;
-        if (this.estado.objetos.some(o => o.x === cx && o.y === cy - 1 && o.tipo.startsWith(mat))) mask += 1;
-        if (this.estado.objetos.some(o => o.x + 1 === cx + 1 && o.x === cx + 1 && o.y === cy && o.tipo.startsWith(mat))) mask += 2;
-        if (this.estado.objetos.some(o => o.x === cx && o.y === cy + 1 && o.tipo.startsWith(mat))) mask += 4;
-        if (this.estado.objetos.some(o => o.x === cx - 1 && o.y === cy && o.tipo.startsWith(mat))) mask += 8;
+        // --- TRATAMENTO DE CERCA NORMAL (_f) ---
 
-        // Mapeamento para as classes CSS (Coluna-Linha da spritesheet)
-        const mapaFmask = {
-            0:  "1-1", // Isolado
-            1:  "2-1", // Só Norte (Base Vertical)
-            2:  "0-2", // Só Leste (Ponta Esquerda)
-            3:  "0-3", // Norte + Leste (Quina BL)
-            4:  "0-1", // Só Sul (Topo Vertical)
-            5:  "0-0", // Norte + Sul (Meio Vertical)
-            6:  "2-0", // Sul + Leste (Quina TL)
-            7:  "1-0", // N+S+L (T-Vertical virado pra Direita)
-            8:  "2-2", // Só Oeste (Ponta Direita)
-            9:  "1-3", // Norte + Oeste (Quina BR)
-            10: "1-2", // Leste + Oeste (Meio Horizontal)
-            11: "2-3", // N+L+O (T-Horizontal virado pra Cima)
-            12: "1-1", // Sul + Oeste (Quina TR) -> ajuste manual se necessário
-            13: "0-3", // N+S+O (T-Vertical virado pra Esquerda)
-            14: "0-3", // S+L+O (T-Horizontal virado pra Baixo)
-            15: "1-2"  // Cruzamento (Centro)
-        };
-        alvo.fmask = mapaFmask[mask] || "1-1";
+        // 1. Linha Horizontal Inferior (Meio entre os cantos: tem vizinho Leste e Oeste)
+        // Se ela tem Leste e Oeste, ela é o meio horizontal da base:
+        if (temL && temO) {
+            // Se estiver na linha de baixo (sem vizinho ao Sul, mas com vizinhos laterais):
+            // Usa a haste horizontal de base (-16px -64px)
+            alvo.fmask = "base-meio"; 
+        }
+        // 2. Cantos Inferiores (fazem a virada para cima)
+        else if (temN && temL) {
+            alvo.fmask = "cima-dir";     // -0px -64px (Canto inferior esquerdo)
+        } 
+        else if (temN && temO) {
+            alvo.fmask = "cima-esq";     // -32px -64px (Canto inferior direito)
+        } 
+        // 3. Colunas Verticais
+        else if (temN) {
+            alvo.fmask = "cima";         // -0px -32px (Extensão para cima)
+        } 
+        // 4. Pontas Horizontais (fora de quina)
+        else if (temL) {
+            alvo.fmask = "dir";          // -0px -0px (Junção para Direita)
+        } 
+        else if (temO) {
+            alvo.fmask = "esq";          // -32px -0px (Junção para Esquerda)
+        } 
+        // 5. Isolada
+        else {
+            alvo.fmask = "isolada";      // -32px -32px
+        }
     };
 
-    [ [x,y], [x,y-1], [x,y+1], [x+1,y], [x-1,y] ].forEach(([nx, ny]) => atualizar(nx, ny));
+    // Atualiza a célula clicada e todas as vizinhas ortogonais
+    [ [x, y], [x, y - 1], [x, y + 1], [x + 1, y], [x - 1, y] ].forEach(([nx, ny]) => atualizar(nx, ny));
 },
 
     // Lógica Matemática de Bitmasking para Caminhos

@@ -316,29 +316,39 @@ window.addEventListener("DOMContentLoaded", () => {
   <div class="container-geral">
   <div class="frame">
     <div class="menu-funcionalidades">
-      <div class="bloco-funcao">
-        <button class="botao-funcao btnPlantio" onclick="abrirModalPlantio()">
-          <img src="recursos/enxada.png" class="enxada-estatica" alt="Plantio" title="Plantio">
-          <img src="recursos/enxada.gif" class="enxada-animada" alt="Plantio animado">
+        <!-- 1. Botão Plantio -->
+        <button type="button" class="btn-menu-principal" onclick="abrirModalPlantio()">
+            <div class="slot-icone-topo">
+            <img src="recursos/enxada.png" class="enxada-estatica icone-ampliado" alt="Plantio">
+            <img src="recursos/enxada.gif" class="enxada-animada icone-ampliado" alt="Plantio animado">
+            </div>
+            <div class="faixa-rotulo-base">Plantio</div>
         </button>
-        <div class="rotulo-funcao">Plantio</div>
-      </div>
 
-      <div class="bloco-funcao">
-        <button class="botao-funcao btnProcessamento" onclick="ativarFuncao('processamento')">
-          <img src="recursos/jarra.png" alt="Processamento" title="Processamento"></button>
-        <div class="rotulo-funcao">Processamento</div>
-      </div>
+        <!-- 2. Botão Processamento -->
+        <button type="button" class="btn-menu-principal btn-processamento" onclick="ativarFuncao('processamento')">
+            <div class="slot-icone-topo">
+            <img src="recursos/jarra.png" alt="Processamento" class="icone-jarra">
+            </div>
+            <div class="faixa-rotulo-base texto-comprimido">Processamento</div>
+        </button>
 
-      <!-- Novo botão Player -->
-      <button type="button" class="btn-player" id="btnCadastro">
-        <img src="recursos/player.png" alt="Player">
-        <span>Player</span>
-      </button>
-      <!--novo botão layout -->
-      <button type="button" class="btn-layout" id="btnLayout" onclick="abrirModalLayout()">
-        <img src="recursos/layout.png" alt="Layout"> <span>Layout</span>
-      </button>
+        <!-- 3. Botão Player -->
+        <button type="button" class="btn-menu-principal" id="btnCadastro">
+            <div class="slot-icone-topo">
+            <img src="recursos/player.png" alt="Player" class="icone-player">
+            </div>
+            <div class="faixa-rotulo-base">Player</div>
+        </button>
+
+        <!-- 4. Botão Layout -->
+        <button type="button" class="btn-menu-principal" id="btnLayout" onclick="abrirModalLayout()">
+            <div class="slot-icone-topo">
+            <img src="recursos/layout.png" alt="Layout" class="icone-layout">
+            </div>
+            <div class="faixa-rotulo-base">Layout</div>
+        </button>
+    </div>
 
     </div>
   </div>
@@ -1589,6 +1599,32 @@ function validarPlantioDinamico() {
       renderizarItensProcessamento();
   }
 
+// Itens extras do barril que não estão no JSON
+  const ITENS_EXTRAS_BARRIL = [
+      {
+          id: 'manual_mel',
+          nome: 'mel',
+          sprite: '-128px -448px',
+          sheet: 'objetos1',
+          produtoExcecao: { nome: 'Hidromel', sprite: '-96px -608px' }
+      },
+      {
+          id: 'manual_arroz',
+          nome: 'arroz',
+          sprite: '-480px -544px',
+          sheet: 'objetos1',
+          produtoExcecao: { nome: 'Vinagre', sprite: '-352px -544px' }
+      }
+  ];
+
+  // Mapa de exceções para itens do JSON no barril (todos os produtos em objetos1.png)
+  const EXCECOES_BARRIL_JSON = {
+      43: { nome: 'Chá Verde', sprite: '-448px -800px' },
+      52: { nome: 'Café',       sprite: '-352px -512px' },
+      58: { nome: 'Pale Ale',   sprite: '-480px -384px' },
+      80: { nome: 'Cerveja',    sprite: '-320px -448px' }
+  };
+
   function renderizarItensProcessamento() {
       const container = document.getElementById('listaItensProcessamento');
       const contador = document.getElementById('contadorItensProcessamento');
@@ -1600,7 +1636,14 @@ function validarPlantioDinamico() {
       if (maquinaProcessamentoAtiva === 'jarra') {
           itensFiltrados = jsonItens.filter(item => item.prGeleia === true || item.prPicles === true);
       } else if (maquinaProcessamentoAtiva === 'barril') {
-          itensFiltrados = jsonItens.filter(item => item.prVinho === true || item.prSuco === true);
+          // Pega vinhos, sucos e as exceções existentes no JSON
+          const doJson = jsonItens.filter(item => 
+              item.prVinho === true || 
+              item.prSuco === true || 
+              EXCECOES_BARRIL_JSON.hasOwnProperty(item.id)
+          );
+          // Junta com os itens manuais (mel e arroz)
+          itensFiltrados = [...doJson, ...ITENS_EXTRAS_BARRIL];
       }
 
       if (contador) {
@@ -1611,6 +1654,7 @@ function validarPlantioDinamico() {
           const itemDiv = document.createElement('div');
           itemDiv.className = 'item-plantio';
 
+          // 1. Sprite do cultivo / matéria-prima
           let visualHTML = '';
           if (item.sprite) {
               const posSprite = item.sprite.replace(',', '');
@@ -1620,29 +1664,65 @@ function validarPlantioDinamico() {
               visualHTML = `<img src="${item.imagem.replace(/\\/g, '/')}" alt="${item.nome}" onerror="this.style.display='none'">`;
           }
 
+          // 2. Mapeamento dos produtos e folhas de sprite
           let rotuloProducao = '';
+          let posProduto = '';
+          let folhaProduto = ''; // Vazia = objetos1.png; 'sprite-obj3' = objetos3.png
+
           if (maquinaProcessamentoAtiva === 'jarra') {
-              rotuloProducao = item.prGeleia ? 'Geléia' : 'Picles';
+              folhaProduto = 'sprite-obj3';
+              if (item.prGeleia) {
+                  rotuloProducao = 'Geléia';
+                  posProduto = '-64px -512px';
+              } else if (item.prPicles) {
+                  rotuloProducao = 'Picles';
+                  posProduto = '-0px -512px';
+              }
           } else if (maquinaProcessamentoAtiva === 'barril') {
-              rotuloProducao = item.prVinho ? 'Vinho' : 'Suco';
+              // Checagem de Exceções do Barril (todas em objetos1.png)
+              if (item.produtoExcecao) {
+                  rotuloProducao = item.produtoExcecao.nome;
+                  posProduto = item.produtoExcecao.sprite;
+                  folhaProduto = ''; // objetos1.png
+              } else if (EXCECOES_BARRIL_JSON[item.id]) {
+                  rotuloProducao = EXCECOES_BARRIL_JSON[item.id].nome;
+                  posProduto = EXCECOES_BARRIL_JSON[item.id].sprite;
+                  folhaProduto = ''; // objetos1.png
+              } else if (item.prVinho) {
+                  rotuloProducao = 'Vinho';
+                  posProduto = '-96px -480px';
+                  folhaProduto = 'sprite-obj3';
+              } else if (item.prSuco) {
+                  rotuloProducao = 'Suco';
+                  posProduto = '-160px -480px';
+                  folhaProduto = 'sprite-obj3';
+              }
           }
 
+          // 3. Miniatura do produto com 1/2 tamanho e a folha correta
+          const badgeHTML = posProduto 
+              ? `<div class="sprite-item ${folhaProduto} badge-produto-subtitulo" style="background-position: ${posProduto};"></div>` 
+              : '';
+
+          // 4. Montagem com o cultivo no topo e subtítulo limpo
           itemDiv.innerHTML = `
               ${visualHTML}
               <p style="font-weight: bold; margin-top: 3px;">${item.nome}</p>
-              <span style="font-size: 9px; color: #643925; opacity: 0.85;">(${rotuloProducao})</span>
+              <div class="linha-subtitulo-processamento">
+                  <span style="font-size: 9px; color: #643925; opacity: 0.85;">(${rotuloProducao})</span>
+                  ${badgeHTML}
+              </div>
           `;
 
           itemDiv.onclick = () => {
               document.querySelectorAll('#listaItensProcessamento .item-plantio').forEach(el => el.classList.remove('selecionado'));
               itemDiv.classList.add('selecionado');
-              console.log(`Item selecionado para ${maquinaProcessamentoAtiva}:`, item.nome);
+              console.log(`Item selecionado para ${maquinaProcessamentoAtiva}:`, item.nome, `-> ${rotuloProducao}`);
           };
 
           container.appendChild(itemDiv);
       });
   }
-
   // ========================================================
   // SUA FUNÇÃO ORIGINAL FICA LOGO ABAIXO, INTACTA:
   // ========================================================
