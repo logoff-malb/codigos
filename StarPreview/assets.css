@@ -383,19 +383,21 @@
 
 
 /* ==========================================================================
-   8.2 RENDERIZAÇÃO NO GRID (Cercas e Portões de 16x32px)
+   8.2 RENDERIZAÇÃO NO GRID (Cercas e Portões) - Mais compacta sem frestas
    ========================================================================== */
 
 .celula-grade .objeto-sprite[class*="tile-cerca"] {
     background-size: 48px auto !important; /* 3 colunas de 16px */
     width: 16px !important;
     height: 32px !important;
-    transform: scale(3) !important;
-    transform-origin: top left !important;
-    top: -48px !important; /* Estende 1 célula para cima */
+    /* scaleX(3) fecha perfeitamente os 48px horizontais */
+    /* scaleY(2.4) encurta a altura para não parecer gigante */
+    transform: scaleX(3) scaleY(2.0) !important;
+    transform-origin: bottom left !important;
+    top: auto !important; /* Puxa para cima na medida certa da base */
     left: 0 !important;
     z-index: 4 !important;
-    pointer-events: none !important; /* Impede interceptar cliques no grid */
+    pointer-events: none !important;
     image-rendering: pixelated !important;
 }
 

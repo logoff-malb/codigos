@@ -4,12 +4,45 @@
  */
 const FarmPlanner = {
     config: {
-        largura: 60,
+        largura: 60, // Padrão genérico
         altura: 60,
-        tamanhoCelula: 48 // Tamanho fixo de cada célula do grid em px
+        tamanhoCelula: 48
+    },
+
+    mapaAtual: 'generico',
+
+    // --- Definição dos Mapas Oficiais e do Genérico ---
+   mapasConfig: {
+        generico:     { nome: 'Grade Genérica (60x60)', largura: 60, altura: 60, imagem: null },
+        padrao:       { nome: 'Fazenda Padrão',          imagem: 'recursos/fazenda1.png' },
+        entrerios:    { nome: 'Fazenda Entre Rios',      imagem: 'recursos/fazenda2.png' },
+        floresta:     { nome: 'Fazenda na Floresta',     imagem: 'recursos/fazenda3.png' },
+        colina:       { nome: 'Fazenda na Colina',       imagem: 'recursos/fazenda4.png' },
+        remota:       { nome: 'Fazenda Remota',          imagem: 'recursos/fazenda5.png' },
+        quatroCantos: { nome: 'Quatro Cantos',           imagem: 'recursos/fazenda6.png' },
+        praia:        { nome: 'Fazenda na Praia',        imagem: 'recursos/fazenda7.png' },
+        pradaria:     { nome: 'Fazenda dos Prados (1.6)', imagem: 'recursos/fazenda8.png' }
     },
     
-    matriz: [],
+    selecionarMapa: function(idMapa) {
+        const mapa = this.mapasConfig[idMapa];
+        if (!mapa) return;
+
+        this.mapaAtual = idMapa;
+        
+        // Se o mapa tiver tamanho próprio (ex: genérico 60), usa ele. Senão, assume 80x65
+        this.config.largura = mapa.largura || 80;
+        this.config.altura  = mapa.altura  || 65;
+
+        // Limpa objetos fora dos limites
+        this.estado.objetos = this.estado.objetos.filter(obj => {
+            return obj.x < this.config.largura && obj.y < this.config.altura;
+        });
+
+        this.inicializarGrade();
+    },
+
+    celulasDOM: [], // Cache O(1) para acesso direto às células sem querySelector
 
     // --- Configurações de Cores do Canvas ---
     coresAlcance: {
@@ -39,14 +72,16 @@ const FarmPlanner = {
         const viewport = document.querySelector('.viewport-edicao');
         if (!viewport) return;
 
+        // 1. Zoom via Scroll do Mouse (com Alt ou direto na viewport) e bloqueio da página
         viewport.addEventListener('wheel', (e) => {
-            if (e.altKey) {
-                e.preventDefault();
-                const delta = e.deltaY < 0 ? 0.1 : -0.1;
-                this.alterarZoom(delta);
-            }
+            e.preventDefault(); // Bloqueia a rolagem da página principal
+
+            // Zoom suave com a rodinha do mouse
+            const delta = e.deltaY < 0 ? 0.05 : -0.05;
+            this.alterarZoom(delta);
         }, { passive: false });
 
+        // 2. Atalhos de Teclado (Alt + "+", Alt + "-", Alt + "0")
         window.addEventListener('keydown', (e) => {
             const modal = document.getElementById('modalLayout');
             if (!modal || !modal.open) return;
@@ -249,14 +284,13 @@ const FarmPlanner = {
                 isPiso: true,
                 indexPiso: i - 1 // Mapeamento vertical no pisos.png
             };
-            // cadastro dinamico das cercas
+        }
+        // cadastro dinamico das cercas
             const materiaisCerca = ['cerca1', 'cerca2', 'cerca3', 'cerca4'];
             materiaisCerca.forEach(mat => {
                 config[`${mat}_f`] = { categoria: 'Cercas', material: mat, subtipo: 'f', isCerca: true, dimensao: [1,1], alcance: [] };
                 config[`${mat}_g`] = { categoria: 'Cercas', material: mat, subtipo: 'g', isCerca: true, dimensao: [1,1], alcance: [] };
-                config[`${mat}_b`] = { categoria: 'Cercas', material: mat, subtipo: 'b', isCerca: true, dimensao: [1,1], alcance: [] };
             });
-        }
 
         return config;
     })(),
@@ -272,13 +306,18 @@ const FarmPlanner = {
         },
         zoom: 1,
         botaoPressionado: null,
+        houveArrasto: false
     },
 
     ferramentaAtual: 'aspersorC',
 
-    abrir: function() {
+     abrir: function() {
         const modal = document.getElementById('modalLayout');
         if (modal) {
+            document.body.style.overflow = 'hidden'; // Impede o scroll da página de fundo
+            modal.onclose = () => {
+                document.body.style.overflow = ''; // Restaura ao fechar
+            };
             this.inicializarGrade();
             modal.showModal();
         }
@@ -302,15 +341,14 @@ const FarmPlanner = {
         canvasFundo.style.pointerEvents = 'none';
         canvasFundo.style.zIndex = '1'; // Atrás de tudo
         
+        
         const larguraPx = this.config.largura * this.config.tamanhoCelula;
         const alturaPx = this.config.altura * this.config.tamanhoCelula;
-        
-        [canvasFundo].forEach(canv => {
-            canv.width = larguraPx;
-            canv.height = alturaPx;
-            canv.style.width = larguraPx + 'px';
-            canv.style.height = alturaPx + 'px';
-        });
+        canvasFundo.width = larguraPx;
+        canvasFundo.height = alturaPx;
+        canvasFundo.style.width = larguraPx + 'px';
+        canvasFundo.style.height = alturaPx + 'px';
+
         
         // --- CANVAS DE TOPO (Z-Index: 6) ---
         // Este canvas desenha as bordas e linhas pontilhadas na frente de tudo
@@ -322,6 +360,7 @@ const FarmPlanner = {
         container.appendChild(canvasTopo);
 
         // Grid HTML
+        this.celulasDOM = []; // Limpa o cache
         for (let i = 0; i < (this.config.largura * this.config.altura); i++) {
             const x = i % this.config.largura;
             const y = Math.floor(i / this.config.largura);
@@ -337,25 +376,40 @@ const FarmPlanner = {
             // Previne o menu de contexto do Windows para o botão direito na grade
             celula.oncontextmenu = (e) => e.preventDefault();
 
-            celula.onmousedown = (e) => {
-                // Define se estamos agindo com o botão esquerdo (0) ou direito (2)
+           celula.onmousedown = (e) => {
                 this.estado.botaoPressionado = (e.button === 2) ? 'direito' : 'esquerdo';
-                this.gerenciarClique(celula, this.estado.botaoPressionado);
+                this.estado.houveArrasto = false; // Reseta no início do clique
+
+                // Se for botão direito (apagar) ou ferramenta de pintura contínua, aplica no ato
+                const ehPintura = this.ferramentaAtual.startsWith('piso') || this.ferramentaAtual.startsWith('cerca');
+                if (this.estado.botaoPressionado === 'direito' || ehPintura) {
+                    this.gerenciarClique(celula, this.estado.botaoPressionado);
+                }
+            };
+
+            celula.onmouseup = (e) => {
+                // Só coloca o objeto se NÃO foi um arrasto de câmera
+                if (!this.estado.houveArrasto && e.button === 0) {
+                    const ehPintura = this.ferramentaAtual.startsWith('piso') || this.ferramentaAtual.startsWith('cerca');
+                    if (!ehPintura) {
+                        this.gerenciarClique(celula, 'esquerdo');
+                    }
+                }
+                this.estado.botaoPressionado = null;
             };
 
             celula.onmouseenter = () => {
-                // Lógica de Pintura: Só pinta no arrasto se for Botão Direito (Borracha)
-                // OU se for Botão Esquerdo COM ferramenta de PISO selecionada.
+                // Modo Pintura Contínua: só executa se o mouse estiver pressionado em pisos, cercas ou apagando
                 if (this.estado.botaoPressionado) {
-                    if (this.estado.botaoPressionado === 'direito' || 
-                        this.ferramentaAtual.startsWith('piso') || 
-                        this.ferramentaAtual.startsWith('cerca')) { 
+                    const ehPintura = this.ferramentaAtual.startsWith('piso') || this.ferramentaAtual.startsWith('cerca');
+                    if (this.estado.botaoPressionado === 'direito' || ehPintura) {
                         this.gerenciarClique(celula, this.estado.botaoPressionado);
                     }
                 }
             };
 
             container.appendChild(celula);
+            this.celulasDOM[i] = celula; // Guarda referência direta em O(1)
         }
 
         // Listener global para parar de pintar ao soltar o mouse fora das células
@@ -381,7 +435,7 @@ const FarmPlanner = {
 
                 if (e.button === 0) { // Só arrasta com o botão esquerdo
                     isDown = true;
-                    viewport.style.cursor = 'grabbing';
+                    this.estado.houveArrasto = false;
                     startX = e.pageX - viewport.offsetLeft;
                     startY = e.pageY - viewport.offsetTop;
                     scrollLeft = viewport.scrollLeft;
@@ -389,16 +443,22 @@ const FarmPlanner = {
                 }
             });
 
-            viewport.addEventListener('mouseleave', () => { isDown = false; });
+            viewport.addEventListener('mouseleave', () => { isDown = false; this.estado.botaoPressionado = null;})
             viewport.addEventListener('mouseup', () => { isDown = false; viewport.style.cursor = 'grab'; });
-
             viewport.addEventListener('mousemove', (e) => {
                 if (!isDown) return;
                 const x = e.pageX - viewport.offsetLeft;
                 const y = e.pageY - viewport.offsetTop;
-                viewport.scrollLeft = scrollLeft - (x - startX);
-                viewport.scrollTop = scrollTop - (y - startY);
-                this.sincronizarScroll();
+                const deltaX = Math.abs(x - startX);
+                const deltaY = Math.abs(y - startY);
+                
+                if (deltaX > 4 || deltaY > 4) {
+                    this.estado.houveArrasto = true;
+                    viewport.style.cursor = 'grabbing';
+                    viewport.scrollLeft = scrollLeft - (x - startX);
+                    viewport.scrollTop = scrollTop - (y - startY);
+                    this.sincronizarScroll();
+                }
             });
         }
     },
@@ -509,24 +569,6 @@ const FarmPlanner = {
         11: 10,  // (2,2) - Borda Baixo (Vizinhos N+E+W)
         9:  11   // (2,3) - Quina BR (Vizinhos N+W)
     };
-    const mapaCercas = {
-        // [Coluna, Linha] da spritesheet 3x10
-        isolado:  [1, 1],
-        
-        // Conexões Verticais (Seção Vertical)
-        verticalTopo: [1, 0], 
-        verticalMeio: [0, 0], // Você descreveu 0x0 como ancora direita, mas no padrão SDV 0,0 e 0,2 são as extremidades verticais
-        verticalBase: [3, 0], // Seguindo sua lógica de Row 1, 2, 3...
-
-        // Conexões Horizontais (Row 2)
-        horizontalEsq:  [0, 2],
-        horizontalMeio: [1, 2],
-        horizontalDir:  [2, 2],
-
-        // Portões (Baseado nas suas fileiras 4 a 9)
-        portaoH: [0, 4], // Portão horizontal conectado
-        portaoV: [0, 5], // Portão vertical conectado
-    };
     const atualizarPonto = (cx, cy) => {
             const alvo = this.estado.objetos.find(o => o.x === cx && o.y === cy && o.tipo === tipoPiso);
             if (!alvo) return;
@@ -553,193 +595,221 @@ colocarObjeto: function(x, y, tipo) {
     const config = this.objetosConfig[tipo];
     if (!config) return;
 
-    // 1. ANTES DE APAGAR: Verifica o que existia para atualizar os vizinhos depois
-    const objetoAntigo = this.estado.objetos.find(obj => obj.x === x && obj.y === y);
-    
-    // Captura o tipo antigo se for Piso ou Cerca
-    const tipoAntigoPiso = (objetoAntigo && this.objetosConfig[objetoAntigo.tipo]?.isPiso) 
-                        ? objetoAntigo.tipo 
-                        : null;
-    const tipoAntigoCerca = (objetoAntigo && this.objetosConfig[objetoAntigo.tipo]?.isCerca) 
-                        ? objetoAntigo.tipo 
-                        : null;
+    const novoLarg = config.dimensao?.[0] || 1;
+    const novoAlt = config.dimensao?.[1] || 1;
 
-    // 2. Validação de limite máximo (ex: Mini-Obelisco)
     if (config.limiteMaximo) {
         const quantidadeAtual = this.estado.objetos.filter(obj => obj.tipo === tipo).length;
         const jaExisteAqui = this.estado.objetos.some(obj => obj.x === x && obj.y === y && obj.tipo === tipo);
+        if (quantidadeAtual >= config.limiteMaximo && !jaExisteAqui) return;
+    }
 
-        if (quantidadeAtual >= config.limiteMaximo && !jaExisteAqui) {
-            return;
-        }
-    }                    
-
-    // 3. Lógica de colisão (AABB) - Remove o que estiver no caminho
+    const removidos = [];
     this.estado.objetos = this.estado.objetos.filter(obj => {
         const objConfig = this.objetosConfig[obj.tipo];
         const objLarg = objConfig?.dimensao?.[0] || 1;
         const objAlt = objConfig?.dimensao?.[1] || 1;
         
-        const colide = (x < obj.x + objLarg && x + 1 > obj.x && 
-                        y < obj.y + objAlt && y + 1 > obj.y);
+        // Colisão AABB bidirecional (considera o tamanho do novo E do antigo)
+        const colide = (x < obj.x + objLarg && x + novoLarg > obj.x && 
+                        y < obj.y + objAlt && y + novoAlt > obj.y);
+        if (colide) removidos.push(obj);
         return !colide;
     });
 
-    // 4. Adiciona o novo objeto
     const novoObjeto = { x, y, tipo };
-    
-    // IMPORTANTE: Se for cerca, nasce com fmask padrão para ativar o CSS 8.2 instantaneamente
-    if (config.isCerca) {
-        novoObjeto.fmask = "1-1"; 
-    }
-
+    if (config.isCerca) novoObjeto.fmask = "isolada";
     this.estado.objetos.push(novoObjeto);
 
-    // 5. Recalcula vizinhos do NOVO objeto que acabou de ser colocado
     if (config.isPiso) {
         this.recalcularBitmasksVizinhos(x, y, tipo);
     } else if (config.isCerca) {
         this.recalcularConexaoCerca(x, y, tipo);
     }
 
-    // 6. ATUALIZA VIZINHOS DOS OBJETOS REMOVIDOS
-    // Se você apagou um piso antigo, os vizinhos dele precisam saber
-    if (tipoAntigoPiso && tipoAntigoPiso !== tipo) {
-        this.recalcularBitmasksVizinhos(x, y, tipoAntigoPiso);
-    }
-    
-    // Se você apagou uma cerca antiga, os vizinhos dela precisam saber
-    if (tipoAntigoCerca && tipoAntigoCerca !== tipo) {
-        this.recalcularConexaoCerca(x, y, tipoAntigoCerca);
+    removidos.forEach(r => {
+        const confR = this.objetosConfig[r.tipo];
+        if (confR?.isPiso) this.recalcularBitmasksVizinhos(r.x, r.y, r.tipo);
+        if (confR?.isCerca) this.recalcularConexaoCerca(r.x, r.y, r.tipo);
+    });
+
+    // Atualiza granularmente todas as células do objeto e suas bordas imediatas
+    for (let dy = -1; dy <= novoAlt; dy++) {
+        for (let dx = -1; dx <= novoLarg; dx++) {
+            this.renderizarCelula(x + dx, y + dy);
+        }
     }
 
-    this.renderizarObjetos();
+    // Canvas só redesenha se houver alcance ou flores envolvidas
+    if (config.alcance?.length > 0 || config.categoria === 'flores' || removidos.some(r => this.objetosConfig[r.tipo]?.alcance?.length > 0)) {
+        this.atualizarCanvasAlcances();
+    }
 },
 
-renderizarObjetos: function() {
-    // 1. Limpa os sprites do DOM
-    document.querySelectorAll('.objeto-sprite').forEach(el => el.remove());
+// Acesso direto em O(1)
+    obterCelulaDOM: function(x, y) {
+        if (x < 0 || x >= this.config.largura || y < 0 || y >= this.config.altura) return null;
+        return this.celulasDOM[y * this.config.largura + x] || null;
+    },
 
-    const canvasF = document.getElementById('canvas-alcances-fundo');
-    const canvasT = document.getElementById('canvas-alcances-topo');
-    if (!canvasF || !canvasT) return;
+    // RENDERIZAÇÃO GRANULAR: atualiza apenas a célula solicitada
+    renderizarCelula: function(x, y) {
+        const celulaDOM = this.obterCelulaDOM(x, y);
+        if (!celulaDOM) return;
 
-    const ctxF = canvasF.getContext('2d');
-    const ctxT = canvasT.getContext('2d');
-    ctxF.clearRect(0, 0, canvasF.width, canvasF.height);
-    ctxT.clearRect(0, 0, canvasT.width, canvasT.height);
-
-    const listaFlores = this.estado.objetos.filter(o => o.tipo && o.tipo.startsWith('flor'));
-
-    const obterFlorPrioritaria = (colmeiaX, colmeiaY) => {
-        let melhorFlor = null;
-        let menorDistancia = Infinity;
-        let menorAngulo = Infinity;
-        listaFlores.forEach(flor => {
-            const dx = flor.x - colmeiaX;
-            const dy = flor.y - colmeiaY;
-            const distManhattan = Math.abs(dx) + Math.abs(dy);
-            if (distManhattan > 0 && distManhattan <= 5) {
-                let angulo = Math.atan2(dy, dx) * (180 / Math.PI);
-                let anguloAjustado = (angulo - 180 + 360) % 360;
-                if (distManhattan < menorDistancia) {
-                    menorDistancia = distManhattan; menorAngulo = anguloAjustado; melhorFlor = flor;
-                } else if (distManhattan === menorDistancia && anguloAjustado < menorAngulo) {
-                    menorAngulo = anguloAjustado; melhorFlor = flor;
-                }
-            }
+        const obj = this.estado.objetos.find(o => {
+            const conf = this.objetosConfig[o.tipo];
+            const larg = conf?.dimensao?.[0] || 1;
+            const alt = conf?.dimensao?.[1] || 1;
+            return x >= o.x && x < o.x + larg && y >= o.y && y < o.y + alt;
         });
-        return melhorFlor;
-    };
 
-    // 3. Renderização dos Objetos
-    this.estado.objetos.forEach(obj => {
+        let divSprite = celulaDOM.querySelector('.objeto-sprite');
+
+        if (!obj) {
+            if (divSprite) divSprite.remove();
+            return;
+        }
+
         const config = this.objetosConfig[obj.tipo];
         if (!config) return;
 
-        const larg = config.dimensao ? config.dimensao[0] : 1;
-        const alt = config.dimensao ? config.dimensao[1] : 1;
-        const tamanho = this.config.tamanhoCelula;
-        const florVinculada = (config.categoria === 'cMel') ? obterFlorPrioritaria(obj.x, obj.y) : null;
+        const dx = x - obj.x;
+        const dy = y - obj.y;
 
-        for (let dy = 0; dy < alt; dy++) {
-            for (let dx = 0; dx < larg; dx++) {
-                const alvoX = obj.x + dx;
-                const alvoY = obj.y + dy;
-                const celulaDOM = document.querySelector(`.celula-grade[data-x="${alvoX}"][data-y="${alvoY}"]`);
-                if (!celulaDOM) continue;
-
-                const divSprite = document.createElement('div');
-                divSprite.style.position = 'absolute';
-                divSprite.style.pointerEvents = 'none';
-
-                // --- LOGICA DE CLASSES E ESTILOS (UNIFICADA) ---
-                if (config.isCerca) {
-                    // DEIXA O CSS (assets.css) CONTROLAR WIDTH/HEIGHT/SCALE
-                    divSprite.className = `objeto-sprite tile-${obj.tipo} fmask-${obj.fmask || '1-1'}`;
-                    divSprite.style.zIndex = '4';
-                } 
-                else if (config.isPiso) {
-                    divSprite.className = `objeto-sprite tile-${obj.tipo} mask-${obj.mask || 0}`;
-                    divSprite.style.width = '32px';
-                    divSprite.style.height = '32px';
-                    divSprite.style.transform = 'scale(1.5)';
-                    divSprite.style.transformOrigin = 'top left';
-                    divSprite.style.zIndex = '2';
-                    divSprite.style.top = '0';
-                    divSprite.style.left = '0';
-                } 
-                else {
-                    // OBJETOS GERAIS (Aspersores, Espantalhos, Flores)
-                    if (larg > 1 || alt > 1) {
-                        divSprite.classList.add('objeto-sprite', `tile-${obj.tipo}-${dx}-${dy}`);
-                    } else {
-                        divSprite.classList.add('objeto-sprite', `tile-${obj.tipo}`);
-                    }
-                    divSprite.style.zIndex = '5';
-                    divSprite.style.width = '100%';
-                    divSprite.style.height = '100%';
-                    divSprite.style.top = '0';
-                    divSprite.style.left = '0';
-                }
-
-                if (dx === 0 && dy === 0 && florVinculada) {
-                    const badgeFlor = document.createElement('div');
-                    badgeFlor.classList.add('badge-flor-colmeia', `tile-${florVinculada.tipo}`);
-                    divSprite.appendChild(badgeFlor);
-                }
-                celulaDOM.appendChild(divSprite);
-            }
+        if (!divSprite) {
+            divSprite = document.createElement('div');
+            divSprite.style.position = 'absolute';
+            divSprite.style.pointerEvents = 'none';
+            celulaDOM.appendChild(divSprite);
         }
 
-        // --- RENDERIZAÇÃO DE ALCANCES (CANVASES) ---
-        if (this.estado.visibilidade[config.categoria] && config.alcance && config.alcance.length > 0) {
-            
+        divSprite.className = 'objeto-sprite';
+
+        if (config.isCerca) {
+            divSprite.classList.add(`tile-${obj.tipo}`, `fmask-${obj.fmask || 'isolada'}`);
+            divSprite.style.zIndex = (config.subtipo === 'g') ? '3' : '4';
+            divSprite.style.width = '';
+            divSprite.style.height = '';
+            divSprite.style.transform = '';
+            divSprite.style.top = '';
+            divSprite.style.left = '';
+        } else if (config.isPiso) {
+            divSprite.classList.add(`tile-${obj.tipo}`, `mask-${obj.mask || 0}`);
+            divSprite.style.width = '32px';
+            divSprite.style.height = '32px';
+            divSprite.style.transform = 'scale(1.5)';
+            divSprite.style.transformOrigin = 'top left';
+            divSprite.style.zIndex = '2';
+            divSprite.style.top = '0';
+            divSprite.style.left = '0';
+        } else {
+            const larg = config.dimensao ? config.dimensao[0] : 1;
+            const alt = config.dimensao ? config.dimensao[1] : 1;
+            if (larg > 1 || alt > 1) {
+                divSprite.classList.add(`tile-${obj.tipo}-${dx}-${dy}`);
+            } else {
+                divSprite.classList.add(`tile-${obj.tipo}`);
+            }
+            divSprite.style.zIndex = '5';
+            divSprite.style.width = '100%';
+            divSprite.style.height = '100%';
+            divSprite.style.top = '0';
+            divSprite.style.left = '0';
+        }
+
+        divSprite.querySelectorAll('.badge-flor-colmeia').forEach(b => b.remove());
+        if (config.categoria === 'cMel' && dx === 0 && dy === 0) {
+            const flor = this.obterFlorPrioritaria(obj.x, obj.y);
+            if (flor) {
+                const badge = document.createElement('div');
+                badge.classList.add('badge-flor-colmeia', `tile-${flor.tipo}`);
+                divSprite.appendChild(badge);
+            }
+        }
+    },
+
+    obterFlorPrioritaria: function(colmeiaX, colmeiaY) {
+        const listaFlores = this.estado.objetos.filter(o => o.tipo && o.tipo.startsWith('flor'));
+        let melhorFlor = null;
+        let menorDistancia = Infinity;
+        let menorX = Infinity;
+        let menorY = Infinity;
+
+        listaFlores.forEach(flor => {
+            const dx = flor.x - colmeiaX;
+            const dy = flor.y - colmeiaY;
+            const dist = Math.abs(dx) + Math.abs(dy);
+
+            // Alcance máximo do apiário: 5 casas em losango
+            if (dist > 0 && dist <= 5) {
+                // 1º Critério: Menor distância absoluta
+                if (dist < menorDistancia) {
+                    menorDistancia = dist;
+                    menorX = flor.x;
+                    menorY = flor.y;
+                    melhorFlor = flor;
+                } 
+                // 2º Critério (Empate na distância): Prioridade para a flor mais à ESQUERDA (menor X)
+                else if (dist === menorDistancia) {
+                    if (flor.x < menorX) {
+                        menorDistancia = dist;
+                        menorX = flor.x;
+                        menorY = flor.y;
+                        melhorFlor = flor;
+                    } 
+                    // 3º Critério (Empate na distância e no X): Prioridade para a flor mais ACIMA (menor Y)
+                    else if (flor.x === menorX && flor.y < menorY) {
+                        menorDistancia = dist;
+                        menorX = flor.x;
+                        menorY = flor.y;
+                        melhorFlor = flor;
+                    }
+                }
+            }
+        });
+
+        return melhorFlor;
+    },
+
+    atualizarCanvasAlcances: function() {
+        const canvasF = document.getElementById('canvas-alcances-fundo');
+        const canvasT = document.getElementById('canvas-alcances-topo');
+        if (!canvasF || !canvasT) return;
+
+        const ctxF = canvasF.getContext('2d');
+        const ctxT = canvasT.getContext('2d');
+        ctxF.clearRect(0, 0, canvasF.width, canvasF.height);
+        ctxT.clearRect(0, 0, canvasT.width, canvasT.height);
+
+        const tamanho = this.config.tamanhoCelula;
+
+        this.estado.objetos.forEach(obj => {
+            const config = this.objetosConfig[obj.tipo];
+            if (!config || !this.estado.visibilidade[config.categoria] || !config.alcance?.length) return;
+
             if (config.categoria === 'cMel') {
+                const florVinculada = this.obterFlorPrioritaria(obj.x, obj.y);
                 config.alcance.forEach(([dx, dy]) => {
                     if (dx === 0 && dy === 0) return;
                     const ax = obj.x + dx;
                     const ay = obj.y + dy;
-
                     if (ax >= 0 && ax < this.config.largura && ay >= 0 && ay < this.config.altura) {
                         const px = ax * tamanho;
                         const py = ay * tamanho;
                         const ehFlorAtiva = florVinculada && (ax === florVinculada.x && ay === florVinculada.y);
 
-                        // FUNDO: Cor mel translúcida
                         ctxF.fillStyle = 'rgba(255, 180, 0, 0.18)';
                         ctxF.fillRect(px, py, tamanho, tamanho);
 
-                        // TOPO: Destaque da flor ativa e bordas vermelhas
                         if (ehFlorAtiva) {
-                            ctxT.fillStyle = 'rgba(255, 215, 0, 0.35)'; // Brilho sobre a flor
+                            ctxT.fillStyle = 'rgba(255, 215, 0, 0.35)';
                             ctxT.fillRect(px, py, tamanho, tamanho);
                             ctxT.strokeStyle = '#FFFFFF';
                             ctxT.lineWidth = 3;
                             ctxT.strokeRect(px + 2, py + 2, tamanho - 4, tamanho - 4);
                         }
 
-                        // Bordas de limite vermelhas (ctxT para ficar sobre o piso)
                         ctxT.strokeStyle = '#FF2222';
                         ctxT.lineWidth = 2;
                         if (!config.alcance.some(([nx, ny]) => nx === dx && ny === dy - 1)) {
@@ -754,11 +824,9 @@ renderizarObjetos: function() {
                         if (!config.alcance.some(([nx, ny]) => nx === dx + 1 && ny === dy)) {
                             ctxT.beginPath(); ctxT.moveTo(px + tamanho, py); ctxT.lineTo(px + tamanho, py + tamanho); ctxT.stroke();
                         }
-                        
                     }
                 });
 
-                // TOPO: Linha pontilhada vinculando colmeia à flor
                 if (florVinculada) {
                     ctxT.beginPath();
                     ctxT.setLineDash([6, 6]);
@@ -769,9 +837,7 @@ renderizarObjetos: function() {
                     ctxT.stroke();
                     ctxT.setLineDash([]);
                 }
-
             } else {
-                // Irrigação e Proteção: Apenas preenchimento no FUNDO
                 const corOriginal = this.coresAlcance[config.categoria];
                 if (corOriginal) {
                     ctxF.fillStyle = corOriginal;
@@ -784,9 +850,16 @@ renderizarObjetos: function() {
                     });
                 }
             }
+        });
+    },
+renderizarObjetos: function() {
+        for (let y = 0; y < this.config.altura; y++) {
+            for (let x = 0; x < this.config.largura; x++) {
+                this.renderizarCelula(x, y);
+            }
         }
-    });
-},
+        this.atualizarCanvasAlcances();
+    },
 
     construirControles: function() {
         const container = document.getElementById('controles-container');
@@ -974,10 +1047,6 @@ renderizarObjetos: function() {
 
   gerenciarClique: function(celula, botao) {
         if (!celula) return;
-        if (celula.classList.contains('objeto-sprite')) {
-            celula = celula.parentElement;
-        }
-
         const x = parseInt(celula.dataset.x);
         const y = parseInt(celula.dataset.y);
         
@@ -994,16 +1063,27 @@ renderizarObjetos: function() {
                 const xAntigo = objRemovido.x;
                 const yAntigo = objRemovido.y;
                 const configRemovido = this.objetosConfig[tipoAntigo];
-                // 1. REMOVE PRIMEIRO
+                const remLarg = configRemovido?.dimensao?.[0] || 1;
+                const remAlt = configRemovido?.dimensao?.[1] || 1;
+
                 this.estado.objetos = this.estado.objetos.filter(obj => obj !== objRemovido);
 
-                  // Lógica de atualização de vizinhos para Pisos e Cercas
                 if (configRemovido?.isPiso) {
                     this.recalcularBitmasksVizinhos(xAntigo, yAntigo, tipoAntigo);
                 } else if (configRemovido?.isCerca) {
                     this.recalcularConexaoCerca(xAntigo, yAntigo, tipoAntigo);
                 }
-                this.renderizarObjetos();
+
+                // Renderiza a área ocupada pelo objeto removido + 1 célula de borda
+                for (let dy = -1; dy <= remAlt; dy++) {
+                    for (let dx = -1; dx <= remLarg; dx++) {
+                        this.renderizarCelula(xAntigo + dx, yAntigo + dy);
+                    }
+                }
+
+                if (configRemovido?.alcance?.length > 0 || configRemovido?.categoria === 'flores') {
+                    this.atualizarCanvasAlcances();
+                }
             }
         } else {
             // SEGURANÇA CONTRA SPAM NO ARRASTO:
