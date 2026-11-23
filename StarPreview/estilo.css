@@ -1,7 +1,7 @@
 body {
   margin: 0;
   padding: 0;
-  background-image: url('recursos/fazenda.png');
+  background-image: url('recursos/fazenda1.png');
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
@@ -1371,10 +1371,11 @@ dialog#modalPlantio {
 
 #grid-fazenda {
     display: grid;
-    grid-template-columns: repeat(60, 48px); 
-    width: max-content; 
-     
     position: relative; /* Essencial para alinhar o Canvas absoluto por baixo */
+    background-color: var(--cor-terra-stardew); /* Fundo terra exibido no modo Genérico */
+    image-rendering: pixelated; /* Mantém os mapas e pixels sempre 100% nítidos */
+    background-repeat: no-repeat;
+
 }
 
 #canvas-alcances {
@@ -1387,9 +1388,9 @@ dialog#modalPlantio {
 .celula-grade {
     width: 48px !important;
     height: 48px !important;
-    border: 0.5px solid rgba(139, 69, 19, 0.2) !important; 
+    border: 0.5px solid rgba(139, 69, 19, 0.2) !important; /* Linha sutil visível sobre a terra e o mapa */
     box-sizing: border-box !important;
-    background-color: transparent !important; 
+    background-color: transparent !important; /* Permite ver o mapa perfeitamente por baixo */
     position: relative !important; 
     overflow: visible !important;
 }

@@ -14,32 +14,99 @@ const FarmPlanner = {
     // --- Definição dos Mapas Oficiais e do Genérico ---
    mapasConfig: {
         generico:     { nome: 'Grade Genérica (60x60)', largura: 60, altura: 60, imagem: null },
-        padrao:       { nome: 'Fazenda Padrão',          imagem: 'recursos/fazenda1.png' },
-        entrerios:    { nome: 'Fazenda Entre Rios',      imagem: 'recursos/fazenda2.png' },
-        floresta:     { nome: 'Fazenda na Floresta',     imagem: 'recursos/fazenda3.png' },
-        colina:       { nome: 'Fazenda na Colina',       imagem: 'recursos/fazenda4.png' },
-        remota:       { nome: 'Fazenda Remota',          imagem: 'recursos/fazenda5.png' },
-        quatroCantos: { nome: 'Quatro Cantos',           imagem: 'recursos/fazenda6.png' },
-        praia:        { nome: 'Fazenda na Praia',        imagem: 'recursos/fazenda7.png' },
-        pradaria:     { nome: 'Fazenda dos Prados (1.6)', imagem: 'recursos/fazenda8.png' }
+        padrao:       { nome: 'Fazenda Padrão',          imagem: 'recursos/fazenda1.png', colisao: 'recursos/fazenda1_colisao.json' },
+        entrerios:    { nome: 'Fazenda Entre Rios',      imagem: 'recursos/fazenda2.png', colisao: 'recursos/fazenda2_colisao.json' },
+        floresta:     { nome: 'Fazenda na Floresta',     imagem: 'recursos/fazenda3.png', colisao: 'recursos/fazenda3_colisao.json' },
+        colina:       { nome: 'Fazenda na Colina',       imagem: 'recursos/fazenda4.png', colisao: 'recursos/fazenda4_colisao.json' },
+        remota:       { nome: 'Fazenda Remota',          imagem: 'recursos/fazenda5.png', colisao: 'recursos/fazenda5_colisao.json' },
+        quatroCantos: { nome: 'Quatro Cantos',           imagem: 'recursos/fazenda6.png', colisao: 'recursos/fazenda6_colisao.json' },
+        praia:        { nome: 'Fazenda na Praia',        imagem: 'recursos/fazenda7.png', colisao: 'recursos/fazenda7_colisao.json' },
+        pradaria:     { nome: 'Fazenda dos Prados (1.6)', imagem: 'recursos/fazenda8.png', colisao: 'recursos/fazenda8_colisao.json' }
     },
-    
-    selecionarMapa: function(idMapa) {
+
+    dadosColisao: null, // Armazena a matriz em memória
+
+    // Mapeamento dos IDs do Tiled para nomes fáceis de ler
+    tiposTerreno: {
+        1: 'solido',
+        2: 'agua',
+        3: 'grama',
+        4: 'terra'
+    },
+
+    selecionarMapa: async function(idMapa) {
         const mapa = this.mapasConfig[idMapa];
         if (!mapa) return;
 
         this.mapaAtual = idMapa;
-        
-        // Se o mapa tiver tamanho próprio (ex: genérico 60), usa ele. Senão, assume 80x65
         this.config.largura = mapa.largura || 80;
         this.config.altura  = mapa.altura  || 65;
 
-        // Limpa objetos fora dos limites
+        // --- CARREGA O JSON DO TILED ---
+        this.dadosColisao = null;
+        if (mapa.colisao) {
+            try {
+                const resposta = await fetch(mapa.colisao);
+                const dadosJson = await resposta.json();
+                
+                // Encontra a camada que tem os dados (ignora a camada de imagem)
+                const camadaTiles = dadosJson.layers.find(l => l.data && l.data.length > 0);
+                if (camadaTiles) {
+                    this.dadosColisao = camadaTiles.data;
+                }
+            } catch (erro) {
+                console.warn('Não foi possível carregar a colisão do mapa:', erro);
+            }
+        }
+
+        // Limpa objetos fora dos novos limites
         this.estado.objetos = this.estado.objetos.filter(obj => {
             return obj.x < this.config.largura && obj.y < this.config.altura;
         });
 
         this.inicializarGrade();
+    },
+podeConstruir: function(x, y, tipo) {
+        // Se estiver no modo genérico ou sem JSON de colisão carregado, libera tudo
+        if (!this.dadosColisao) return true;
+
+        const config = this.objetosConfig[tipo];
+        if (!config) return true;
+
+        const larg = config.dimensao?.[0] || 1;
+        const alt = config.dimensao?.[1] || 1;
+
+        // REGRA: Se o objeto NÃO tiver a propriedade 'terrenosProibidos', não há restrições!
+        // Apenas valida se não está sendo colocado fora das bordas físicas da grade
+        if (!config.terrenosProibidos || config.terrenosProibidos.length === 0) {
+            return (x >= 0 && x + larg <= this.config.largura && y >= 0 && y + alt <= this.config.altura);
+        }
+
+        const proibidos = config.terrenosProibidos;
+
+        // Se tem restrições, verifica apenas o que estiver na lista proibida
+        for (let dy = 0; dy < alt; dy++) {
+            for (let dx = 0; dx < larg; dx++) {
+                const px = x + dx;
+                const py = y + dy;
+
+                // Fora dos limites da grade é sempre proibido
+                if (px < 0 || px >= this.config.largura || py < 0 || py >= this.config.altura) {
+                    return false;
+                }
+
+                const indice = (py * this.config.largura) + px;
+                const idTerreno = this.dadosColisao[indice];
+                const nomeTerreno = this.tiposTerreno[idTerreno] || 'solido';
+
+                // Se o terreno da célula estiver na lista de proibições deste item -> Bloqueia!
+                if (proibidos.includes(nomeTerreno)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     },
 
     celulasDOM: [], // Cache O(1) para acesso direto às células sem querySelector
@@ -51,9 +118,21 @@ const FarmPlanner = {
         'cMel':      'rgba(255, 200, 50, 0.18)' // Vítreo dourado/mel translúcido
     },
 
-    aplicarZoom: function(novoZoom) {
-        const zoomClamped = Math.min(Math.max(novoZoom, 0.25), 2.0);
-        this.estado.zoom = Math.round(zoomClamped * 100) / 100;
+   aplicarZoom: function(novoZoom) {
+        const viewport = document.querySelector('.viewport-edicao');
+        
+        // --- Zoom Mínimo Condicional ---
+        let minZoom = 0.25; // Padrão do modo genérico
+        
+        if (this.mapaAtual !== 'generico' && viewport) {
+            // Calcula o zoom exato para o mapa de 80x65 caber 100% na viewport
+            const zoomX = viewport.clientWidth / (this.config.largura * this.config.tamanhoCelula);
+            const zoomY = viewport.clientHeight / (this.config.altura * this.config.tamanhoCelula);
+            minZoom = Math.min(zoomX, zoomY); // Geralmente ~0.15 a 0.18
+        }
+
+        const zoomClamped = Math.min(Math.max(novoZoom, minZoom), 2.0);
+        this.estado.zoom = Math.round(zoomClamped * 1000) / 1000;
 
         const grid = document.getElementById('grid-fazenda');
         if (grid) {
@@ -61,7 +140,19 @@ const FarmPlanner = {
             grid.style.transform = `scale(${this.estado.zoom})`;
         }
 
+        // Garante que o zoom não exponha a área vazia fora do mapa
+        this.limitarScroll();
         this.sincronizarScroll();
+    },
+
+    // Atalho para acionar a visão total com um clique
+    ajustarVisaoTotal: function() {
+        const viewport = document.querySelector('.viewport-edicao');
+        if (!viewport) return;
+        
+        const zoomX = viewport.clientWidth / (this.config.largura * this.config.tamanhoCelula);
+        const zoomY = viewport.clientHeight / (this.config.altura * this.config.tamanhoCelula);
+        this.aplicarZoom(Math.min(zoomX, zoomY));
     },
 
     alterarZoom: function(delta) {
@@ -100,6 +191,22 @@ const FarmPlanner = {
             }
         });
     },
+    limitarScroll: function() {
+        const viewport = document.querySelector('.viewport-edicao');
+        if (!viewport) return;
+
+        // Largura e altura visíveis reais após o zoom
+        const larguraVisivel = (this.config.largura * this.config.tamanhoCelula) * this.estado.zoom;
+        const alturaVisivel = (this.config.altura * this.config.tamanhoCelula) * this.estado.zoom;
+
+        // Limite máximo de rolagem (0 se o mapa for menor que a viewport)
+        const maxScrollX = Math.max(0, larguraVisivel - viewport.clientWidth);
+        const maxScrollY = Math.max(0, alturaVisivel - viewport.clientHeight);
+
+        // Trava entre 0 e o limite máximo exato
+        viewport.scrollLeft = Math.max(0, Math.min(viewport.scrollLeft, maxScrollX));
+        viewport.scrollTop = Math.max(0, Math.min(viewport.scrollTop, maxScrollY));
+    },
 
     // --- Configurações dos Objetos, Dimensões de Colisão e Alcances ---
     objetosConfig: (() => {
@@ -118,32 +225,63 @@ const FarmPlanner = {
             // Irrigação
             aspersorC: { 
                 categoria: 'Irrigação',
+                terrenosProibidos: ['solido', 'agua'],
                 dimensao: [1, 1],
-                alcance: [[0, 0], [0, -1], [0, 1], [-1, 0], [1, 0]] 
+                alcance: [[0, 0], [0, -1], [0, 1], [-1, 0], [1, 0]],
+                alcanceBocal: [
+                    [0, 0],
+                    [0, -1], [0, -2], // Cima (Norte)
+                    [0, 1],  [0, 2],  // Baixo (Sul)
+                    [-1, 0], [-2, 0], // Esquerda (Oeste)
+                    [1, 0],  [2, 0]   // Direita (Leste)
+                ] 
             },
             aspersorQ: { 
                 categoria: 'Irrigação', 
                 dimensao: [1, 1],
+                terrenosProibidos: ['solido', 'agua'],
                 alcance: [
                     [0,0], [-1,-1], [0,-1], [1,-1], [-1,0], [1,0], [-1,1], [0,1], [1,1]
-                ] 
+                ],
+                alcanceBocal: (() => {
+                    const coords = [];
+                    for (let dy = -2; dy <= 2; dy++) {
+                        for (let dx = -2; dx <= 2; dx++) coords.push([dx, dy]);
+                    }
+                    return coords;
+                })() 
             },
             aspersorI: { 
                 categoria: 'Irrigação', 
                 dimensao: [1, 1],
+                terrenosProibidos: ['solido', 'agua'],
                 alcance: [
                     [-2,-2], [-1,-2], [0,-2], [1,-2], [2,-2],
                     [-2,-1], [-1,-1], [0,-1], [1,-1], [2,-1],
                     [-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0],
                     [-2, 1], [-1, 1], [0, 1], [1, 1], [2, 1],
                     [-2, 2], [-1, 2], [0, 2], [1, 2], [2, 2]
-                ] 
+                ],
+                alcanceBocal: (() => {
+                    const coords = [];
+                    for (let dy = -3; dy <= 3; dy++) {
+                        for (let dx = -3; dx <= 3; dx++) coords.push([dx, dy]);
+                    }
+                    return coords;
+                })() 
+            },
+             bocalPressao: { // Registro do Bocal
+                categoria: 'Irrigação',
+                dimensao: [1, 1],
+                isModificacao: true,
+                nome: 'Bocal de Pressão'
             },
             
             // Espantalho Clássico
             espantalho: { 
                 categoria: 'Proteção', 
                 dimensao: [1, 1],
+                terrenosProibidos: ['solido', 'agua'],
                 alcance: (() => {
                     const coords = [];
                     for (let dy = -8; dy <= 8; dy++) {
@@ -166,12 +304,14 @@ const FarmPlanner = {
             colmeia: {
                 categoria: 'cMel',
                 dimensao: [1, 1],
+                terrenosProibidos: ['solido', 'agua'],
                 alcance: alcanceColmeia
             },
 
             colmeiaVazia: {
                 categoria: 'cMel',
                 dimensao: [1, 1],
+                terrenosProibidos: ['solido', 'agua'],
                 alcance: alcanceColmeia 
             },
 
@@ -180,6 +320,7 @@ const FarmPlanner = {
                 categoria: 'construcao',
                 dimensao: [1, 1],
                 alcance: [],
+                terrenosProibidos: ['solido', 'agua'],
                 limiteMaximo: 2
             },
 
@@ -188,48 +329,56 @@ const FarmPlanner = {
                 categoria: 'construcao',
                 dimensao: [2, 2],
                 alcance: [],
+                terrenosProibidos: ['solido', 'agua'],
                 nome: 'Toco grande'
             },
             troncoGrande: {
                 categoria: 'construcao',
                 dimensao: [2, 2],
                 alcance: [],
+                terrenosProibidos: ['solido', 'agua'],
                 nome: 'tronco Grande'
             },
             pedraCinza: {
                 categoria: 'construcao',
                 dimensao: [2, 2],
                 alcance: [],
+                terrenosProibidos: ['solido', 'agua'],
                 nome: 'Pedra Cinza'
             },
             pedraVermelha: {
                 categoria: 'construcao',
                 dimensao: [2, 2],
                 alcance: [],
+                terrenosProibidos: ['solido', 'agua'],
                 nome: 'Grande pedra vermelha'
             },
             pedraMarrom: {
                 categoria: 'construcao',
                 dimensao: [2, 2],
                 alcance: [],
+                terrenosProibidos: ['solido', 'agua'],
                 nome: 'Grande pedra marrom'
             },
             pedraAzul: {
                 categoria: 'construcao',
                 dimensao: [2, 2],
                 alcance: [],
+                terrenosProibidos: ['solido', 'agua'],
                 nome: 'Grande pedra azul'
             },
             pedraAzul2: {
                 categoria: 'construcao',
                 dimensao: [2, 2],
                 alcance: [],
+                terrenosProibidos: ['solido', 'agua'],
                 nome: 'Grande pedra azul'
             },
             obMeteorito: {
                 categoria: 'construcao',
                 dimensao: [2, 2],
                 alcance: [],
+                terrenosProibidos: ['solido', 'agua'],
                 nome: 'Meteorito'
             }
         };
@@ -239,6 +388,7 @@ const FarmPlanner = {
             config[`espantalhoR${i}`] = {
                 categoria: 'Proteção',
                 dimensao: [1, 1],
+                terrenosProibidos: ['solido', 'agua'],
                 alcance: config.espantalho.alcance
             };
         }
@@ -247,6 +397,7 @@ const FarmPlanner = {
         config.espantalhoLuxo = {
             categoria: 'Proteção',
             dimensao: [1, 1],
+            terrenosProibidos: ['solido', 'agua'],
             alcance: (() => {
                 const coords = [];
                 for (let dy = -16; dy <= 16; dy++) {
@@ -271,7 +422,9 @@ const FarmPlanner = {
             config[f] = {
                 categoria: 'flores',
                 dimensao: [1, 1],
-                alcance: []
+                alcance: [],
+                terrenosProibidos: ['solido', 'agua', 'grama'],
+
             };
         });
 
@@ -281,6 +434,7 @@ const FarmPlanner = {
                 categoria: 'piso',
                 dimensao: [1, 1],
                 alcance: [],
+                terrenosProibidos: ['solido', 'agua'],
                 isPiso: true,
                 indexPiso: i - 1 // Mapeamento vertical no pisos.png
             };
@@ -288,8 +442,8 @@ const FarmPlanner = {
         // cadastro dinamico das cercas
             const materiaisCerca = ['cerca1', 'cerca2', 'cerca3', 'cerca4'];
             materiaisCerca.forEach(mat => {
-                config[`${mat}_f`] = { categoria: 'Cercas', material: mat, subtipo: 'f', isCerca: true, dimensao: [1,1], alcance: [] };
-                config[`${mat}_g`] = { categoria: 'Cercas', material: mat, subtipo: 'g', isCerca: true, dimensao: [1,1], alcance: [] };
+                config[`${mat}_f`] = { categoria: 'Cercas', terrenosProibidos: ['solido', 'agua'], material: mat, subtipo: 'f', isCerca: true, dimensao: [1,1], alcance: [] };
+                config[`${mat}_g`] = { categoria: 'Cercas', terrenosProibidos: ['solido', 'agua'], material: mat, subtipo: 'g', isCerca: true, dimensao: [1,1], alcance: [] };
             });
 
         return config;
@@ -327,41 +481,55 @@ const FarmPlanner = {
         const container = document.getElementById('grid-fazenda');
         if (!container) return;
 
+        const mapa = this.mapasConfig[this.mapaAtual];
+        const larguraPx = this.config.largura * this.config.tamanhoCelula;
+        const alturaPx = this.config.altura * this.config.tamanhoCelula;
+
         container.innerHTML = '';
         container.style.gridTemplateColumns = `repeat(${this.config.largura}, 1fr)`;
         
-        // Canvas de alcances
-        // --- CANVAS DE FUNDO (Z-Index: 1) ---
-        // Este canvas desenha as cores sólidas (preenchimento) atrás dos pisos
+        // Garante que o grid tenha o tamanho exato em pixels da grade atual
+        container.style.width = larguraPx + 'px';
+        container.style.height = alturaPx + 'px';
+
+        // --- Configuração do Background (Mapa Real ou Fundo Genérico) ---
+        if (mapa && mapa.imagem) {
+            container.style.backgroundImage = `url('${mapa.imagem}')`;
+            container.style.backgroundSize = `${larguraPx}px ${alturaPx}px`;
+            container.style.backgroundRepeat = 'no-repeat';
+            container.style.imageRendering = 'pixelated';
+        } else {
+            container.style.backgroundImage = 'none';
+        }
+        
+        // --- CANVAS DE ALCANCES ---
+        // 1. Canvas de Fundo (Preenchimentos transparentes atrás de tudo)
         const canvasFundo = document.createElement('canvas');
         canvasFundo.id = 'canvas-alcances-fundo';
         canvasFundo.style.position = 'absolute';
         canvasFundo.style.top = '0';
         canvasFundo.style.left = '0';
         canvasFundo.style.pointerEvents = 'none';
-        canvasFundo.style.zIndex = '1'; // Atrás de tudo
+        canvasFundo.style.zIndex = '1';
         
-        
-        const larguraPx = this.config.largura * this.config.tamanhoCelula;
-        const alturaPx = this.config.altura * this.config.tamanhoCelula;
         canvasFundo.width = larguraPx;
         canvasFundo.height = alturaPx;
         canvasFundo.style.width = larguraPx + 'px';
         canvasFundo.style.height = alturaPx + 'px';
 
-        
-        // --- CANVAS DE TOPO (Z-Index: 6) ---
-        // Este canvas desenha as bordas e linhas pontilhadas na frente de tudo
+        // 2. Canvas de Topo (Bordas e linhas pontilhadas na frente de tudo)
         const canvasTopo = canvasFundo.cloneNode();
         canvasTopo.id = 'canvas-alcances-topo';
-        canvasTopo.style.zIndex = '6'; // Acima dos objetos e pisos
+        canvasTopo.style.zIndex = '6';
         
         container.appendChild(canvasFundo);
         container.appendChild(canvasTopo);
 
-        // Grid HTML
-        this.celulasDOM = []; // Limpa o cache
-        for (let i = 0; i < (this.config.largura * this.config.altura); i++) {
+        // --- GRID HTML ---
+        this.celulasDOM = []; // Limpa o cache O(1)
+        const totalCelulas = this.config.largura * this.config.altura;
+
+        for (let i = 0; i < totalCelulas; i++) {
             const x = i % this.config.largura;
             const y = Math.floor(i / this.config.largura);
 
@@ -373,14 +541,13 @@ const FarmPlanner = {
             celula.style.position = 'relative';
             celula.style.zIndex = '4';
             
-            // Previne o menu de contexto do Windows para o botão direito na grade
+            // Previne menu de contexto do Windows com o botão direito
             celula.oncontextmenu = (e) => e.preventDefault();
 
-           celula.onmousedown = (e) => {
+            celula.onmousedown = (e) => {
                 this.estado.botaoPressionado = (e.button === 2) ? 'direito' : 'esquerdo';
-                this.estado.houveArrasto = false; // Reseta no início do clique
+                this.estado.houveArrasto = false;
 
-                // Se for botão direito (apagar) ou ferramenta de pintura contínua, aplica no ato
                 const ehPintura = this.ferramentaAtual.startsWith('piso') || this.ferramentaAtual.startsWith('cerca');
                 if (this.estado.botaoPressionado === 'direito' || ehPintura) {
                     this.gerenciarClique(celula, this.estado.botaoPressionado);
@@ -388,7 +555,7 @@ const FarmPlanner = {
             };
 
             celula.onmouseup = (e) => {
-                // Só coloca o objeto se NÃO foi um arrasto de câmera
+                // Só posiciona o objeto se NÃO tiver havido arrasto de câmera
                 if (!this.estado.houveArrasto && e.button === 0) {
                     const ehPintura = this.ferramentaAtual.startsWith('piso') || this.ferramentaAtual.startsWith('cerca');
                     if (!ehPintura) {
@@ -399,7 +566,7 @@ const FarmPlanner = {
             };
 
             celula.onmouseenter = () => {
-                // Modo Pintura Contínua: só executa se o mouse estiver pressionado em pisos, cercas ou apagando
+                // Modo de pintura contínua ao arrastar
                 if (this.estado.botaoPressionado) {
                     const ehPintura = this.ferramentaAtual.startsWith('piso') || this.ferramentaAtual.startsWith('cerca');
                     if (this.estado.botaoPressionado === 'direito' || ehPintura) {
@@ -409,7 +576,7 @@ const FarmPlanner = {
             };
 
             container.appendChild(celula);
-            this.celulasDOM[i] = celula; // Guarda referência direta em O(1)
+            this.celulasDOM[i] = celula; // Armazena acesso direto O(1)
         }
 
         // Listener global para parar de pintar ao soltar o mouse fora das células
@@ -423,17 +590,16 @@ const FarmPlanner = {
         this.renderizarObjetos();
         this.configurarAtalhosZoom();
 
-        // --- ARRASTAR CÂMERA ---
+        // --- ARRASTAR CÂMERA (Com proteção contra duplicação de eventos na troca de mapa) ---
         const viewport = document.querySelector('.viewport-edicao');
         let isDown = false;
         let startX, startY, scrollLeft, scrollTop;
 
-        if (viewport) {
+        if (viewport && !window.viewportDragGuard) {
             viewport.addEventListener('mousedown', (e) => {
-                // DESATIVA ARRASTO DA CÂMERA SE FOR PISO (para permitir pintura)
-                if (this.ferramentaAtual.startsWith('piso')|| this.ferramentaAtual.startsWith('cerca')) return;
+                if (this.ferramentaAtual.startsWith('piso') || this.ferramentaAtual.startsWith('cerca')) return;
 
-                if (e.button === 0) { // Só arrasta com o botão esquerdo
+                if (e.button === 0) {
                     isDown = true;
                     this.estado.houveArrasto = false;
                     startX = e.pageX - viewport.offsetLeft;
@@ -443,8 +609,16 @@ const FarmPlanner = {
                 }
             });
 
-            viewport.addEventListener('mouseleave', () => { isDown = false; this.estado.botaoPressionado = null;})
-            viewport.addEventListener('mouseup', () => { isDown = false; viewport.style.cursor = 'grab'; });
+            viewport.addEventListener('mouseleave', () => { 
+                isDown = false; 
+                this.estado.botaoPressionado = null; 
+            });
+
+            viewport.addEventListener('mouseup', () => { 
+                isDown = false; 
+                viewport.style.cursor = 'grab'; 
+            });
+
             viewport.addEventListener('mousemove', (e) => {
                 if (!isDown) return;
                 const x = e.pageX - viewport.offsetLeft;
@@ -455,11 +629,20 @@ const FarmPlanner = {
                 if (deltaX > 4 || deltaY > 4) {
                     this.estado.houveArrasto = true;
                     viewport.style.cursor = 'grabbing';
+                    
+                    // Posição desejada
                     viewport.scrollLeft = scrollLeft - (x - startX);
                     viewport.scrollTop = scrollTop - (y - startY);
+
+                    // Trava imediatamente nas bordas da imagem se um mapa real estiver selecionado
+                    if (this.mapaAtual !== 'generico') {
+                        this.limitarScroll();
+                    }
+
                     this.sincronizarScroll();
                 }
             });
+            window.viewportDragGuard = true; // Impede que os listeners se repitam ao trocar de mapa
         }
     },
     // --- Lógica de Conexão Inteligente de Cercas ---
@@ -592,6 +775,8 @@ const FarmPlanner = {
         direcoes.forEach(dir => atualizarPonto(x + dir.dx, y + dir.dy));
 },
 colocarObjeto: function(x, y, tipo) {
+    if (!this.podeConstruir(x, y, tipo)) return;
+
     const config = this.objetosConfig[tipo];
     if (!config) return;
 
@@ -653,6 +838,7 @@ colocarObjeto: function(x, y, tipo) {
     },
 
     // RENDERIZAÇÃO GRANULAR: atualiza apenas a célula solicitada
+    // RENDERIZAÇÃO GRANULAR: atualiza apenas a célula solicitada
     renderizarCelula: function(x, y) {
         const celulaDOM = this.obterCelulaDOM(x, y);
         if (!celulaDOM) return;
@@ -664,10 +850,12 @@ colocarObjeto: function(x, y, tipo) {
             return x >= o.x && x < o.x + larg && y >= o.y && y < o.y + alt;
         });
 
-        let divSprite = celulaDOM.querySelector('.objeto-sprite');
+        // Ignora o bocal para não confundir com o aspersor principal
+        let divSprite = celulaDOM.querySelector('.objeto-sprite:not(.bocal-overlay)');
 
+        // Se a célula está vazia, limpa tudo dela e encerra com segurança
         if (!obj) {
-            if (divSprite) divSprite.remove();
+            celulaDOM.querySelectorAll('.objeto-sprite').forEach(el => el.remove());
             return;
         }
 
@@ -727,6 +915,14 @@ colocarObjeto: function(x, y, tipo) {
                 divSprite.appendChild(badge);
             }
         }
+
+        // --- RENDERIZAÇÃO SEGURA DO BOCAL (No final da função) ---
+        celulaDOM.querySelectorAll('.bocal-overlay').forEach(b => b.remove());
+        if (obj.temBocal) {
+            const bocalDiv = document.createElement('div');
+            bocalDiv.className = 'objeto-sprite bocal-overlay tile-bocalPressao';
+            celulaDOM.appendChild(bocalDiv);
+        }
     },
 
     obterFlorPrioritaria: function(colmeiaX, colmeiaY) {
@@ -783,6 +979,7 @@ colocarObjeto: function(x, y, tipo) {
         ctxT.clearRect(0, 0, canvasT.width, canvasT.height);
 
         const tamanho = this.config.tamanhoCelula;
+        
 
         this.estado.objetos.forEach(obj => {
             const config = this.objetosConfig[obj.tipo];
@@ -850,6 +1047,16 @@ colocarObjeto: function(x, y, tipo) {
                     });
                 }
             }
+            // Se for aspersor com bocal, usa o alcance estendido; senão, o normal
+            const alcanceUsado = (obj.temBocal && config.alcanceBocal) ? config.alcanceBocal : config.alcance;
+
+            alcanceUsado.forEach(([dx, dy]) => {
+                const ax = obj.x + dx;
+                const ay = obj.y + dy;
+                if (ax >= 0 && ax < this.config.largura && ay >= 0 && ay < this.config.altura) {
+                    ctxF.fillRect(ax * tamanho, ay * tamanho, tamanho, tamanho);
+                }
+            });
         });
     },
 renderizarObjetos: function() {
@@ -866,6 +1073,38 @@ renderizarObjetos: function() {
         if (!container) return;
 
         container.innerHTML = ''; 
+                // --- SELETOR DE MAPAS ---
+        const divMapa = document.createElement('div');
+        divMapa.style.marginBottom = '10px';
+
+        const labelMapa = document.createElement('label');
+        labelMapa.style.display = 'block';
+        labelMapa.style.fontWeight = 'bold';
+        labelMapa.style.fontSize = '12px';
+        labelMapa.innerText = 'Layout da Fazenda:';
+
+        const selectMapa = document.createElement('select');
+        selectMapa.style.width = '100%';
+        selectMapa.style.padding = '4px';
+        selectMapa.style.borderRadius = '4px';
+
+        Object.keys(this.mapasConfig).forEach(chave => {
+            const opt = document.createElement('option');
+            opt.value = chave;
+            opt.innerText = this.mapasConfig[chave].nome;
+            if (chave === this.mapaAtual) opt.selected = true;
+            selectMapa.appendChild(opt);
+        });
+
+        selectMapa.addEventListener('change', (e) => {
+            this.selecionarMapa(e.target.value);
+        });
+
+        divMapa.appendChild(labelMapa);
+        divMapa.appendChild(selectMapa);
+        container.appendChild(divMapa);
+
+        // --- CHECKBOXES DE ALCANCE ---
         const categories = [...new Set(
             Object.values(this.objetosConfig)
                 .map(o => o.categoria)
@@ -901,7 +1140,8 @@ renderizarObjetos: function() {
         const aspersores = [
             { id: 'aspersorC', nome: 'Aspersor Comum' },
             { id: 'aspersorQ', nome: 'Aspersor de Qualidade' },
-            { id: 'aspersorI', nome: 'Aspersor de Irídio' }
+            { id: 'aspersorI', nome: 'Aspersor de Irídio' },
+            { id: 'bocalPressao', nome: 'Bocal de Pressão (Melhoria)' }
         ];
 
         const espantalhos = [
@@ -1086,6 +1326,18 @@ renderizarObjetos: function() {
                 }
             }
         } else {
+             // --- APLICAÇÃO DO BOCAL DE PRESSÃO ---
+            if (this.ferramentaAtual === 'bocalPressao') {
+                const aspersorAlvo = this.estado.objetos.find(o => o.x === x && o.y === y && o.tipo.startsWith('aspersor'));
+                if (aspersorAlvo) {
+                    // Alterna o bocal (se já tem, remove; se não tem, coloca)
+                    aspersorAlvo.temBocal = !aspersorAlvo.temBocal;
+                    this.renderizarCelula(x, y);
+                    this.atualizarCanvasAlcances();
+                }
+                return; // Não coloca nada no chão se não for um aspersor
+            }
+
             // SEGURANÇA CONTRA SPAM NO ARRASTO:
             // Só executa o "ColocarObjeto" se a célula não tiver esse objeto ou se for um piso diferente
             const objExistente = this.estado.objetos.find(o => o.x === x && o.y === y);

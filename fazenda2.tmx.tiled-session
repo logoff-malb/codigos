@@ -1,0 +1,46 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "",
+    "expandedProjectPaths": [
+    ],
+    "file.lastUsedOpenFilter": "Todos os Ficheiros (*)",
+    "fileStates": {
+        "": {
+            "scaleInDock": 1
+        },
+        "fazenda1.tmx": {
+            "scale": 0.5371153846153846,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 640.4582885785894,
+                "y": 519.4414607948443
+            }
+        },
+        "fazenda1.tmx#colisão": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        }
+    },
+    "last.exportedFilePath": "C:/Users/assue/Desktop/codigos/StarPreview/recursos",
+    "last.externalTilesetPath": "C:/Users/assue/Desktop/codigos",
+    "last.imagePath": "C:/Users/assue/Desktop",
+    "map.height": 65,
+    "map.lastUsedExportFilter": "Todos os Ficheiros (*)",
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "map.width": 80,
+    "openFiles": [
+    ],
+    "project": "fazenda2.tmx.tiled-project",
+    "recentFiles": [
+    ],
+    "tileset.lastUsedFilter": "Ficheiros de conjunto de tiles Tiled (*.tsx *.xml)",
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    }
+}
